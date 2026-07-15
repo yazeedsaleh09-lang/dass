@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+    "@crisis/i18n": "0.2.0",
     "@crisis/shared": "0.1.0",
     "colyseus.js": "^0.16.0"
   }

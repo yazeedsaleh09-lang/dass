@@ -2,6 +2,12 @@
 // These implement the locked Phase-1 design (3 meters, authored crises, fog info,
 // consequence links, simple-majority vote, non-scored private goals, endings-from-state).
 // No new mechanics are introduced here.
+//
+// v0.2 (localization): all visible text fields hold i18n KEYS (resolved client-side from
+// @crisis/i18n). The narration `log` is locale-neutral structured entries. No mechanics change.
+
+import type { LogEntry } from '@crisis/i18n';
+export type { LogEntry };
 
 export type MeterId = 'stability' | 'resources' | 'cohesion';
 export const METER_IDS: readonly MeterId[] = ['stability', 'resources', 'cohesion'];
@@ -125,7 +131,9 @@ export interface GoalResult {
   playerId: string;
   goalId: string;
   outcome: GoalOutcome;
-  note: string;
+  /** i18n key + params for the explanation (rendered client-side). */
+  noteKey: string;
+  noteParams?: Record<string, string | number>;
 }
 
 export interface RevealedCard {
@@ -153,8 +161,8 @@ export interface MatchState {
   ended: boolean;
   ending?: Ending;
   goalResults?: GoalResult[];
-  /** Human-readable narration, appended as the match progresses. */
-  log: string[];
+  /** Locale-neutral narration entries, appended as the match progresses. */
+  log: LogEntry[];
 }
 
 // ---- Client-facing view (redacted: hides other players' private goals/cards) ----
@@ -199,10 +207,10 @@ export interface ClientView {
     vote?: string;
   };
   revealedCards: RevealedCard[];
-  log: string[];
+  log: LogEntry[];
   ended: boolean;
   ending?: Ending;
-  /** Present only when ended: everyone's goal is revealed at the recap. */
+  /** Present only when ended: everyone's goal is revealed at the recap. goalTitle is an i18n key. */
   goalResults?: (GoalResult & { nickname: string; goalTitle: string })[];
   /** Server-set epoch ms when the current timed phase ends (for the client clock). */
   phaseEndsAt?: number;

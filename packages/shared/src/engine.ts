@@ -10,7 +10,9 @@ import type {
   CrisisOption,
   Ending,
   Goal,
+  GoalOutcome,
   GoalResult,
+  LogEntry,
   MatchState,
   Meters,
   MeterId,
@@ -126,7 +128,16 @@ export function initMatch(players: PlayerInput[], content: ContentBundle, seed: 
     revealedCards: [],
     seed,
     ended: false,
-    log: [`Prologue: the settlement stands. Stability ${content.startMeters.stability}, Resources ${content.startMeters.resources}, Cohesion ${content.startMeters.cohesion}.`],
+    log: [
+      {
+        key: 'log.prologue',
+        params: {
+          stability: content.startMeters.stability,
+          resources: content.startMeters.resources,
+          cohesion: content.startMeters.cohesion,
+        },
+      },
+    ],
   };
 }
 
@@ -166,12 +177,15 @@ function startCrisis(s: MatchState, content: ContentBundle): MatchState {
   for (const eff of crisis.onStartLinkEffects ?? []) {
     if (s.activeLinks.includes(eff.ifLink)) {
       if (eff.meterDeltas) applyDeltas(s, eff.meterDeltas);
-      if (eff.narrative) s.log.push(eff.narrative);
+      if (eff.narrative) s.log.push({ key: 'log.plain', params: { textKey: eff.narrative } });
     }
   }
 
   dealInfo(s, crisis);
-  s.log.push(`Crisis ${s.crisisIndex + 1}${crisis.tier === 'final' ? ' (FINAL)' : ''} — ${crisis.title}: ${crisis.publicBrief}`);
+  s.log.push({
+    key: crisis.tier === 'final' ? 'log.crisisIntroFinal' : 'log.crisisIntro',
+    params: { index: s.crisisIndex + 1, titleKey: crisis.title, briefKey: crisis.publicBrief },
+  });
 
   // A collapse could be triggered by an onStart link effect.
   checkCollapse(s);
@@ -331,7 +345,7 @@ export function resolveDecision(state: MatchState, content: ContentBundle): Matc
   const uncertain = crisis.infoCards.filter((c) => c.reliability !== 'confirmed');
   const hadUncertainInfo = uncertain.length > 0;
   for (const card of uncertain) {
-    s.log.push(`  · Info "${card.content}" turned out ${card.truth ? 'TRUE' : 'FALSE'}.`);
+    s.log.push({ key: card.truth ? 'log.infoTrue' : 'log.infoFalse', params: { contentKey: card.content } });
   }
 
   const votesSnapshot: Record<string, string> = {};
@@ -346,8 +360,11 @@ export function resolveDecision(state: MatchState, content: ContentBundle): Matc
     metersAfter: { ...s.meters },
   });
 
-  s.log.push(`  → The group chose "${chosen.title}". ${resultText}`);
-  s.log.push(`     Meters: Stability ${s.meters.stability}, Resources ${s.meters.resources}, Cohesion ${s.meters.cohesion}.`);
+  s.log.push({ key: 'log.chose', params: { titleKey: chosen.title, resultKey: resultText } });
+  s.log.push({
+    key: 'log.meters',
+    params: { stability: s.meters.stability, resources: s.meters.resources, cohesion: s.meters.cohesion },
+  });
 
   s.crisisPhase = 'resolution';
   checkCollapse(s);
@@ -359,11 +376,8 @@ function checkCollapse(s: MatchState): void {
     if (s.meters[id] <= 0) {
       s.ended = true;
       s.stage = 'ending';
-      s.ending = {
-        kind: 'collapse',
-        text: `The settlement does not survive: ${id} reached zero.`,
-      };
-      s.log.push(`COLLAPSE — ${id} hit 0. ${s.ending.text}`);
+      s.ending = { kind: 'collapse', text: 'ending.collapse.text' };
+      s.log.push({ key: 'log.collapse', params: { meterKey: `meter.${id}` } });
       s.goalResults = evaluateGoals(s, id);
       return;
     }
@@ -402,22 +416,21 @@ function toEnding(s: MatchState, content: ContentBundle): MatchState {
   s.stage = 'ending';
   s.ended = true;
   s.ending = computeEnding(s.meters);
-  s.log.push(`ENDING — ${s.ending.kind.toUpperCase()}: ${s.ending.text}`);
+  s.log.push({
+    key: 'log.ending',
+    params: { kindKey: `ending.label.${s.ending.kind}`, textKey: s.ending.text },
+  });
   s.goalResults = evaluateGoals(s);
   void content;
   return s;
 }
 
 export function computeEnding(m: Meters): Ending {
-  for (const id of METER_IDS) if (m[id] <= 0) return { kind: 'collapse', text: `${id} reached zero.` };
+  for (const id of METER_IDS) if (m[id] <= 0) return { kind: 'collapse', text: 'ending.collapse.text' };
   const bands = METER_IDS.map((id) => bandFor(m[id]));
-  if (bands.includes('critical')) {
-    return { kind: 'fractured', text: 'You survived — barely, and not whole.' };
-  }
-  if (bands.every((b) => b === 'healthy')) {
-    return { kind: 'success', text: 'More than survival — you kept who you were.' };
-  }
-  return { kind: 'stable', text: 'You held. Scarred, tired, but standing.' };
+  if (bands.includes('critical')) return { kind: 'fractured', text: 'ending.fractured.text' };
+  if (bands.every((b) => b === 'healthy')) return { kind: 'success', text: 'ending.success.text' };
+  return { kind: 'stable', text: 'ending.stable.text' };
 }
 
 // ---------- private goals (non-scored, evaluated from final state + history) ----------
@@ -426,56 +439,56 @@ export function evaluateGoals(s: MatchState, collapseMeter?: MeterId): GoalResul
   return s.players.map((p) => {
     const goalId = p.goalId;
     if (collapsed) {
-      return { playerId: p.id, goalId, outcome: 'unmet', note: 'The settlement fell; nothing else counts.' };
+      return { playerId: p.id, goalId, outcome: 'unmet' as GoalOutcome, noteKey: 'goal.note.collapseVoid' };
     }
-    const [outcome, note] = resolveGoal(p.goalId, s);
-    return { playerId: p.id, goalId, outcome, note };
+    const [outcome, noteKey, noteParams] = resolveGoal(p.goalId, s);
+    return { playerId: p.id, goalId, outcome, noteKey, noteParams };
   });
 }
 
-function resolveGoal(goalId: string, s: MatchState): [GoalResult['outcome'], string] {
-  // The goal's rule is looked up from the player's goalId via the content-independent id convention.
-  // To keep the engine content-agnostic, rules are encoded by id prefix used in @crisis/content.
+// Returns [outcome, noteKey, noteParams?] — the note is an i18n key rendered client-side.
+function resolveGoal(goalId: string, s: MatchState): [GoalOutcome, string, Record<string, string | number>?] {
   const rule = GOAL_RULES[goalId];
-  if (!rule) return ['unmet', 'Unknown goal.'];
+  if (!rule) return ['unmet', 'goal.note.unresolved'];
   const m = s.meters;
   const highest = METER_IDS.reduce((a, b) => (m[a] >= m[b] ? a : b));
   const highestTied = METER_IDS.filter((id) => m[id] === m[highest]).length > 1;
 
   switch (rule.kind) {
     case 'highestMeter': {
-      if (m[rule.meter] === m[highest] && !highestTied) return ['met', `${rule.meter} ended highest.`];
-      if (m[rule.meter] === m[highest]) return ['partly', `${rule.meter} tied for highest.`];
-      return ['unmet', `${rule.meter} was not the highest meter.`];
+      const mk = { meterKey: `meter.${rule.meter}` };
+      if (m[rule.meter] === m[highest] && !highestTied) return ['met', 'goal.note.highestMet', mk];
+      if (m[rule.meter] === m[highest]) return ['partly', 'goal.note.highestTied', mk];
+      return ['unmet', 'goal.note.highestUnmet', mk];
     }
     case 'surviveNoCritical': {
       const anyCritical = METER_IDS.some((id) => s.everCritical[id]);
-      return anyCritical ? ['partly', 'Survived, but a meter went critical along the way.'] : ['met', 'Survived with no meter ever critical.'];
+      return anyCritical ? ['partly', 'goal.note.survivePartly'] : ['met', 'goal.note.surviveMet'];
     }
     case 'boldAtLeast': {
       const bold = s.history.filter((h) => h.tags.includes('bold')).length;
-      if (bold >= rule.n) return ['met', `Chose the bold path ${bold} time(s).`];
-      if (bold === rule.n - 1) return ['partly', `Chose bold ${bold} time(s); needed ${rule.n}.`];
-      return ['unmet', `Only ${bold} bold choice(s).`];
+      if (bold >= rule.n) return ['met', 'goal.note.boldMet', { bold }];
+      if (bold === rule.n - 1) return ['partly', 'goal.note.boldPartly', { bold, need: rule.n }];
+      return ['unmet', 'goal.note.boldUnmet', { bold }];
     }
     case 'leastSafeAtLeastOnce': {
       const risky = s.history.some((h) => h.tags.includes('bold') || h.tags.includes('risky'));
-      return risky ? ['met', 'The group took a real risk at least once.'] : ['unmet', 'The group always played it safe.'];
+      return risky ? ['met', 'goal.note.leastSafeMet'] : ['unmet', 'goal.note.leastSafeUnmet'];
     }
     case 'neverSacrifice': {
       const sacrificed = s.history.some((h) => h.tags.includes('sacrifice'));
-      return sacrificed ? ['unmet', 'The group sacrificed people at least once.'] : ['met', 'No one was sacrificed.'];
+      return sacrificed ? ['unmet', 'goal.note.neverSacrificeUnmet'] : ['met', 'goal.note.neverSacrificeMet'];
     }
     case 'refusedRumor': {
       const opportunities = s.history.filter((h) => h.hadUncertainInfo);
       const refused = opportunities.some((h) => !h.tags.includes('actsOnRumor'));
       const acted = opportunities.some((h) => h.tags.includes('actsOnRumor'));
-      if (refused && !acted) return ['met', 'The group refused to act on rumor.'];
-      if (refused) return ['partly', 'The group refused rumor once but acted on it elsewhere.'];
-      return ['unmet', 'The group acted on unverified rumor.'];
+      if (refused && !acted) return ['met', 'goal.note.refusedMet'];
+      if (refused) return ['partly', 'goal.note.refusedPartly'];
+      return ['unmet', 'goal.note.refusedUnmet'];
     }
     default:
-      return ['unmet', 'Unresolved goal.'];
+      return ['unmet', 'goal.note.unresolved'];
   }
 }
 

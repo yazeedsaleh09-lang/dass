@@ -13,6 +13,7 @@ const ctx = await esbuild.context({
   outfile: 'apps/web/public/bundle.js',
   format: 'esm',
   target: 'es2022',
+  charset: 'utf8',
   sourcemap: true,
   logLevel: 'info',
   define: { CRISIS_SERVER_URL: JSON.stringify(process.env.CRISIS_SERVER_URL ?? '') },

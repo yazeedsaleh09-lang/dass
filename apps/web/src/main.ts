@@ -1,29 +1,31 @@
-// Ugly-but-functional v0.1 web client. Plain DOM + colyseus.js.
-// Reuses the SAME server + rules. No polish/animation/audio (per v0.1 rules).
+// v0.2 web client: full i18n (en/ar) + RTL. The server sends locale-neutral keys;
+// the client translates everything, so switching language is instant (no refresh, no round-trip).
 import { Client, type Room } from 'colyseus.js';
 import type { ClientView } from '@crisis/shared';
+import { detectLocale, dir, LOCALE_NAMES, LOCALES, renderLog, t, type Locale } from '@crisis/i18n';
 
-// CRISIS_SERVER_URL is injected at build time by esbuild (see apps/web/build.mjs).
-// Priority: ?server= override → build-time env → same-host dev default.
 declare const CRISIS_SERVER_URL: string;
 const params = new URLSearchParams(location.search);
 const BUILT_IN = typeof CRISIS_SERVER_URL !== 'undefined' && CRISIS_SERVER_URL ? CRISIS_SERVER_URL : '';
 function defaultServer(): string {
-  if (BUILT_IN) return BUILT_IN; // baked at build (e.g. Netlify + separate server)
+  if (BUILT_IN) return BUILT_IN;
   const h = location.hostname;
-  if (h === 'localhost' || h === '127.0.0.1') return 'ws://localhost:2567'; // local dev
-  // hosted same-origin: the server also serves this page (single-host deploy)
+  if (h === 'localhost' || h === '127.0.0.1') return 'ws://localhost:2567';
   return `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
 }
 const SERVER = params.get('server') ?? defaultServer();
+
+let locale: Locale = detectLocale(params.get('lang') ?? localStorage.getItem('locale'));
 let lastError = '';
+type ChatItem = { kind: 'chat'; name: string; text: string } | { kind: 'signal'; name: string; sig: string };
+const chatLog: ChatItem[] = [];
 
 const app = document.getElementById('app')!;
 let client: Client | null = null;
 let room: Room | null = null;
 let view: ClientView | null = null;
-const chatLog: string[] = [];
-let timerHandle: number | undefined;
+
+const TR = (key: string, p?: Record<string, string | number>): string => t(locale, key, p);
 
 const el = (tag: string, props: Record<string, unknown> = {}, ...kids: (Node | string)[]): HTMLElement => {
   const n = document.createElement(tag);
@@ -39,6 +41,32 @@ const btn = (label: string, onClick: () => void, opts: { primary?: boolean; disa
   b.onclick = onClick;
   return b;
 };
+/** Wrap a number/code/timer so it always reads left-to-right, even inside RTL text. */
+const ltr = (s: string | number): HTMLElement => el('span', { className: 'ltr', textContent: String(s) });
+
+function applyDir(): void {
+  document.documentElement.dir = dir(locale);
+  document.documentElement.lang = locale;
+}
+function setLocale(l: Locale): void {
+  locale = l;
+  localStorage.setItem('locale', l);
+  applyDir();
+  buildLangBar();
+  render();
+}
+function buildLangBar(): void {
+  const bar = document.getElementById('langbar');
+  if (!bar) return;
+  bar.replaceChildren(
+    el('span', { className: 'muted', textContent: TR('ui.language') + ': ' }),
+    ...LOCALES.map((l) => {
+      const b = btn(LOCALE_NAMES[l], () => setLocale(l), { primary: l === locale });
+      b.className = (b.className + ' langbtn').trim();
+      return b;
+    }),
+  );
+}
 
 function connectHandlers(r: Room): void {
   r.onMessage('state', (v: ClientView) => {
@@ -46,11 +74,11 @@ function connectHandlers(r: Room): void {
     render();
   });
   r.onMessage('chat', (m: { name: string; text: string }) => {
-    chatLog.push(`${m.name}: ${m.text}`);
+    chatLog.push({ kind: 'chat', name: m.name, text: m.text });
     render();
   });
   r.onMessage('signal', (m: { name: string; kind: string }) => {
-    chatLog.push(`— ${m.name} signals: ${m.kind.replace('_', ' ')}`);
+    chatLog.push({ kind: 'signal', name: m.name, sig: m.kind });
     render();
   });
   r.onError((code, msg) => alert(`error ${code}: ${msg ?? ''}`));
@@ -63,30 +91,27 @@ function connectHandlers(r: Room): void {
 
 async function createRoom(nickname: string): Promise<void> {
   client = new Client(SERVER);
-  const r = await client.create('match', { nickname });
-  room = r;
-  connectHandlers(r);
+  room = await client.create('match', { nickname });
+  connectHandlers(room);
 }
 async function joinRoom(code: string, nickname: string): Promise<void> {
-  if (!code) throw new Error('Enter a room code');
+  if (!code) throw new Error(TR('ui.enterCode'));
   client = new Client(SERVER);
-  const r = await client.joinById(code, { nickname });
-  room = r;
-  connectHandlers(r);
+  room = await client.joinById(code, { nickname });
+  connectHandlers(room);
 }
-/** Run a connect action, surfacing failures (server down / bad code) instead of crashing. */
 function attempt(p: Promise<void>): void {
   lastError = '';
   void p.catch((e: unknown) => {
-    lastError = `Could not connect (server: ${SERVER}). ${(e as Error)?.message ?? String(e)}`;
+    lastError = TR('ui.connError', { msg: (e as Error)?.message ?? String(e) });
     render();
   });
 }
 
 function renderHome(): void {
-  const nick = el('input', { id: 'nick', placeholder: 'Your name' }) as HTMLInputElement;
+  const nick = el('input', { id: 'nick', placeholder: TR('ui.yourName') }) as HTMLInputElement;
   nick.value = localStorage.getItem('nick') ?? '';
-  const code = el('input', { id: 'code', placeholder: 'Room code' }) as HTMLInputElement;
+  const code = el('input', { id: 'code', placeholder: TR('ui.roomCode') }) as HTMLInputElement;
   const getNick = () => {
     const n = nick.value.trim() || 'Player';
     localStorage.setItem('nick', n);
@@ -95,32 +120,26 @@ function renderHome(): void {
   const banner: Node[] = lastError ? [el('p', { className: 'err' }, lastError)] : [];
   app.replaceChildren(
     ...banner,
-    el('h1', {}, 'Crisis — v0.1 prototype'),
-    el('p', { className: 'muted' }, `server: ${SERVER} · ugly on purpose · needs 4+ players`),
+    el('h1', {}, TR('ui.appTitle')),
+    el('p', { className: 'muted' }, TR('ui.tagline')),
     el('div', { className: 'card' },
-      el('h3', {}, 'Host a room'),
+      el('h3', {}, TR('ui.hostRoom')),
       nick,
-      el('div', { className: 'row' }, btn('Create room', () => attempt(createRoom(getNick())), { primary: true })),
+      el('div', { className: 'row' }, btn(TR('ui.createRoom'), () => attempt(createRoom(getNick())), { primary: true })),
     ),
     el('div', { className: 'card' },
-      el('h3', {}, 'Join a room'),
+      el('h3', {}, TR('ui.joinTitle')),
       code,
-      el('div', { className: 'row' }, btn('Join', () => attempt(joinRoom(code.value.trim(), getNick()))),
-      ),
+      el('div', { className: 'row' }, btn(TR('ui.join'), () => attempt(joinRoom(code.value.trim(), getNick())))),
     ),
   );
 }
 
 function meterRow(v: ClientView): HTMLElement {
   const m = v.meters;
-  const one = (label: string, val: number) => el('span', { className: 'meter' }, el('span', { className: 'muted' }, label + ' '), el('b', {}, String(val)));
-  return el('div', { className: 'meters' }, one('Stability', m.stability), one('Resources', m.resources), one('Cohesion', m.cohesion));
-}
-
-function timeLeft(v: ClientView): string {
-  if (!v.phaseEndsAt) return '';
-  const s = Math.max(0, Math.round((v.phaseEndsAt - Date.now()) / 1000));
-  return ` · ${s}s`;
+  const one = (id: 'stability' | 'resources' | 'cohesion') =>
+    el('span', { className: 'meter' }, el('span', { className: 'muted' }, TR(`meter.${id}`) + ' '), el('b', {}, ltr(m[id])));
+  return el('div', { className: 'meters' }, one('stability'), one('resources'), one('cohesion'));
 }
 
 function renderLobby(v: ClientView): void {
@@ -128,106 +147,111 @@ function renderLobby(v: ClientView): void {
   const readyCount = v.players.filter((p) => p.ready).length;
   const canStart = !!me?.isHost && v.players.length >= 4 && readyCount >= 4;
   app.replaceChildren(
-    el('h2', {}, `Lobby — ${v.players.length} player(s)`),
-    el('p', { className: 'muted' }, `Room code: ${room?.roomId ?? ''} — share it. Need 4 ready to start.`),
+    el('h2', {}, TR('ui.lobby', { count: v.players.length })),
+    el('p', { className: 'muted' }, el('span', {}, TR('ui.codeLabel') + ' '), ltr(room?.roomId ?? ''), el('span', {}, ' — ' + TR('ui.shareHint'))),
     el('div', {}, ...v.players.map((p) =>
-      el('div', { className: 'pill' + (p.id === v.you.id ? ' you' : '') }, `${p.nickname}${p.isHost ? ' 👑' : ''} ${p.ready ? '✓ready' : '…'}${p.connected ? '' : ' (offline)'}`),
+      el('span', { className: 'pill' + (p.id === v.you.id ? ' you' : '') },
+        `${p.nickname}${p.isHost ? ' 👑' : ''} ${p.ready ? '✓' + TR('ui.readyTag') : '…'}${p.connected ? '' : ' (' + TR('ui.offline') + ')'}`),
     )),
     el('div', { className: 'row' },
-      btn(me?.ready ? 'Unready' : 'Ready', () => room?.send('ready', { ready: !me?.ready }), { primary: !me?.ready }),
-      btn(`Start (${readyCount}/4)`, () => room?.send('start', {}), { primary: true, disabled: !canStart }),
-      btn('Leave', () => void room?.leave()),
+      btn(me?.ready ? TR('ui.unready') : TR('ui.ready'), () => room?.send('ready', { ready: !me?.ready }), { primary: !me?.ready }),
+      btn(TR('ui.start', { ready: readyCount }), () => room?.send('start', {}), { primary: true, disabled: !canStart }),
+      btn(TR('ui.leave'), () => void room?.leave()),
     ),
   );
 }
 
 function renderMatch(v: ClientView): void {
   const kids: Node[] = [];
-  kids.push(el('h2', {}, `Crisis ${v.crisisIndex + 1}/${v.playlistLength}${v.crisis?.tier === 'final' ? ' — FINAL' : ''} · ${v.crisisPhase}${timeLeft(v)}`));
-  kids.push(meterRow(v));
+  const phase = TR(`phase.${v.crisisPhase}`);
+  const headerKey = v.crisis?.tier === 'final' ? 'ui.crisisHeaderFinal' : 'ui.crisisHeader';
+  const header = el('h2', {}, TR(headerKey, { index: v.crisisIndex + 1, total: v.playlistLength, phase }));
+  if (v.phaseEndsAt) {
+    const s = Math.max(0, Math.round((v.phaseEndsAt - Date.now()) / 1000));
+    header.append(el('span', { className: 'muted' }, ' · '), ltr(TR('ui.timeLeft', { s })));
+  }
+  kids.push(header, meterRow(v));
 
   if (v.you.goalTitle) {
-    kids.push(el('div', { className: 'card you' }, el('b', {}, 'Your private goal: '), `${v.you.goalTitle} — ${v.you.goalDescription ?? ''}`));
+    kids.push(el('div', { className: 'card you' },
+      el('b', {}, TR('ui.yourGoal') + ' '), `${TR(v.you.goalTitle)} — ${v.you.goalDescription ? TR(v.you.goalDescription) : ''}`));
   }
-
   if (v.crisis) {
-    kids.push(el('div', { className: 'card' }, el('b', {}, v.crisis.title + ': '), v.crisis.publicBrief));
+    kids.push(el('div', { className: 'card' }, el('b', {}, TR(v.crisis.title) + ': '), TR(v.crisis.publicBrief)));
   }
 
-  // Your private info cards
   if (v.you.cards.length) {
     const cardEls = v.you.cards.map((c) => {
-      const wrap = el('div', {}, el('span', { className: 'tag' }, `[${c.reliability}] `), c.content, ' ');
-      if (v.crisisPhase === 'deliberation') {
-        wrap.append(btn('Reveal to group', () => room?.send('reveal', { cardId: c.id })));
-      }
+      const wrap = el('div', {}, el('span', { className: 'tag' }, `[${TR(`reliability.${c.reliability}`)}] `), TR(c.content), ' ');
+      if (v.crisisPhase === 'deliberation') wrap.append(btn(TR('ui.reveal'), () => room?.send('reveal', { cardId: c.id })));
       return wrap;
     });
-    kids.push(el('div', { className: 'card' }, el('b', {}, 'Your private info:'), ...cardEls));
+    kids.push(el('div', { className: 'card' }, el('b', {}, TR('ui.yourInfo')), ...cardEls));
   } else {
-    kids.push(el('div', { className: 'muted' }, 'You hold no private info this crisis.'));
+    kids.push(el('div', { className: 'muted' }, TR('ui.noInfo')));
   }
 
-  // Revealed info (public)
   if (v.revealedCards.length) {
-    kids.push(el('div', { className: 'card' }, el('b', {}, 'Revealed to the group:'),
-      ...v.revealedCards.map((r) => el('div', {}, el('span', { className: 'tag' }, `[${r.reliability}] `), r.content))));
+    kids.push(el('div', { className: 'card' }, el('b', {}, TR('ui.revealed')),
+      ...v.revealedCards.map((r) => el('div', {}, el('span', { className: 'tag' }, `[${TR(`reliability.${r.reliability}`)}] `), TR(r.content)))));
   }
 
-  // Options / voting
   if (v.crisis && v.crisisPhase === 'decision') {
-    const voted = v.you.vote;
-    kids.push(el('h3', {}, voted ? 'You voted. (change until the timer ends)' : 'Cast your vote:'));
+    kids.push(el('h3', {}, v.you.vote ? TR('ui.votedHint') : TR('ui.castVote')));
     for (const o of v.crisis.options) {
-      const b = btn((voted === o.id ? '✓ ' : '') + o.title, () => room?.send('vote', { optionId: o.id }), { primary: voted === o.id });
-      b.className += ' opt';
+      const b = btn((v.you.vote === o.id ? '✓ ' : '') + TR(o.title), () => room?.send('vote', { optionId: o.id }), { primary: v.you.vote === o.id });
+      b.className = (b.className + ' opt').trim();
       kids.push(b);
     }
     const votedCount = v.players.filter((p) => p.hasVoted).length;
-    kids.push(el('p', { className: 'muted' }, `${votedCount}/${v.players.length} voted`));
+    kids.push(el('p', { className: 'muted' }, TR('ui.votedCount', { n: votedCount, total: v.players.length })));
   } else if (v.crisis && v.crisisPhase === 'briefing') {
-    kids.push(el('p', { className: 'muted' }, 'Read your info. Discussion opens next.'));
-    kids.push(btn('Ready (skip wait)', () => room?.send('continue', {})));
+    kids.push(el('p', { className: 'muted' }, TR('ui.briefingHint')));
+    kids.push(btn(TR('ui.readySkip'), () => room?.send('continue', {})));
   } else if (v.crisisPhase === 'deliberation') {
-    kids.push(el('h3', {}, 'Discuss'));
+    kids.push(el('h3', {}, TR('ui.discuss')));
   } else if (v.crisisPhase === 'interlude') {
-    kids.push(btn('Continue', () => room?.send('continue', {}), { primary: true }));
+    kids.push(btn(TR('ui.continue'), () => room?.send('continue', {}), { primary: true }));
   }
 
-  // Players
   kids.push(el('div', { className: 'row' }, ...v.players.map((p) =>
-    el('span', { className: 'pill' + (p.id === v.you.id ? ' you' : '') }, `${p.nickname}${p.hasVoted ? ' ✓' : ''}${p.connected ? '' : ' (off)'}`))));
+    el('span', { className: 'pill' + (p.id === v.you.id ? ' you' : '') }, `${p.nickname}${p.hasVoted ? ' ✓' : ''}${p.connected ? '' : ' (' + TR('ui.offline') + ')'}`))));
 
-  // Chat + signals
-  kids.push(el('h3', {}, 'Talk'));
+  kids.push(el('h3', {}, TR('ui.talk')));
   kids.push(el('div', { className: 'row' },
-    ...['agree', 'disagree', 'warning', 'need_info'].map((k) => btn(k.replace('_', ' '), () => room?.send('signal', { kind: k })))));
-  const chatIn = el('input', { placeholder: 'say something…' }) as HTMLInputElement;
-  chatIn.onkeydown = (e) => {
-    if ((e as KeyboardEvent).key === 'Enter' && chatIn.value.trim()) {
+    ...['agree', 'disagree', 'warning', 'need_info'].map((k) => btn(TR(`signal.${k}`), () => room?.send('signal', { kind: k })))));
+  const chatIn = el('input', { placeholder: TR('ui.saySomething') }) as HTMLInputElement;
+  const sendChat = () => {
+    if (chatIn.value.trim()) {
       room?.send('chat', { text: chatIn.value.trim() });
       chatIn.value = '';
     }
   };
-  kids.push(el('div', { className: 'row' }, chatIn, btn('Send', () => {
-    if (chatIn.value.trim()) { room?.send('chat', { text: chatIn.value.trim() }); chatIn.value = ''; }
-  })));
-  kids.push(el('div', { id: 'log' }, chatLog.slice(-40).join('\n')));
+  chatIn.onkeydown = (e) => {
+    if ((e as KeyboardEvent).key === 'Enter') sendChat();
+  };
+  kids.push(el('div', { className: 'row' }, chatIn, btn(TR('ui.send'), sendChat)));
+  const logLines = chatLog.slice(-40).map((c) =>
+    c.kind === 'chat' ? `${c.name}: ${c.text}` : TR('ui.signalMsg', { name: c.name, kind: TR(`signal.${c.sig}`) }));
+  kids.push(el('div', { id: 'log' }, logLines.join('\n')));
 
   app.replaceChildren(...kids);
 }
 
 function renderEnding(v: ClientView): void {
+  const kindLabel = v.ending ? TR(`ending.label.${v.ending.kind}`) : '?';
   app.replaceChildren(
-    el('h1', {}, `Ending: ${v.ending?.kind.toUpperCase() ?? '?'}`),
-    el('p', {}, v.ending?.text ?? ''),
+    el('h1', {}, TR('ui.endingHeader', { kind: kindLabel })),
+    el('p', {}, v.ending ? TR(v.ending.text) : ''),
     meterRow(v),
-    el('h3', {}, 'The story'),
-    el('div', { id: 'log' }, v.log.join('\n')),
-    el('h3', {}, 'Private goals'),
+    el('h3', {}, TR('ui.theStory')),
+    el('div', { id: 'log' }, v.log.map((e) => renderLog(e, locale)).join('\n')),
+    el('h3', {}, TR('ui.privateGoals')),
     el('div', {}, ...(v.goalResults ?? []).map((g) =>
-      el('div', { className: 'card' }, el('b', {}, `${g.nickname} — ${g.goalTitle}: `), el('span', {}, `${g.outcome.toUpperCase()} — ${g.note}`)))),
-    el('div', { className: 'row' }, btn('Back to home', () => void room?.leave(), { primary: true })),
+      el('div', { className: 'card' },
+        el('b', {}, `${g.nickname} — ${TR(g.goalTitle)}: `),
+        el('span', {}, `${TR(`goal.outcome.${g.outcome}`)} — ${renderLog({ key: g.noteKey, params: g.noteParams }, locale)}`)))),
+    el('div', { className: 'row' }, btn(TR('ui.backHome'), () => void room?.leave(), { primary: true })),
   );
 }
 
@@ -242,10 +266,10 @@ function render(): void {
   else renderMatch(v);
 }
 
-// live timer refresh during timed phases
-timerHandle = window.setInterval(() => {
+window.setInterval(() => {
   if (room && view && !view.ended && view.phaseEndsAt) render();
 }, 1000);
-void timerHandle;
 
+applyDir();
+buildLangBar();
 render();

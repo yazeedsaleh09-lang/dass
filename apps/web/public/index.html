@@ -3,29 +3,39 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Crisis — v0.1 prototype</title>
+    <title>Crisis — prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
     <style>
-      body { font-family: system-ui, sans-serif; margin: 0; padding: 12px; max-width: 780px; margin: 0 auto; color: #16202b; }
+      :root { --ink: #16202b; --muted: #5a6672; }
+      body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; padding: 12px; max-width: 780px; margin: 0 auto; color: var(--ink); }
+      html[lang="ar"] body { font-family: "Cairo", "Segoe UI", Tahoma, "Noto Sans Arabic", system-ui, sans-serif; }
       h1, h2, h3 { margin: 8px 0; }
-      button { min-height: 44px; padding: 8px 14px; margin: 4px 4px 4px 0; font-size: 15px; border-radius: 8px; border: 1px solid #b4bcc6; background: #f5f7f9; cursor: pointer; }
+      button { min-height: 44px; padding: 8px 14px; margin: 4px; font-size: 15px; border-radius: 8px; border: 1px solid #b4bcc6; background: #f5f7f9; cursor: pointer; font-family: inherit; }
       button:disabled { opacity: 0.4; cursor: default; }
       button.primary { background: #4a6da6; color: #fff; border-color: #3a5688; }
-      input { min-height: 40px; padding: 6px 10px; font-size: 15px; border-radius: 8px; border: 1px solid #b4bcc6; }
+      input { min-height: 40px; padding: 6px 10px; font-size: 15px; border-radius: 8px; border: 1px solid #b4bcc6; font-family: inherit; }
       .card { border: 1px solid #d7dde4; border-radius: 10px; padding: 10px; margin: 8px 0; }
-      .opt { display: block; width: 100%; text-align: left; }
+      .opt { display: block; width: 100%; text-align: start; }
       .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-      .meters { display: flex; gap: 16px; font-variant-numeric: tabular-nums; margin: 6px 0; }
+      .meters { display: flex; gap: 16px; margin: 6px 0; flex-wrap: wrap; }
+      .meter { display: inline-flex; gap: 4px; align-items: baseline; }
       .meter b { font-size: 18px; }
-      .muted { color: #5a6672; font-size: 13px; }
-      .tag { font-size: 12px; color: #5a6672; }
+      .muted { color: var(--muted); font-size: 13px; }
+      .tag { font-size: 12px; color: var(--muted); }
+      .ltr { direction: ltr; unicode-bidi: isolate; display: inline-block; font-variant-numeric: tabular-nums; }
       #log { white-space: pre-wrap; font-size: 13px; color: #333; max-height: 180px; overflow: auto; border: 1px solid #eee; padding: 6px; border-radius: 8px; background: #fafbfc; }
       .pill { display: inline-block; border: 1px solid #b4bcc6; border-radius: 999px; padding: 2px 8px; margin: 2px; font-size: 13px; }
       .you { background: #eef3fb; }
       .err { color: #8c2f2a; background: #fdeeee; border: 1px solid #e6a9a3; border-radius: 8px; padding: 10px; }
+      #langbar { display: flex; gap: 6px; align-items: center; justify-content: flex-end; max-width: 780px; margin: 0 auto 4px; }
+      #langbar button.langbtn { min-height: 34px; padding: 4px 12px; margin: 2px; font-size: 14px; }
     </style>
   </head>
   <body>
-    <div id="app">loading…</div>
+    <div id="langbar"></div>
+    <div id="app">…</div>
     <script type="module" src="./bundle.js"></script>
   </body>
 </html>

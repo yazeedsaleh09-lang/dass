@@ -2,6 +2,17 @@
 
 Per the build rules: implementation frictions are **documented here, not solved by changing the locked design**. Nothing below is a mechanic change; items are either faithful-subset choices for v0.1 or content/tuning notes deferred to v0.2.
 
+## v0.2 — Arabic Localization (implemented & verified)
+Full i18n with **English + Arabic (first-class)**, RTL, instant switching. No mechanics changed.
+- **Architecture:** new `@crisis/i18n` package (`en.json`, `ar.json`, `t()`, `renderLog()`, `detectLocale()`, `dir()`). **Every visible string is a KEY** — the server stays **locale-agnostic** (sends keys + a locale-neutral structured `log: LogEntry[]`), and the **client translates everything**. So language switch is **instant** (no refresh, no server round-trip).
+- **Content keyed:** `crises.ts`/`goals.ts` text → i18n keys; the engine's narration/goal-notes/endings → structured keys (`log.*`, `goal.note.*`, `ending.*.text`). `MatchState.log` is now `LogEntry[]`; `GoalResult` carries `noteKey`+`noteParams`.
+- **RTL:** `<html dir>` toggled per locale; CSS uses logical properties (`text-align:start`, flex); numbers/timer/room codes wrapped in `.ltr` (isolated LTR); Arabic font = **Cairo** (Google Fonts) with system-Arabic fallback.
+- **Default language:** `detectLocale()` → Arabic if `navigator.language` starts with `ar`, else English; overridable via `?lang=` or the in-UI language selector (persisted to `localStorage`).
+- **Arabic quality:** natural Modern Standard Arabic (not literal machine translation).
+- **Verified (headless):** node+web typecheck, 23 unit tests, bilingual sim (`npm run sim -- 5 42 ar`), netcheck/nettests/servecheck green, web build with `charset:'utf8'` (both languages literally in the bundle).
+- **Needs a human (browser) pass:** visual RTL mirroring on each screen + mobile — the mechanism is in place (dir/logical CSS/LTR isolation) but pixels can't be checked headlessly. Covered by the [QA matrix](../04_Testing/QA_Report.md#4).
+- **v0.2 backlog for i18n:** bundle the Arabic font locally for offline; add more languages by dropping in another `<lang>.json`; per-player server-side locale is intentionally NOT used (client-side keeps switching instant).
+
 ## Deviations from the 3.1 spec (no design impact)
 - **npm workspaces instead of pnpm.** The sandbox had no pnpm; used npm workspaces for the v0.1 scaffold. Structure is identical; can switch to pnpm later. *(Priority: trivial.)*
 - **esbuild postinstall** blocked by the sandbox's script policy → `npm rebuild esbuild` restores it (documented in README). Not a code issue.

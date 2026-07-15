@@ -1,14 +1,14 @@
 import type { Goal } from '@crisis/shared';
 
-// Private Goals (non-scored, session-only). Presentation only; the engine owns the
-// evaluation rules via GOAL_RULES keyed by these ids. Ported from Phase 2.6 §B.
+// v0.2: title/description are i18n KEYS (resolved from @crisis/i18n). The engine owns the
+// evaluation rules via GOAL_RULES keyed by id. Presentation lives in the translation files.
 export const goals: Goal[] = [
-  { id: 'goal_provider', title: 'The Provider', description: 'You want Resources to be the highest meter at the end.' },
-  { id: 'goal_peacemaker', title: 'The Peacemaker', description: 'You want Cohesion to be the highest meter at the end.' },
-  { id: 'goal_guardian', title: 'The Guardian', description: 'You want Stability to be the highest meter at the end.' },
-  { id: 'goal_humanitarian', title: 'The Humanitarian', description: 'You never want the group to sacrifice people.' },
-  { id: 'goal_hardliner', title: 'The Hardliner', description: 'You believe caution is slow death — take the bold option at least twice.' },
-  { id: 'goal_pragmatist', title: 'The Pragmatist', description: 'You just want to survive with no meter ever hitting critical.' },
-  { id: 'goal_restless', title: 'The Restless', description: 'Status quo bores you — take a real risk at least once.' },
-  { id: 'goal_skeptic', title: 'The Skeptic', description: 'You distrust rumor — refuse to act on unverified info at least once.' },
+  { id: 'goal_provider', title: 'goal.provider.title', description: 'goal.provider.desc' },
+  { id: 'goal_peacemaker', title: 'goal.peacemaker.title', description: 'goal.peacemaker.desc' },
+  { id: 'goal_guardian', title: 'goal.guardian.title', description: 'goal.guardian.desc' },
+  { id: 'goal_humanitarian', title: 'goal.humanitarian.title', description: 'goal.humanitarian.desc' },
+  { id: 'goal_hardliner', title: 'goal.hardliner.title', description: 'goal.hardliner.desc' },
+  { id: 'goal_pragmatist', title: 'goal.pragmatist.title', description: 'goal.pragmatist.desc' },
+  { id: 'goal_restless', title: 'goal.restless.title', description: 'goal.restless.desc' },
+  { id: 'goal_skeptic', title: 'goal.skeptic.title', description: 'goal.skeptic.desc' },
 ];

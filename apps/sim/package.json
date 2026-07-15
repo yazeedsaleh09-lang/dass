@@ -4,6 +4,7 @@
   "type": "module",
   "main": "src/run.ts",
   "dependencies": {
+    "@crisis/i18n": "0.2.0",
     "@crisis/shared": "0.1.0",
     "@crisis/content": "0.1.0"
   }
