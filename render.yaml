@@ -1,0 +1,14 @@
+# Render Blueprint — single-host deploy (Option A). This file sits at the repo root
+# (the `app/` folder is the git repo), so Render's "Blueprint" reads it directly — no
+# Root Directory needed. The Colyseus server also serves the built web client → ONE URL.
+services:
+  - type: web
+    name: crisis-v01
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev && node apps/web/build.mjs
+    startCommand: npm run server
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"

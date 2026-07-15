@@ -1,0 +1,17 @@
+{
+  "name": "@crisis/server",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@colyseus/ws-transport": "^0.16.0",
+    "@crisis/content": "0.1.0",
+    "@crisis/shared": "0.1.0",
+    "colyseus": "^0.16.0",
+    "colyseus.js": "^0.16.0",
+    "tsx": "^4.19.2"
+  }
+}

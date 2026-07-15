@@ -1,0 +1,10 @@
+{
+  "name": "@crisis/sim",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/run.ts",
+  "dependencies": {
+    "@crisis/shared": "0.1.0",
+    "@crisis/content": "0.1.0"
+  }
+}

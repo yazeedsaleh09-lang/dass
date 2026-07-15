@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Crisis — v0.1 prototype</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0; padding: 12px; max-width: 780px; margin: 0 auto; color: #16202b; }
+      h1, h2, h3 { margin: 8px 0; }
+      button { min-height: 44px; padding: 8px 14px; margin: 4px 4px 4px 0; font-size: 15px; border-radius: 8px; border: 1px solid #b4bcc6; background: #f5f7f9; cursor: pointer; }
+      button:disabled { opacity: 0.4; cursor: default; }
+      button.primary { background: #4a6da6; color: #fff; border-color: #3a5688; }
+      input { min-height: 40px; padding: 6px 10px; font-size: 15px; border-radius: 8px; border: 1px solid #b4bcc6; }
+      .card { border: 1px solid #d7dde4; border-radius: 10px; padding: 10px; margin: 8px 0; }
+      .opt { display: block; width: 100%; text-align: left; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .meters { display: flex; gap: 16px; font-variant-numeric: tabular-nums; margin: 6px 0; }
+      .meter b { font-size: 18px; }
+      .muted { color: #5a6672; font-size: 13px; }
+      .tag { font-size: 12px; color: #5a6672; }
+      #log { white-space: pre-wrap; font-size: 13px; color: #333; max-height: 180px; overflow: auto; border: 1px solid #eee; padding: 6px; border-radius: 8px; background: #fafbfc; }
+      .pill { display: inline-block; border: 1px solid #b4bcc6; border-radius: 999px; padding: 2px 8px; margin: 2px; font-size: 13px; }
+      .you { background: #eef3fb; }
+      .err { color: #8c2f2a; background: #fdeeee; border: 1px solid #e6a9a3; border-radius: 8px; padding: 10px; }
+    </style>
+  </head>
+  <body>
+    <div id="app">loading…</div>
+    <script type="module" src="./bundle.js"></script>
+  </body>
+</html>

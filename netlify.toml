@@ -1,0 +1,12 @@
+# Netlify — hosts the web CLIENT only (Option B, as requested).
+# The Colyseus SERVER must run elsewhere (Render/Railway/Fly/Colyseus Cloud) with a wss:// URL.
+# Point the client at it via an environment variable in the Netlify UI:
+#   Site settings → Environment variables → CRISIS_SERVER_URL = wss://<your-server-host>
+#   (must be wss:// — an https Netlify page cannot connect to insecure ws://)
+# If your git repo root is "GameProject", set Netlify "Base directory" to: app
+[build]
+  command = "npm install --include=dev && node apps/web/build.mjs"
+  publish = "apps/web/public"
+
+[build.environment]
+  NODE_VERSION = "20"
