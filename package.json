@@ -17,6 +17,8 @@
     "test:watch": "vitest",
     "sim": "tsx apps/sim/src/run.ts",
     "v2sim": "tsx apps/v2sim/src/run.ts",
+    "v2server": "tsx apps/v2server/src/index.ts",
+    "v2netcheck": "tsx apps/v2server/src/netcheck.ts",
     "server": "tsx apps/server/src/index.ts",
     "netcheck": "tsx apps/server/src/netcheck.ts",
     "nettests": "tsx apps/server/src/nettests.ts",
