@@ -1,13 +1,15 @@
 import en from './en.json';
 import ar from './ar.json';
+import v2en from './v2.en.json';
+import v2ar from './v2.ar.json';
 
 export type Locale = 'en' | 'ar';
 export const LOCALES: Locale[] = ['en', 'ar'];
 export const LOCALE_NAMES: Record<Locale, string> = { en: 'English', ar: 'العربية' };
 
 const DICTS: Record<Locale, Record<string, string>> = {
-  en: en as Record<string, string>,
-  ar: ar as Record<string, string>,
+  en: { ...(en as Record<string, string>), ...(v2en as Record<string, string>) },
+  ar: { ...(ar as Record<string, string>), ...(v2ar as Record<string, string>) },
 };
 
 /** A locale-neutral narration entry produced by the engine and rendered client-side. */

@@ -15,7 +15,8 @@
     "paths": {
       "@crisis/shared": ["packages/shared/src/index.ts"],
       "@crisis/content": ["packages/content/src/index.ts"],
-      "@crisis/i18n": ["packages/i18n/src/index.ts"]
+      "@crisis/i18n": ["packages/i18n/src/index.ts"],
+      "@crisis/v2": ["packages/v2/src/index.ts"]
     },
     "noEmit": true
   },
