@@ -1,4 +1,23 @@
-# Version 0.1 — First Playable (build)
+# Version 2 — "The Council" (current, primary)
+
+The redesign. Civic roles with hidden stakes · 4 hidden city variables shown only as **bands** (never numbers) · confirmed/rumored info with credibility · the online-native **Public Commitment Phase** (secret commit → synchronized reveal → challenge → the commit locks as the vote) · consequence threads + callbacks · documentary ending. **Saudi Arabic primary**, English secondary. Reuses the v1 engine pattern, Colyseus netcode, i18n, and deploy; the design is fresh.
+
+**Run V2:**
+```bash
+npm install                       # + npm rebuild esbuild if postinstall was blocked
+npm run v2sim -- 6 7 ar           # headless full match (Saudi Arabic)
+# play it (two terminals):
+npm run v2server                  # http://localhost:2568  (serves client + ws)
+npm run v2web:dev                 # http://localhost:8081  (dev client)
+```
+Open :8081 in 4+ tabs → Create → share code → Join → seat up → Begin. **Verify:** `npm run typecheck` · `npm run typecheck:v2web` · `npm run v2netcheck`.
+Deploy = same single-host Render flow as below, but `render.yaml`/`Dockerfile` now build `apps/v2web` and run `npm run v2server`.
+
+Packages: `@crisis/v2` (engine + content) · `@crisis/v2sim` · `@crisis/v2server` · `@crisis/v2web` · reused `@crisis/i18n` (Saudi/English).
+
+---
+
+# Version 0.1 — First Playable (build) — legacy
 
 Faithful implementation of the **locked** social-crisis design (`../01_Game_Design`, `../02_Product_Design`, `../03_Development/`). No redesign, no new mechanics. Improvements → `IMPLEMENTATION_NOTES.md` (v0.2 backlog).
 

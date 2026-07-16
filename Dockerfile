@@ -3,7 +3,7 @@
 FROM node:20-slim
 WORKDIR /app
 COPY . .
-RUN npm install --include=dev && node apps/web/build.mjs
-ENV PORT=2567
-EXPOSE 2567
-CMD ["npm", "run", "server"]
+RUN npm install --include=dev && node apps/v2web/build.mjs
+ENV PORT=2568
+EXPOSE 2568
+CMD ["npm", "run", "v2server"]

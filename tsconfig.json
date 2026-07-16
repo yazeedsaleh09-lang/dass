@@ -21,5 +21,5 @@
     "noEmit": true
   },
   "include": ["packages/*/src/**/*.ts", "apps/*/src/**/*.ts"],
-  "exclude": ["node_modules", "apps/web/**"]
+  "exclude": ["node_modules", "apps/web/**", "apps/v2web/**"]
 }
