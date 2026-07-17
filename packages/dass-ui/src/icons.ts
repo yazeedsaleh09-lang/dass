@@ -1,26 +1,43 @@
-// دسّ — line-icons (unified sharp family, currentColor-driven). No emoji as the final asset.
+// دسّ — original iconography. Line family shares stroke weight + sharp joins with the logo mark.
 import type { ActionKind } from '@dass/domain';
 
-const A = 'fill="none" stroke="currentColor" stroke-width="2.25" stroke-linejoin="miter" stroke-linecap="square"';
+const L = 'fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round" stroke-linecap="round"';
 
-/** 📈 back / 📉 dump / 💰 sell — open pair vs. a closed "lock into a shelf". */
-export function actionIcon(kind: ActionKind, size = 28): string {
-  const head = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" ${A} aria-hidden="true">`;
-  if (kind === 'back') return `${head}<path d="M12 3 L12 21"/><path d="M5 11 L12 3 L19 11"/></svg>`;
-  if (kind === 'dump') return `${head}<path d="M12 3 L12 21"/><path d="M5 13 L12 21 L19 13"/></svg>`;
-  return `${head}<path d="M12 3 L12 12"/><path d="M8 9 L12 13 L16 9"/><path d="M4 20 L20 20"/><path d="M9 20 L9 16.5 A3 3 0 0 1 15 16.5 L15 20"/></svg>`;
+/** The logo mark: a blade slipping through a seam — bright above the "table", dim below it. */
+export function mark(size = 40): string {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+    <line x1="7" y1="27" x2="41" y2="27" stroke="var(--line-2)" stroke-width="2"/>
+    <path d="M24 5 L30.5 23.5 L24 27 L17.5 23.5 Z" fill="var(--gold)"/>
+    <path d="M24 27 L28 40 L24 44 L20 40 Z" fill="var(--gold-deep)" opacity=".5"/>
+    <circle cx="24" cy="25.5" r="1.5" fill="#fff"/>
+  </svg>`;
 }
 
-/** The sting mark (shadda-as-needle) — the logo's reusable icon / favicon. */
-export function sting(size = 40, color = '#F2B33D'): string {
-  return `<svg width="${size * 0.5}" height="${size}" viewBox="0 0 20 40" aria-hidden="true"><path d="M10 1 L14 24 L10 31 L6 24 Z" fill="${color}"/><path d="M10 24 L7 29 M10 24 L13 28" stroke="#FFFFFF" stroke-width="1.2" fill="none"/></svg>`;
+/** 📈 back (gather + rise) / 📉 dump (sharp down strike) / 💰 sell (lock into the vault). */
+export function actionIcon(kind: ActionKind, size = 30): string {
+  const head = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" ${L} aria-hidden="true">`;
+  if (kind === 'back') return `${head}<path d="M12 20 V6"/><path d="M6.5 11 L12 5.5 L17.5 11"/><path d="M8.5 16.5 L12 13 L15.5 16.5" opacity=".55"/></svg>`;
+  if (kind === 'dump') return `${head}<path d="M12 4 V16"/><path d="M6.5 11 L12 16.5 L17.5 11"/><path d="M8.5 5.5 L12 9 L15.5 5.5" opacity=".55"/></svg>`;
+  return `${head}<path d="M12 3 V10.5"/><path d="M8.5 8 L12 11.5 L15.5 8"/><rect x="4.5" y="14" width="15" height="6" rx="1.4"/><path d="M9.5 14 V12.4 A2.5 2.5 0 0 1 14.5 12.4 V14"/></svg>`;
 }
 
-/** "الوسيط" silhouette — sarcastic, glasses + crooked tie. */
-export function waseetMark(size = 44): string {
-  return `<svg width="${size}" height="${size}" viewBox="0 0 58 58" aria-hidden="true"><circle cx="29" cy="29" r="28" fill="#1C1C25" stroke="rgba(245,240,232,.18)"/><path d="M29 16 a8 8 0 0 1 8 8 v3 a8 8 0 0 1 -16 0 v-3 a8 8 0 0 1 8 -8Z" fill="#0c0c12"/><path d="M14 46 a15 13 0 0 1 30 0Z" fill="#0c0c12"/><rect x="20" y="22" width="7" height="4" fill="#8A8A94"/><rect x="31" y="22" width="7" height="4" fill="#8A8A94"/><path d="M29 40 L27 47 L31 47 Z" fill="#FF2E43"/></svg>`;
+export function actionColor(kind: ActionKind): string {
+  return kind === 'back' ? 'var(--green)' : kind === 'dump' ? 'var(--red)' : 'var(--gold)';
 }
 
-export function actionColorVar(kind: ActionKind): string {
-  return kind === 'back' ? 'var(--up)' : kind === 'dump' ? 'var(--down)' : 'var(--gold)';
+export type UiIcon = 'soundOn' | 'soundOff' | 'copy' | 'check' | 'refresh' | 'users' | 'link' | 'skip';
+
+export function uiIcon(name: UiIcon, size = 22): string {
+  const h = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" ${L} aria-hidden="true">`;
+  const paths: Record<UiIcon, string> = {
+    soundOn: '<path d="M4 9 V15 H8 L13 19 V5 L8 9 Z"/><path d="M16.5 8.5 A5 5 0 0 1 16.5 15.5"/><path d="M19 6 A8.5 8.5 0 0 1 19 18" opacity=".55"/>',
+    soundOff: '<path d="M4 9 V15 H8 L13 19 V5 L8 9 Z"/><path d="M17 9 L21 15 M21 9 L17 15"/>',
+    copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8 V6 A2 2 0 0 0 14 4 H6 A2 2 0 0 0 4 6 V14 A2 2 0 0 0 6 16 H8"/>',
+    check: '<path d="M4 12.5 L9.5 18 L20 6.5"/>',
+    refresh: '<path d="M20 11 A8 8 0 1 0 19 15"/><path d="M20 5 V11 H14"/>',
+    users: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20 A6 6 0 0 1 14.5 20"/><path d="M16 5.5 A3 3 0 0 1 16 11.4"/><path d="M17 14.5 A6 6 0 0 1 20.5 20" opacity=".6"/>',
+    link: '<path d="M9 15 L15 9"/><path d="M11 6 L13 4 A4 4 0 0 1 19 10 L17 12"/><path d="M13 18 L11 20 A4 4 0 0 1 5 14 L7 12"/>',
+    skip: '<path d="M6 5 L15 12 L6 19 Z"/><path d="M18 5 V19"/>',
+  };
+  return `${h}${paths[name]}</svg>`;
 }

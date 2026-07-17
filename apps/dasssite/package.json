@@ -1,0 +1,8 @@
+{
+  "name": "@dass/site",
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "@dass/ui": "0.1.0"
+  }
+}

@@ -1,9 +1,9 @@
-# Single-host image (Option A): build the web client, run the Colyseus server which serves it.
+# Single-host image: build both دسّ clients, then run the Colyseus/HTTP server.
 # Works on Railway, Fly.io, Render (Docker), any container host.
 FROM node:20-slim
 WORKDIR /app
 COPY . .
-RUN npm install --include=dev && node apps/v2web/build.mjs
-ENV PORT=2568
-EXPOSE 2568
-CMD ["npm", "run", "v2server"]
+RUN npm ci --include=dev && npm run dassbuild
+ENV PORT=8000
+EXPOSE 8000
+CMD ["npm", "run", "dassserver"]

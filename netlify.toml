@@ -10,7 +10,7 @@
 #   Site settings → Environment variables → DASS_SERVER_URL = wss://<your-render-host>
 # If the git repo root is "GameProject", set Netlify "Base directory" to: app
 [build]
-  command = "npm install --include=dev && node apps/dasstv/build.mjs"
+  command = "npm ci --include=dev && node apps/dasstv/build.mjs"
   publish = "apps/dasstv/public"
 
 [build.environment]

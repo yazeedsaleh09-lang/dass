@@ -5,7 +5,7 @@
   "engines": {
     "node": "20.x"
   },
-  "description": "Version 0.1 — first playable prototype of the locked social crisis engine. Faithful implementation only.",
+  "description": "دسّ — server-authoritative Saudi social game for one TV and 4–8 phones.",
   "type": "module",
   "workspaces": [
     "packages/*",
@@ -28,13 +28,17 @@
     "dassserver": "tsx apps/dassserver/src/index.ts",
     "dassnetcheck": "tsx apps/dassserver/src/netcheck.ts",
     "dassqacheck": "tsx apps/dassserver/src/dassqacheck.ts",
+    "dassservecheck": "tsx apps/dassserver/src/servecheck.ts",
     "dasstv:build": "node apps/dasstv/build.mjs",
     "dasstv:dev": "node apps/dasstv/build.mjs --serve",
     "dassplayer:build": "node apps/dassplayer/build.mjs",
     "dassplayer:dev": "node apps/dassplayer/build.mjs --serve",
-    "dassbuild": "node apps/dasstv/build.mjs && node apps/dassplayer/build.mjs",
+    "dasssite:build": "node apps/dasssite/build.mjs",
+    "dasssite:dev": "node apps/dasssite/build.mjs --serve",
+    "dassbuild": "node apps/dasssite/build.mjs && node apps/dasstv/build.mjs && node apps/dassplayer/build.mjs",
     "typecheck:dasstv": "tsc --noEmit -p apps/dasstv/tsconfig.json",
     "typecheck:dassplayer": "tsc --noEmit -p apps/dassplayer/tsconfig.json",
+    "typecheck:dasssite": "tsc --noEmit -p apps/dasssite/tsconfig.json",
     "server": "tsx apps/server/src/index.ts",
     "netcheck": "tsx apps/server/src/netcheck.ts",
     "nettests": "tsx apps/server/src/nettests.ts",
@@ -46,6 +50,12 @@
     "@types/node": "^22.9.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.5"
+    "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "nanoid": "3.3.8"
+  },
+  "dependencies": {
+    "qrcode-generator": "^1.5.2"
   }
 }

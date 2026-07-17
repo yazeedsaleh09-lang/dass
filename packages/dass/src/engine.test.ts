@@ -114,15 +114,21 @@ describe('security: redactDassStateFor', () => {
     expect(JSON.stringify(bView).includes('dump')).toBe(false);
   });
 
-  it('reveals actual actions (and dassة) at REVEAL', () => {
+  it('keeps actual actions sealed mid-game and reveals them at Market Close', () => {
     const s = startGame(initGame(four(), cfg));
     s.declares['a'] = { kind: 'back', target: 'b' };
     s.phase = 'LOCK';
     applyLock(s, 'a', { kind: 'dump', target: 'b' });
     s.phase = 'REVEAL';
     resolveRound(s, cfg);
+    const midGameView = redactDassStateFor(s, 'b');
+    expect(midGameView.reveal).toBeUndefined();
+    expect(midGameView.history).toEqual([]);
+    expect(JSON.stringify(midGameView).includes('dump')).toBe(false);
+
+    endGame(s, cfg);
     const bView = redactDassStateFor(s, 'b');
-    const aEntry = bView.reveal?.entries.find((e) => e.playerId === 'a');
+    const aEntry = bView.history[0]?.entries.find((e) => e.playerId === 'a');
     expect(aEntry?.actual).toEqual({ kind: 'dump', target: 'b' });
     expect(aEntry?.isDassa).toBe(true);
   });

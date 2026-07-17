@@ -3,6 +3,8 @@
 //   node apps/dassplayer/build.mjs --serve    -> watch + serve on :8090
 // For a hosted (Netlify) build set DASS_SERVER_URL=wss://your-server-host.
 import * as esbuild from 'esbuild';
+import { createHash } from 'node:crypto';
+import { readFile, writeFile } from 'node:fs/promises';
 
 const serve = process.argv.includes('--serve');
 const ctx = await esbuild.context({
@@ -25,5 +27,10 @@ if (serve) {
 } else {
   await ctx.rebuild();
   await ctx.dispose();
+  const bundle = await readFile('apps/dassplayer/public/bundle.js');
+  const version = createHash('sha256').update(bundle).digest('hex').slice(0, 10);
+  const indexPath = 'apps/dassplayer/public/index.html';
+  const index = await readFile(indexPath, 'utf8');
+  await writeFile(indexPath, index.replace(/\/play\/bundle\.js(?:\?v=[a-f0-9]+)?/, `/play/bundle.js?v=${version}`));
   console.log('built -> apps/dassplayer/public/bundle.js');
 }

@@ -210,7 +210,7 @@ export function computeWinner(state: GameState): string[] {
 /**
  * Build the redacted, client-safe view for one player.
  * SECURITY (§10): never reads state.locked for OTHER players. A locked action reaches a
- * client only as `you.locked` (its own) or inside a reveal (post-resolution, when public).
+ * client only as `you.locked` (its own), then through history after Market Close.
  */
 export function redactDassStateFor(state: GameState, playerId: string): ClientView {
   const players: PublicPlayerView[] = state.players.map((p) => ({
@@ -231,11 +231,6 @@ export function redactDassStateFor(state: GameState, playerId: string): ClientVi
     declares = { ...state.declares };
   }
 
-  const thisReveal =
-    state.phase === 'REVEAL' || state.phase === 'VAULT_UPDATE'
-      ? state.history[state.history.length - 1]?.reveal
-      : undefined;
-
   return {
     phase: state.phase,
     round: state.round,
@@ -247,8 +242,10 @@ export function redactDassStateFor(state: GameState, playerId: string): ClientVi
       declared: state.declares[playerId],
       locked: state.locked[playerId], // YOUR OWN locked action only
     },
-    reveal: thisReveal,
-    history: state.history.map((r) => r.reveal),
+    // Movement is public through the bars, but who caused it stays secret until
+    // Market Close. Do not ship either the current reveal or prior authorship early.
+    reveal: state.ended ? state.history[state.history.length - 1]?.reveal : undefined,
+    history: state.ended ? state.history.map((r) => r.reveal) : [],
     ended: state.ended,
     winnerIds: state.winnerIds,
     hostId: state.hostId,

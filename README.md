@@ -1,23 +1,32 @@
-# Version 2 — "The Council" (current, primary)
+# دسّ — current primary game
 
-The redesign. Civic roles with hidden stakes · 4 hidden city variables shown only as **bands** (never numbers) · confirmed/rumored info with credibility · the online-native **Public Commitment Phase** (secret commit → synchronized reveal → challenge → the commit locks as the vote) · consequence threads + callbacks · documentary ending. **Saudi Arabic primary**, English secondary. Reuses the v1 engine pattern, Colyseus netcode, i18n, and deploy; the design is fresh.
+Saudi-first, server-authoritative social game for one shared TV and 4–8 phone players. Each round has a public promise, one public reaction change, a secret final action, public stock movement, permanent Vault banking, and a chronological final reveal. Secret authorship stays server-side until Market Close.
 
-**Run V2:**
+**Run locally:**
 ```bash
-npm install                       # + npm rebuild esbuild if postinstall was blocked
-npm run v2sim -- 6 7 ar           # headless full match (Saudi Arabic)
-# play it (two terminals):
-npm run v2server                  # http://localhost:2568  (serves client + ws)
-npm run v2web:dev                 # http://localhost:8081  (dev client)
+npm ci
+npm run dassbuild
+npm run dassserver
 ```
-Open :8081 in 4+ tabs → Create → share code → Join → seat up → Begin. **Verify:** `npm run typecheck` · `npm run typecheck:v2web` · `npm run v2netcheck`.
-Deploy = same single-host Render flow as below, but `render.yaml`/`Dockerfile` now build `apps/v2web` and run `npm run v2server`.
+Open `http://localhost:8000/` on the shared screen. Players use the displayed `/play?code=...` link. The same HTTP server owns matchmaking and WebSocket traffic, so production uses one origin and one public port.
 
-Packages: `@crisis/v2` (engine + content) · `@crisis/v2sim` · `@crisis/v2server` · `@crisis/v2web` · reused `@crisis/i18n` (Saudi/English).
+**Verify:**
+```bash
+npm run typecheck
+npm run typecheck:dasstv
+npm run typecheck:dassplayer
+npm test
+npm run dassbuild
+npm run dassservecheck
+npm run dassnetcheck
+npm run dassqacheck
+```
+
+Current packages: `@dass/domain` · `@dass/ui` · `@dass/server` · `@dass/tv` · `@dass/player`. The older Council and Crisis implementations remain in the repository as legacy prototypes but are not used by the current deployment.
 
 ---
 
-# Version 0.1 — First Playable (build) — legacy
+# Version 0.1 — First Playable — legacy
 
 Faithful implementation of the **locked** social-crisis design (`../01_Game_Design`, `../02_Product_Design`, `../03_Development/`). No redesign, no new mechanics. Improvements → `IMPLEMENTATION_NOTES.md` (v0.2 backlog).
 

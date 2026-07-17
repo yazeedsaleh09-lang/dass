@@ -81,6 +81,8 @@ export interface PublicPlayerView {
   connected: boolean;
   live: number; // relative bar value; client renders numberless
   vault: number; // numeric (shown)
+  /** Lobby-only readiness. Omitted once play starts. */
+  ready?: boolean;
 }
 
 export interface ClientView {
@@ -89,9 +91,11 @@ export interface ClientView {
   totalRounds: number;
   players: PublicPlayerView[];
   declares: Record<string, Action>; // public leans (empty until REACTION_WINDOW)
-  you: { id: string; declared?: Action; locked?: Action }; // YOUR OWN choices only
-  reveal?: RevealView; // this round's resolved reveal (REVEAL / VAULT_UPDATE)
-  history: RevealView[]; // all resolved reveals (drives the final reveal)
+  you: { id: string; declared?: Action; locked?: Action; reactionMoved?: boolean }; // YOUR OWN choices only
+  /** Deliberately absent until GAME_END: action authorship is the final reveal. */
+  reveal?: RevealView;
+  /** Empty during play; populated only at GAME_END for the chronological final reveal. */
+  history: RevealView[];
   ended: boolean;
   winnerIds: string[];
   phaseEndsAt?: number; // set by the room, not the engine

@@ -12,7 +12,8 @@ const port = process.env.PORT || 8000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const tvDir = path.resolve(__dirname, '../../dasstv/public');
 const playerDir = path.resolve(__dirname, '../../dassplayer/public');
-const httpServer = createDassHttpServer(tvDir, playerDir);
+const siteDir = path.resolve(__dirname, '../../dasssite/public');
+const httpServer = createDassHttpServer(tvDir, playerDir, siteDir);
 
 const gameServer = new Server({ transport: new WebSocketTransport({ server: httpServer }) });
 gameServer.define('dass', DassRoom);

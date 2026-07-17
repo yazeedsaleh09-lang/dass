@@ -9,6 +9,8 @@ import { Client, type Room } from 'colyseus.js';
 import { DassRoom } from './room.js';
 import type { ClientView } from '@dass/domain';
 
+process.env.DASS_ALLOW_TEST_CONFIG = '1';
+
 const PORT = 2601;
 const ENDPOINT = `ws://localhost:${PORT}`;
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -38,14 +40,21 @@ async function main(): Promise<void> {
   const ended = new Map<string, ClientView>();
   const fast = { DECLARE: 400, REACTION_WINDOW: 150, LOCK: 500, REVEAL: 120, VAULT_UPDATE: 120 };
   let sawDassa = false;
+  let leakedBeforeEnd = false;
+  let reactionChangeAccepted = false;
 
   try {
     const host = new Client(ENDPOINT);
     const hostRoom = await host.create<unknown>('dass', { nickname: 'Host', phaseMs: fast, minPlayers: 4 });
+    hostRoom.onMessage('state', () => {});
+    hostRoom.onMessage('sessionlog', () => {});
     rooms.push(hostRoom);
     for (let i = 2; i <= 4; i++) {
       const c = new Client(ENDPOINT);
-      rooms.push(await c.joinById<unknown>(hostRoom.roomId, { nickname: `P${i}` }));
+      const joined = await c.joinById<unknown>(hostRoom.roomId, { nickname: `P${i}` });
+      joined.onMessage('state', () => {});
+      joined.onMessage('sessionlog', () => {});
+      rooms.push(joined);
     }
     console.log('4 clients in room', hostRoom.roomId);
 
@@ -55,6 +64,7 @@ async function main(): Promise<void> {
     for (const r of rooms) {
       r.onMessage('state', (v: ClientView) => {
         latest.set(r.sessionId, v);
+        if (!v.ended && (v.history.length > 0 || v.reveal !== undefined)) leakedBeforeEnd = true;
         if (v.phase === 'LOCK' && v.round === 1) round1Lock.set(r.sessionId, v);
 
         if (v.phase === 'DECLARE' && !v.you.declared) {
@@ -65,9 +75,19 @@ async function main(): Promise<void> {
             if (other) void r.send('declare', { kind: 'back', target: other.id });
           }
         }
+        if (v.phase === 'REACTION_WINDOW' && v.round === 1 && r.sessionId === betrayer && !v.you.reactionMoved) {
+          void r.send('declare', { kind: 'dump', target: betrayTarget });
+          void r.send('declare', { kind: 'sell' }); // must be rejected: only one public move
+        }
+        if (
+          v.phase === 'REACTION_WINDOW' &&
+          r.sessionId === betrayer &&
+          v.you.reactionMoved &&
+          v.you.declared?.kind === 'dump'
+        ) reactionChangeAccepted = true;
         if (v.phase === 'LOCK' && !v.you.locked && v.you.declared) {
           if (r.sessionId === betrayer) {
-            void r.send('lock', { kind: 'dump', target: betrayTarget }); // SECRET betrayal
+            void r.send('lock', { kind: 'sell' }); // SECRET betrayal after publicly moving to dump
           } else {
             void r.send('lock', v.you.declared); // honor the public promise
           }
@@ -90,17 +110,19 @@ async function main(): Promise<void> {
     const ev = [...ended.values()][0];
     check(!!ev && ev.winnerIds.length >= 1, 'a winner was determined (' + ev?.winnerIds.join(',') + ')');
     check(!!ev && ev.players.some((p) => p.vault > 0), 'at least one Vault banked value');
-    check(sawDassa, 'a dassة (broken promise) was revealed during play');
+    check(sawDassa, 'a dassة (broken promise) appeared in the final reveal');
+    check(reactionChangeAccepted, 'one public reaction-window change was accepted and the second was rejected');
+    check(!leakedBeforeEnd, 'action authorship/history stayed sealed until GAME_END');
 
     // --- SECURITY: the locked secret must not leak pre-reveal ---
     check(round1Lock.size >= 3, 'captured round-1 LOCK views');
     const betrayerLock = round1Lock.get(betrayer);
-    check(betrayerLock?.you.locked?.kind === 'dump', 'betrayer sees its OWN locked action');
+    check(betrayerLock?.you.locked?.kind === 'sell', 'betrayer sees its OWN locked action');
     let leaked = false;
     for (const [sid, v] of round1Lock) {
       if (sid === betrayer) continue;
-      // round 1 has no public history yet; the only 'dump' in existence is the betrayer's SECRET.
-      if (JSON.stringify(v).includes('dump')) leaked = true;
+      // No other player declared sell in round one; it exists only as the betrayer's SECRET lock.
+      if (JSON.stringify(v).includes('sell')) leaked = true;
     }
     check(!leaked, "another player's locked action is NOT in any other client's frame pre-reveal");
 

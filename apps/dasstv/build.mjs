@@ -2,6 +2,8 @@
 //   node apps/dasstv/build.mjs           -> apps/dasstv/public/bundle.js
 //   node apps/dasstv/build.mjs --serve    -> watch + serve on :8091
 import * as esbuild from 'esbuild';
+import { createHash } from 'node:crypto';
+import { readFile, writeFile } from 'node:fs/promises';
 
 const serve = process.argv.includes('--serve');
 const ctx = await esbuild.context({
@@ -24,5 +26,10 @@ if (serve) {
 } else {
   await ctx.rebuild();
   await ctx.dispose();
+  const bundle = await readFile('apps/dasstv/public/bundle.js');
+  const version = createHash('sha256').update(bundle).digest('hex').slice(0, 10);
+  const indexPath = 'apps/dasstv/public/index.html';
+  const index = await readFile(indexPath, 'utf8');
+  await writeFile(indexPath, index.replace(/\/tv\/bundle\.js(?:\?v=[a-f0-9]+)?/, `/tv/bundle.js?v=${version}`));
   console.log('built -> apps/dasstv/public/bundle.js');
 }
