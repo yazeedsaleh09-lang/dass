@@ -18,8 +18,8 @@ const gameServer = new Server({ transport: new WebSocketTransport({ server: http
 gameServer.define('dass', DassRoom);
 
 gameServer
-  .listen(port)
-  .then(() => console.log(`[dass] TV(/) + Player(/play) + ws on http://localhost:${port}`))
+  .listen(port, '0.0.0.0')
+  .then(() => console.log(`[dass] TV(/) + Player(/play) + ws on http://0.0.0.0:${port}`))
   .catch((err: unknown) => {
     console.error('[dass] failed to start:', err);
     process.exit(1);
