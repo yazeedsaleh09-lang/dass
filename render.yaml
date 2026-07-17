@@ -1,18 +1,13 @@
-# Render Blueprint — دسّ single-host deploy. The `app/` folder is the git repo root, so
-# Render's "Blueprint" reads this directly. The Colyseus server serves BOTH built clients
-# (TV at /, Player at /play) + the WebSocket on ONE origin → one URL, no CORS/mixed-content.
-#
-# NOTE (accepted, backlog): the free plan spins the service down on idle → a ~30–50s cold
-# start on the first request after inactivity, which breaks the "join < 15s" target during
-# testing. Warm the URL a minute before a session; move to a paid always-on plan post-MVP.
 services:
   - type: web
-    name: dass-mvp
+    name: dass-live
     runtime: node
     plan: free
+    branch: main
     buildCommand: npm install --include=dev && npm run dassbuild
     startCommand: npm run dassserver
     healthCheckPath: /health
+    autoDeployTrigger: commit
     envVars:
-      - key: NODE_VERSION
-        value: "20"
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"

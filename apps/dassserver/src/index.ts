@@ -5,7 +5,7 @@ import { WebSocketTransport } from '@colyseus/ws-transport';
 import { DassRoom } from './room.js';
 import { createDassHttpServer } from './static.js';
 
-const port = Number(process.env.PORT ?? 2600);
+const port = process.env.PORT || 8000;
 
 // Single host: TV client at `/`, Player at `/play`, WS on the same origin (no CORS/mixed-content).
 // If a client isn't built, its route 404s and the WS server still runs.
@@ -18,7 +18,7 @@ const gameServer = new Server({ transport: new WebSocketTransport({ server: http
 gameServer.define('dass', DassRoom);
 
 gameServer
-  .listen(port, '0.0.0.0')
+  .listen(Number(port), '0.0.0.0')
   .then(() => console.log(`[dass] TV(/) + Player(/play) + ws on http://0.0.0.0:${port}`))
   .catch((err: unknown) => {
     console.error('[dass] failed to start:', err);
