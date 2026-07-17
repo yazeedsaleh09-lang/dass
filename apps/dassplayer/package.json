@@ -1,0 +1,10 @@
+{
+  "name": "@dass/player",
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "@dass/domain": "0.1.0",
+    "@dass/ui": "0.1.0",
+    "colyseus.js": "^0.16.0"
+  }
+}

@@ -1,12 +1,17 @@
-# Netlify — hosts the web CLIENT only (Option B, as requested).
-# The Colyseus SERVER must run elsewhere (Render/Railway/Fly/Colyseus Cloud) with a wss:// URL.
-# Point the client at it via an environment variable in the Netlify UI:
-#   Site settings → Environment variables → CRISIS_SERVER_URL = wss://<your-server-host>
-#   (must be wss:// — an https Netlify page cannot connect to insecure ws://)
-# If your git repo root is "GameProject", set Netlify "Base directory" to: app
+# Netlify (OPTIONAL) — دسّ.
+# The single-host Render deploy (render.yaml) already serves both clients + the WS on one URL,
+# so Netlify is NOT required. Use it only if you want the static clients on Netlify's CDN.
+#
+# Netlify hosts static files only; the Colyseus SERVER still runs on Render (persistent WS).
+# دسّ has TWO clients (TV + Player) — one Netlify site publishes one folder, so either:
+#   • host only the TV here and let players use  https://<render-host>/play , or
+#   • create a second Netlify site publishing apps/dassplayer/public.
+# Point the client(s) at the server via an env var (must be wss:// on an https page):
+#   Site settings → Environment variables → DASS_SERVER_URL = wss://<your-render-host>
+# If the git repo root is "GameProject", set Netlify "Base directory" to: app
 [build]
-  command = "npm install --include=dev && node apps/web/build.mjs"
-  publish = "apps/web/public"
+  command = "npm install --include=dev && node apps/dasstv/build.mjs"
+  publish = "apps/dasstv/public"
 
 [build.environment]
   NODE_VERSION = "20"
