@@ -83,6 +83,8 @@ export interface PublicPlayerView {
   vault: number; // numeric (shown)
   /** Lobby-only readiness. Omitted once play starts. */
   ready?: boolean;
+  /** Disconnected but inside the recovery window — the seat is being held, not abandoned. */
+  recovering?: boolean;
 }
 
 export interface ClientView {
@@ -100,6 +102,8 @@ export interface ClientView {
   winnerIds: string[];
   phaseEndsAt?: number; // set by the room, not the engine
   hostId?: string;
+  /** Whether the host connection is currently live (set by the room). Drives "host reconnecting". */
+  hostConnected?: boolean;
 }
 
 export interface PlayerInput {

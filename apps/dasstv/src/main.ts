@@ -53,11 +53,33 @@ const cols = new Map<string, HTMLElement>();
 
 void boot();
 
+// The TV is the room CREATOR = the host. The server hands it a secret host token,
+// kept here (per-tab) so a refresh/reopen reclaims host of the SAME room instead of
+// silently spawning a new one and losing the crown. Never placed in the QR or state.
+interface HostSession {
+  roomId: string;
+  token: string;
+}
+function readHostSession(): HostSession | null {
+  try {
+    const raw = sessionStorage.getItem('dass_host');
+    return raw ? (JSON.parse(raw) as HostSession) : null;
+  } catch {
+    return null;
+  }
+}
+function saveHostSession(roomId: string, token: string): void {
+  sessionStorage.setItem('dass_host', JSON.stringify({ roomId, token }));
+}
+
 async function boot(): Promise<void> {
   await opening();
   sfx.unlock();
   try {
-    room = await client.create('dass', { role: 'tv' });
+    room = await openRoom();
+    room.onMessage('host', (m: { token?: string }) => {
+      if (m?.token && room) saveHostSession(room.roomId, m.token);
+    });
     room.onMessage('state', (v: ClientView) => {
       prev = view;
       view = v;
@@ -69,6 +91,19 @@ async function boot(): Promise<void> {
   } catch {
     stage.innerHTML = `<div class="tv-err">${COPY.genericError}</div>`;
   }
+}
+
+/** Reclaim host of a recently-created room after a refresh; otherwise create a fresh room. */
+async function openRoom(): Promise<Room> {
+  const saved = readHostSession();
+  if (saved) {
+    try {
+      return await client.joinById(saved.roomId, { role: 'tv', hostToken: saved.token });
+    } catch {
+      sessionStorage.removeItem('dass_host'); // room gone — start a new one
+    }
+  }
+  return client.create('dass', { role: 'tv' });
 }
 
 // ---------------- opening ----------------
@@ -125,7 +160,7 @@ function renderLobby(v: ClientView): void {
   const code = room?.roomId ?? '';
   const url = `${location.origin}/play?code=${code}`;
   stage.innerHTML = `
-    <div class="lobby">
+    <div class="lobby" data-room="${escapeHtml(code)}">
       <header class="l-head">
         <span class="l-mark">${mark(40)}</span>
         <span class="l-titles">
@@ -162,8 +197,23 @@ function updateLobby(v: ClientView, first = false): void {
   const cnt = qs('.l-count');
   if (cnt) cnt.innerHTML = `${uiIcon('users', 18)} ${COPY.ofN(conn.length, 8)} · ${readyN} ${COPY.ready}`;
   const foot = qs('#lfoot');
-  const allReady = conn.length >= 4 && conn.every((p) => p.ready);
-  if (foot) foot.textContent = allReady ? COPY.everyoneReady : conn.length >= 4 ? COPY.hostStarts : COPY.needFour;
+  const isHost = v.hostId === v.you.id; // the TV creator holds host — no player ever does
+  const canStart = conn.length >= 4 && conn.every((p) => p.ready);
+  if (foot) {
+    if (isHost) {
+      foot.innerHTML =
+        `<span class="host-badge">${uiIcon('check', 15)} ${COPY.youAreHost}</span>` +
+        `<button id="tv-start" class="btn primary lg tv-start" ${canStart ? '' : 'disabled'}>${COPY.start}</button>` +
+        `<span class="muted l-starthint">${canStart ? '' : conn.length < 4 ? COPY.needFour : COPY.waiting}</span>`;
+      qs('#tv-start')?.addEventListener('click', () => {
+        if (!canStart) return;
+        sfx.roundStart();
+        room?.send('start', {});
+      });
+    } else {
+      foot.textContent = canStart ? COPY.everyoneReady : conn.length >= 4 ? COPY.hostStarts : COPY.needFour;
+    }
+  }
 
   const MAXSEATS = 8;
   const cards = v.players.slice(0, MAXSEATS).map((p) => lobbyCard(p, v.hostId));
@@ -189,10 +239,17 @@ function ghostSeat(seat: number): string {
   </div>`;
 }
 function lobbyCard(p: PublicPlayerView, hostId?: string): string {
-  return `<div class="pcard ${p.ready ? 'is-ready' : ''} ${p.connected ? '' : 'is-off'}" data-id="${p.id}">
+  const badge = p.recovering
+    ? `<span class="badge recon">${uiIcon('refresh', 13)}</span>`
+    : p.id === hostId
+      ? `<span class="badge host">${COPY.host}</span>`
+      : p.ready
+        ? `<span class="badge ok">${uiIcon('check', 14)}</span>`
+        : '<span class="dot"></span>';
+  return `<div class="pcard ${p.ready ? 'is-ready' : ''} ${p.connected ? '' : 'is-off'} ${p.recovering ? 'is-recon' : ''}" data-id="${p.id}">
     <span class="avatar" style="background:${avatarColor(p.seat)}">${escapeHtml(initial(p.nickname))}</span>
     <span class="nm">${escapeHtml(p.nickname)}</span>
-    <span class="pc-badge">${p.id === hostId ? `<span class="badge host">${COPY.host}</span>` : p.ready ? `<span class="badge ok">${uiIcon('check', 14)}</span>` : '<span class="dot"></span>'}</span>
+    <span class="pc-badge">${badge}</span>
   </div>`;
 }
 
@@ -220,7 +277,7 @@ function buildStage(v: ClientView): void {
 function stageCol(p: PublicPlayerView): string {
   return `<div class="col" data-id="${p.id}">
     <div class="intent"></div>
-    <div class="bar-track"><div class="bar"></div></div>
+    <div class="bar-track"><div class="bar"></div><div class="col-recon">${uiIcon('refresh', 16)} ${COPY.playerReconnecting}</div></div>
     <div class="vaultnum col-vault">0</div>
     <div class="col-name"><span class="avatar sm" style="background:${avatarColor(p.seat)}">${escapeHtml(initial(p.nickname))}</span><span class="nm">${escapeHtml(p.nickname)}</span></div>
   </div>`;
@@ -244,6 +301,7 @@ function updateStage(v: ClientView): void {
     const vlt = qs<HTMLElement>('.col-vault', c);
     if (vlt && Number(vlt.textContent) !== p.vault) countTo(vlt, p.vault);
     c.classList.toggle('is-off', !p.connected);
+    c.classList.toggle('is-recon', !!p.recovering);
   }
   if (v.phaseEndsAt && v.phaseEndsAt !== phaseEnd) {
     phaseStart = Date.now();
@@ -566,7 +624,9 @@ function tvCss(): string {
   .pcard.ghost{border-style:dashed;border-color:var(--line-2);background:color-mix(in srgb,var(--surface) 40%,transparent)}
   .pcard.ghost .ghost-av{background:transparent;color:var(--muted);border:1.6px dashed var(--line-3);font-weight:800}
   .pcard.ghost .nm{color:var(--muted);opacity:.8}
-  .l-foot{font-size:var(--fs-h3);text-align:center}
+  .l-foot{font-size:var(--fs-h3);text-align:center;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;min-height:52px}
+  .host-badge{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:800;letter-spacing:.02em;color:var(--green);background:color-mix(in srgb,var(--green) 14%,transparent);border:1px solid color-mix(in srgb,var(--green) 40%,transparent);padding:7px 14px;border-radius:999px}
+  .tv-start{font-size:var(--fs-h3)} .l-starthint{font-size:15px}
 
   .game{flex:1;display:flex;flex-direction:column;gap:20px;position:relative}
   .hud{display:flex;align-items:center;gap:18px}
@@ -575,9 +635,12 @@ function tvCss(): string {
   .floor{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:clamp(14px,2.4vw,44px);position:relative;padding-bottom:8px}
   .col{flex:1;max-width:180px;min-width:96px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:12px}
   .col.is-off{opacity:.4}
+  .col-recon{position:absolute;inset-inline:0;bottom:8px;display:none;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:800;color:var(--gold);text-align:center}
+  .col.is-recon .col-recon{display:flex} .col.is-recon .bar{opacity:.25}
+  .col.is-recon{opacity:.85}
   .intent{height:56px;display:grid;place-items:center;opacity:0;position:relative}
   .intent.show{opacity:1} .intent.fog{filter:blur(3px);opacity:.4;transition:all var(--t-comp) var(--e-out)}
-  .bar-track{width:clamp(48px,6vw,100px);height:46vh;display:flex;align-items:flex-end;background:linear-gradient(180deg,transparent,rgba(255,255,255,.03));border-radius:8px;border:1px solid var(--line)}
+  .bar-track{position:relative;width:clamp(48px,6vw,100px);height:46vh;display:flex;align-items:flex-end;background:linear-gradient(180deg,transparent,rgba(255,255,255,.03));border-radius:8px;border:1px solid var(--line)}
   .bar{height:33%}
   .col-vault{font-size:var(--fs-vault)}
   .col-name{display:flex;align-items:center;gap:8px;max-width:100%;font-weight:800;font-size:clamp(14px,1.4vw,20px)}

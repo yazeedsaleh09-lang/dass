@@ -47,6 +47,7 @@ async function main(): Promise<void> {
     const host = new Client(ENDPOINT);
     const hostRoom = await host.create<unknown>('dass', { nickname: 'Host', phaseMs: fast, minPlayers: 4 });
     hostRoom.onMessage('state', () => {});
+    hostRoom.onMessage('host', () => {});
     hostRoom.onMessage('sessionlog', () => {});
     rooms.push(hostRoom);
     for (let i = 2; i <= 4; i++) {
@@ -58,35 +59,36 @@ async function main(): Promise<void> {
     }
     console.log('4 clients in room', hostRoom.roomId);
 
-    const betrayer = rooms[0]!.sessionId;
-    const betrayTarget = rooms[1]!.sessionId;
+    // Identity is the durable pid (you.id), NOT the socket sessionId.
+    let betrayer = '';
+    let betrayTarget = '';
 
     for (const r of rooms) {
       r.onMessage('state', (v: ClientView) => {
         latest.set(r.sessionId, v);
         if (!v.ended && (v.history.length > 0 || v.reveal !== undefined)) leakedBeforeEnd = true;
-        if (v.phase === 'LOCK' && v.round === 1) round1Lock.set(r.sessionId, v);
+        if (v.phase === 'LOCK' && v.round === 1) round1Lock.set(v.you.id, v);
 
         if (v.phase === 'DECLARE' && !v.you.declared) {
-          if (r.sessionId === betrayer) {
+          if (v.you.id === betrayer) {
             void r.send('declare', { kind: 'back', target: betrayTarget }); // public promise
           } else {
-            const other = v.players.find((p) => p.id !== r.sessionId);
+            const other = v.players.find((p) => p.id !== v.you.id);
             if (other) void r.send('declare', { kind: 'back', target: other.id });
           }
         }
-        if (v.phase === 'REACTION_WINDOW' && v.round === 1 && r.sessionId === betrayer && !v.you.reactionMoved) {
+        if (v.phase === 'REACTION_WINDOW' && v.round === 1 && v.you.id === betrayer && !v.you.reactionMoved) {
           void r.send('declare', { kind: 'dump', target: betrayTarget });
           void r.send('declare', { kind: 'sell' }); // must be rejected: only one public move
         }
         if (
           v.phase === 'REACTION_WINDOW' &&
-          r.sessionId === betrayer &&
+          v.you.id === betrayer &&
           v.you.reactionMoved &&
           v.you.declared?.kind === 'dump'
         ) reactionChangeAccepted = true;
         if (v.phase === 'LOCK' && !v.you.locked && v.you.declared) {
-          if (r.sessionId === betrayer) {
+          if (v.you.id === betrayer) {
             void r.send('lock', { kind: 'sell' }); // SECRET betrayal after publicly moving to dump
           } else {
             void r.send('lock', v.you.declared); // honor the public promise
@@ -95,13 +97,15 @@ async function main(): Promise<void> {
         if (v.reveal?.entries.some((e) => e.isDassa)) sawDassa = true;
         if (v.ended) ended.set(r.sessionId, v);
       });
+      r.send('sync', {});
     }
 
+    await waitUntil(() => rooms.every((r) => !!latest.get(r.sessionId)?.you.id), 3000);
+    betrayer = latest.get(rooms[0]!.sessionId)!.you.id;
+    betrayTarget = latest.get(rooms[1]!.sessionId)!.you.id;
+
     for (const r of rooms) void r.send('ready', { ready: true });
-    await waitUntil(
-      () => (latest.get(rooms[0]!.sessionId)?.players.filter((p) => p.connected).length ?? 0) === 4,
-      3000,
-    );
+    await waitUntil(() => (latest.get(rooms[0]!.sessionId)?.players.filter((p) => p.ready && p.connected).length ?? 0) === 4, 3000);
     void rooms[0]!.send('start', {});
     await waitUntil(() => ended.size === rooms.length, 15000);
 

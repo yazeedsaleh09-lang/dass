@@ -17,6 +17,13 @@ export interface DassConfig {
   maxPlayers: number;
   roundsForPlayers: (n: number) => number;
   phaseMs: Record<TimedPhase, number>;
+  /**
+   * In-game recovery window (ms): how long a disconnected ACTIVE player's seat is held
+   * as recoverable before a returning token is treated as a spectator. Their seat stays
+   * on the board (abstaining, never eliminated) regardless — this only governs whether a
+   * reconnect RESTORES the active identity or joins as a watcher.
+   */
+  recoveryMs: number;
 }
 
 export const DEFAULT_CONFIG: DassConfig = {
@@ -35,4 +42,5 @@ export const DEFAULT_CONFIG: DassConfig = {
     REVEAL: 4000,
     VAULT_UPDATE: 3000,
   },
+  recoveryMs: 120000,
 };

@@ -42,12 +42,13 @@ async function main(): Promise<void> {
     for (let i = 2; i <= 4; i++) rooms.push(await new Client(ENDPOINT).joinById<unknown>(hostRoom.roomId, { nickname: `P${i}` }));
 
     rooms.forEach((r, idx) => {
+      r.onMessage('host', () => {});
       r.onMessage('state', (v: ClientView) => {
         latest.set(r.sessionId, v);
         if (v.ended) ended.set(r.sessionId, v);
         if (idx === silent) return; // the silent player never declares/locks
         if (v.phase === 'DECLARE' && !v.you.declared) {
-          const o = v.players.find((p) => p.id !== r.sessionId);
+          const o = v.players.find((p) => p.id !== v.you.id);
           if (o) void r.send('declare', { kind: 'back', target: o.id });
         }
         if (v.phase === 'LOCK' && !v.you.locked && v.you.declared) void r.send('lock', v.you.declared);
@@ -56,7 +57,7 @@ async function main(): Promise<void> {
     });
 
     for (const r of rooms) void r.send('ready', { ready: true });
-    await waitUntil(() => (latest.get(rooms[0]!.sessionId)?.players.filter((p) => p.connected).length ?? 0) === 4, 3000);
+    await waitUntil(() => (latest.get(rooms[0]!.sessionId)?.players.filter((p) => p.ready && p.connected).length ?? 0) === 4, 3000);
     void rooms[0]!.send('start', {});
 
     // once in play, a 5th client joins → must become a spectator, not a player
@@ -71,8 +72,9 @@ async function main(): Promise<void> {
 
     check(ended.size >= 4, 'the 4 seated players reached GAME_END despite one silent player');
     const ev = [...ended.values()][0];
+    const silentPid = latest.get(rooms[silent]!.sessionId)?.you.id;
     check(!!ev && ev.players.length === 4, 'roster stayed 4 — the late joiner was NOT seated (spectator)');
-    check(!!ev && ev.players.some((p) => p.id === rooms[silent]!.sessionId), 'the silent player is still on the board (not eliminated)');
+    check(!!ev && !!silentPid && ev.players.some((p) => p.id === silentPid), 'the silent player is still on the board (not eliminated)');
     check(!!ev && ev.winnerIds.length >= 1, 'a winner was still determined');
     const sv = specView as ClientView | null;
     check(!!sv && sv.players.length === 4, 'the spectator sees the 4 players (public view), not itself as a 5th');
@@ -91,6 +93,7 @@ async function main(): Promise<void> {
     const tvRoom = await new Client(ENDPOINT).create<unknown>('dass', { role: 'tv' });
     let tvLobby: ClientView | null = null;
     tvRoom.onMessage('state', (v: ClientView) => (tvLobby = v));
+    tvRoom.onMessage('host', () => {});
     tvRoom.onMessage('sessionlog', () => {});
     const eight: Room[] = [];
     for (let i = 1; i <= 8; i++) {
@@ -118,6 +121,7 @@ async function main(): Promise<void> {
     const hardened = await new Client(ENDPOINT).create<unknown>('dass', { nickname: 'Solo', minPlayers: 1, phaseMs: fast });
     let hardenedView: ClientView | null = null;
     hardened.onMessage('state', (v: ClientView) => (hardenedView = v));
+    hardened.onMessage('host', () => {});
     hardened.onMessage('sessionlog', () => {});
     void hardened.send('ready', { ready: true });
     void hardened.send('start', {});
@@ -125,37 +129,52 @@ async function main(): Promise<void> {
     check((hardenedView as ClientView | null)?.phase === 'LOBBY', 'clients cannot lower production minimum players or phase timers');
     await hardened.leave();
 
-    // Host migration remains visible to clients.
+    // Host ownership does NOT migrate to a player when the host disconnects (no auto-promote).
     const migrationClient = new Client(ENDPOINT);
     const migrationHost = await migrationClient.create<unknown>('dass', { nickname: 'Host' });
     migrationHost.onMessage('state', () => {});
+    migrationHost.onMessage('host', () => {});
     migrationHost.onMessage('sessionlog', () => {});
+    const originalHostId = migrationHost.sessionId;
     const successorClient = new Client(ENDPOINT);
-    const successor = await successorClient.joinById<unknown>(migrationHost.roomId, { nickname: 'Next' });
+    const successor = await successorClient.joinById<unknown>(migrationHost.roomId, { nickname: 'Next', playerToken: 'succ' });
     let successorView: ClientView | null = null;
     successor.onMessage('state', (v: ClientView) => (successorView = v));
+    successor.onMessage('host', () => {});
     successor.onMessage('sessionlog', () => {});
     await migrationHost.leave(true);
-    await waitUntil(() => (successorView as ClientView | null)?.hostId === successor.sessionId, 2000);
-    check((successorView as ClientView | null)?.hostId === successor.sessionId, 'host migration is reflected in authoritative client state');
+    await wait(400);
+    check((successorView as ClientView | null)?.hostId !== successor.sessionId, 'a remaining player is NOT auto-promoted to host on host disconnect');
+    check((successorView as ClientView | null)?.hostId === originalHostId, 'host ownership stays with the (now-absent) creator, awaiting token reclaim');
+    void successor.send('start', {});
+    await wait(300);
+    check((successorView as ClientView | null)?.phase === 'LOBBY', 'the non-host survivor still cannot start the game');
     await successor.leave();
 
-    // An unconsented drop reconnects to the same seat/session during the grace window.
+    // An unconsented drop is resumed by the DURABLE token onto the same seat (a fresh socket
+    // with the same pid), not by a Colyseus reconnection token.
     const reconnectClient = new Client(ENDPOINT);
-    const beforeDrop = await reconnectClient.create<unknown>('dass', { nickname: 'Reconnect' });
-    beforeDrop.onMessage('state', () => {});
+    const beforeDrop = await reconnectClient.create<unknown>('dass', { nickname: 'Reconnect', playerToken: 'recon-pt' });
+    let beforeView: ClientView | null = null;
+    beforeDrop.onMessage('state', (v: ClientView) => (beforeView = v));
+    beforeDrop.onMessage('host', () => {});
     beforeDrop.onMessage('sessionlog', () => {});
+    beforeDrop.send('sync', {});
+    await waitUntil(() => !!(beforeView as ClientView | null)?.you.id, 2000);
+    const originalPid = (beforeView as ClientView | null)?.you.id;
     const originalSessionId = beforeDrop.sessionId;
-    const reconnectToken = beforeDrop.reconnectionToken;
     await beforeDrop.leave(false);
     await wait(200);
-    const afterDrop = await reconnectClient.reconnect(reconnectToken);
+    const afterClient = new Client(ENDPOINT);
+    const afterDrop = await afterClient.joinById<unknown>(beforeDrop.roomId, { playerToken: 'recon-pt' });
     let reconnectedView: ClientView | null = null;
     afterDrop.onMessage('state', (v: ClientView) => (reconnectedView = v));
+    afterDrop.onMessage('host', () => {});
     afterDrop.onMessage('sessionlog', () => {});
-    void afterDrop.send('ready', { ready: true });
-    await waitUntil(() => (reconnectedView as ClientView | null)?.players[0]?.ready === true, 2000);
-    check(afterDrop.sessionId === originalSessionId, 'reconnection preserves the original session and seat');
+    afterDrop.send('sync', {});
+    await waitUntil(() => !!(reconnectedView as ClientView | null)?.you.id, 2000);
+    check((reconnectedView as ClientView | null)?.you.id === originalPid, 'token reconnect preserves the durable seat identity (pid)');
+    check(afterDrop.sessionId !== originalSessionId, 'the reconnect uses a new socket (identity is not the sessionId)');
     check((reconnectedView as ClientView | null)?.players.length === 1, 'reconnection does not duplicate the player');
     await afterDrop.leave();
     console.log('\n' + (failed ? 'DASS QA CHECK: FAILED' : 'DASS QA CHECK: PASSED'));

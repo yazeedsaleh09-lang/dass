@@ -27,6 +27,8 @@
     "typecheck:v2web": "tsc --noEmit -p apps/v2web/tsconfig.json",
     "dassserver": "tsx apps/dassserver/src/index.ts",
     "dassnetcheck": "tsx apps/dassserver/src/netcheck.ts",
+    "dasshostcheck": "tsx apps/dassserver/src/hostcheck.ts",
+    "dassreconnectcheck": "tsx apps/dassserver/src/reconnectcheck.ts",
     "dassqacheck": "tsx apps/dassserver/src/dassqacheck.ts",
     "dassservecheck": "tsx apps/dassserver/src/servecheck.ts",
     "dasstv:build": "node apps/dasstv/build.mjs",

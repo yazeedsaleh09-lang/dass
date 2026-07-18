@@ -33,8 +33,29 @@ const client = new Client(serverUrl);
 let room: Room | null = null;
 let view: ClientView | null = null;
 let joined = false;
+let busy = false; // reentrancy guard: blocks double-submit (Enter+click, double-click)
 let intentionalLeave = false;
 let changing = false;
+
+// DURABLE IDENTITY: playerToken (pt) is a stable, room-scoped id the SERVER maps to a
+// permanent seat (pid). It is the single source of identity — reconnecting with it rebinds
+// a fresh socket to the SAME active seat (score/actions/state intact), in the lobby OR
+// mid-game, regardless of how the sessionId changes. Room-scoped so a different room never
+// reuses the wrong seat.
+const ptKey = (roomId: string): string => `dass_pt:${roomId}`;
+function playerTokenFor(roomId: string): string {
+  const k = ptKey(roomId);
+  let t = localStorage.getItem(k);
+  if (!t) {
+    const a = new Uint8Array(18);
+    crypto.getRandomValues(a);
+    t = btoa(String.fromCharCode(...a)).replace(/[^a-zA-Z0-9]/g, '').slice(0, 24);
+    localStorage.setItem(k, t);
+  }
+  return t;
+}
+const hasIdentity = (roomId: string): boolean => !!localStorage.getItem(ptKey(roomId));
+let recoveryEnded = false; // server refused restore (recovery window lapsed) — watch only
 let selKind: ActionKind | null = null;
 let selTarget: string | null = null;
 let lastSig = '';
@@ -44,11 +65,13 @@ app.innerHTML = `<div id="root"></div><div id="toast-host"></div>`;
 const root = qs('#root')!;
 const urlCode = params.get('code');
 const urlName = params.get('name');
-if (urlCode && urlName) void join(urlName, urlCode);
+// Auto-resume when we already own a seat in this room (refresh), or auto-join with name+code.
+if (urlCode && (urlName || hasIdentity(urlCode))) void join(urlName ?? '', urlCode);
 else renderJoin(urlCode ?? '');
 
 // ---------------- connection ----------------
 async function join(name: string, code: string): Promise<void> {
+  if (busy) return; // hard block against a second submit landing before the first resolves
   sfx.unlock();
   const nickname = name.trim().slice(0, 20);
   const roomId = code.trim();
@@ -56,19 +79,18 @@ async function join(name: string, code: string): Promise<void> {
     shake('#code');
     return;
   }
-  if (!nickname) {
+  // A brand-new seat needs a name; a resume (we already hold this room's token) does not.
+  if (!nickname && !hasIdentity(roomId)) {
     shake('#name');
     return;
   }
+  busy = true;
   setBusy(true);
   try {
-    room = await client.joinById(roomId, { nickname });
-    joined = true;
-    wire(room);
-    sessionStorage.setItem('dass_rt', room.reconnectionToken);
-    sfx.join();
-    haptic(15);
+    room = await client.joinById(roomId, { nickname, playerToken: playerTokenFor(roomId) });
+    onJoined();
   } catch (e) {
+    busy = false;
     setBusy(false);
     const msg = String((e as { message?: string })?.message ?? e);
     renderJoin(code, /full/i.test(msg) ? COPY.roomFull : COPY.roomNotFound);
@@ -76,10 +98,33 @@ async function join(name: string, code: string): Promise<void> {
   }
 }
 
+/** Shared success path for a join or a token-based resume. */
+function onJoined(): void {
+  if (!room) return;
+  joined = true;
+  busy = false;
+  recoveryEnded = false;
+  wire(room);
+  sfx.join();
+  haptic(15);
+}
+
 function wire(r: Room): void {
   r.onMessage('state', (v: ClientView) => {
     view = v;
     if (v.phase !== 'REACTION_WINDOW') changing = false;
+    render();
+  });
+  // Server confirmed our seat was restored after a disconnect.
+  r.onMessage('restored', () => {
+    recoveryEnded = false;
+    banner(COPY.sessionRestored, 'ok');
+    setTimeout(() => banner('', 'clear'), 2200);
+  });
+  // The recovery window lapsed — we are a spectator now, not the active player.
+  r.onMessage('recoveryExpired', () => {
+    recoveryEnded = true;
+    forceRender = true;
     render();
   });
   r.onMessage('newCrew', () => {
@@ -90,22 +135,24 @@ function wire(r: Room): void {
     renderJoin('');
   });
   r.onMessage('sessionlog', () => {});
+  const roomId = r.roomId;
   r.onLeave((code: number) => {
     if (intentionalLeave) return;
+    // 4002 = server evicted this socket because a newer connection took over this seat.
+    // Stand down quietly; the newer tab/socket owns it.
+    if (code === 4002) return;
     banner(COPY.reconnecting, 'warn');
-    const token = sessionStorage.getItem('dass_rt');
-    if (token && code !== 1000) void reconnect(token);
-    else banner(COPY.disconnected, 'err');
+    void reconnect(roomId);
   });
   r.send('sync', {});
 }
 
-async function reconnect(token: string): Promise<void> {
-  for (let i = 0; i < 5; i++) {
+/** Durable reconnect: re-join by the stable token, which rebinds us to the same seat. */
+async function reconnect(roomId: string): Promise<void> {
+  for (let i = 0; i < 8; i++) {
     try {
-      room = await client.reconnect(token);
+      room = await client.joinById(roomId, { playerToken: playerTokenFor(roomId) });
       wire(room);
-      sessionStorage.setItem('dass_rt', room.reconnectionToken);
       banner('', 'clear');
       forceRender = true;
       render();
@@ -121,6 +168,7 @@ async function reconnect(token: string): Promise<void> {
 function render(): void {
   const v = view;
   if (!v || !joined) return;
+  if (recoveryEnded) return expiredScreen();
   const sig = `${v.phase}|${act(v.you.declared)}|${act(v.you.locked)}|${v.you.reactionMoved}|${changing}|${v.ended}|${v.players.length}|${v.players.map((p) => (p.connected ? 1 : 0) + (p.ready ? 'r' : '')).join('')}|${v.hostId}`;
   if (sig === lastSig && !forceRender) return;
   lastSig = sig;
@@ -163,9 +211,10 @@ function shell(inner: string, opts: { pad?: boolean } = {}): void {
 function renderJoin(code: string, err?: string): void {
   bg.setMood('secret');
   const hasCode = !!params.get('code');
-  app.innerHTML = `<div id="root"></div><div id="toast-host"></div>`;
-  const r = qs('#root')!;
-  r.innerHTML = `
+  // Render into the PERSISTENT #root (never rebuild app.innerHTML — doing so detaches the
+  // module-level `root`, so a later lobby/game render would write to an orphaned node and
+  // the screen would appear frozen on the join form even though the join succeeded).
+  root.innerHTML = `
     <div class="p-top"><span class="p-brand">${mark(24)}<span class="wordmark g">${COPY.brand}</span></span></div>
     <div class="join">
       <div class="panel join-card">
@@ -363,6 +412,19 @@ function waitScene(title: string, sub: string, kind: 'ok' | 'lock' | 'watch'): v
   if (w) dassIn(w);
 }
 
+/** Shown when the recovery window lapsed: we can watch the TV but no longer act this game. */
+function expiredScreen(): void {
+  bg.setMood('secret');
+  shell(`
+    <div class="wait">
+      <div class="wait-mark"><div class="seal-badge">${uiIcon('soundOff', 34)}</div></div>
+      <div class="wait-title">${COPY.recoveryExpired}</div>
+      <div class="muted wait-sub">${COPY.lookUp}</div>
+    </div>`);
+  const w = qs('.wait');
+  if (w) dassIn(w);
+}
+
 function end(v: ClientView): void {
   bg.setMood('win');
   const isHost = v.hostId === v.you.id;
@@ -405,7 +467,7 @@ function actBtn(kind: ActionKind, label: string): string {
 function act(a?: { kind: string; target?: string }): string {
   return a ? `${a.kind}:${a.target ?? ''}` : '';
 }
-function banner(text: string, kind: 'warn' | 'err' | 'clear'): void {
+function banner(text: string, kind: 'warn' | 'err' | 'ok' | 'clear'): void {
   const b = qs('#banner');
   if (!b) return;
   b.innerHTML = kind === 'clear' || !text ? '' : `<div class="p-banner ${kind}">${text}</div>`;
@@ -438,14 +500,14 @@ void copyText;
 function playerCss(): string {
   return `
   html,body{height:100%;overflow:hidden}
-  #root{min-height:100dvh;display:flex;flex-direction:column;padding:calc(var(--safe-t) + 10px) 16px calc(var(--safe-b) + 16px)}
+  #root{position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column;padding:calc(var(--safe-t) + 10px) 16px calc(var(--safe-b) + 16px)}
   .p-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .p-brand{display:flex;align-items:center;gap:8px;font-size:22px}
   .icon-btn.sm{width:40px;height:40px}
   .p-body{flex:1;display:flex;flex-direction:column}
   #banner{position:fixed;left:0;right:0;top:0}
   .p-banner{padding:8px;text-align:center;font-weight:800;font-size:14px;background:var(--surface-3);border-bottom:1px solid var(--line-2)}
-  .p-banner.err{color:var(--red)} .p-banner.warn{color:var(--gold)}
+  .p-banner.err{color:var(--red)} .p-banner.warn{color:var(--gold)} .p-banner.ok{color:var(--green)}
 
   .join{flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px}
   .j-tag{font-size:clamp(26px,7vw,40px);font-weight:900;line-height:1.25;text-align:center}

@@ -62,6 +62,7 @@ async function main(): Promise<void> {
 
     const room = await new Client(endpoint).create<unknown>('dass', { role: 'tv' });
     room.onMessage('state', () => {});
+    room.onMessage('host', () => {});
     room.onMessage('sessionlog', () => {});
     check(room.roomId.length > 0, 'matchmaking and WebSocket upgrade work on the same port');
     await room.leave();
