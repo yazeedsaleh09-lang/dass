@@ -127,9 +127,11 @@ function renderLobby(v: ClientView): void {
   stage.innerHTML = `
     <div class="lobby">
       <header class="l-head">
-        <span class="l-mark">${mark(34)}</span>
-        <span class="wordmark g l-brand">${COPY.brand}</span>
-        <span class="muted l-sub">${COPY.subtitle}</span>
+        <span class="l-mark">${mark(40)}</span>
+        <span class="l-titles">
+          <span class="wordmark g l-brand">${COPY.brand}</span>
+          <span class="muted l-sub">${COPY.subtitle}</span>
+        </span>
       </header>
       <div class="l-body">
         <div class="panel qr-card">
@@ -163,7 +165,10 @@ function updateLobby(v: ClientView, first = false): void {
   const allReady = conn.length >= 4 && conn.every((p) => p.ready);
   if (foot) foot.textContent = allReady ? COPY.everyoneReady : conn.length >= 4 ? COPY.hostStarts : COPY.needFour;
 
-  grid.innerHTML = v.players.map((p) => lobbyCard(p, v.hostId)).join('');
+  const MAXSEATS = 8;
+  const cards = v.players.slice(0, MAXSEATS).map((p) => lobbyCard(p, v.hostId));
+  const ghosts = Array.from({ length: Math.max(0, MAXSEATS - cards.length) }, (_, i) => ghostSeat(v.players.length + i + 1));
+  grid.innerHTML = cards.concat(ghosts).join('');
   const fresh = v.players.filter((p) => !seenIds.has(p.id));
   for (const p of fresh) {
     seenIds.add(p.id);
@@ -177,6 +182,12 @@ function updateLobby(v: ClientView, first = false): void {
   if (allReady && first === false) sfx.ready();
 }
 
+function ghostSeat(seat: number): string {
+  return `<div class="pcard ghost" aria-hidden="true">
+    <span class="avatar ghost-av">${seat.toLocaleString('ar-EG')}</span>
+    <span class="nm muted">${COPY.emptySeat}</span>
+  </div>`;
+}
 function lobbyCard(p: PublicPlayerView, hostId?: string): string {
   return `<div class="pcard ${p.ready ? 'is-ready' : ''} ${p.connected ? '' : 'is-off'}" data-id="${p.id}">
     <span class="avatar" style="background:${avatarColor(p.seat)}">${escapeHtml(initial(p.nickname))}</span>
@@ -527,6 +538,7 @@ function clamp(n: number, lo: number, hi: number): number {
 // ---------------- scene CSS ----------------
 function tvCss(): string {
   return `
+  html,body{height:100%;overflow:hidden}
   .tv-mute{position:fixed;top:calc(var(--safe-t) + 16px);left:calc(var(--safe-l) + 16px);z-index:var(--z-hud)}
   .tv-err{position:fixed;inset:0;display:grid;place-items:center;font-size:var(--fs-h2);font-weight:800}
   #stage{display:flex;flex-direction:column}
@@ -535,12 +547,13 @@ function tvCss(): string {
   .opening .ow{font-size:var(--fs-display)}
   .opening .ot{font-size:var(--fs-h3);font-weight:700;color:var(--text-2)}
 
-  .lobby{flex:1;display:grid;grid-template-rows:auto 1fr auto auto;gap:clamp(16px,3vh,40px);max-width:1500px;margin:0 auto;width:100%}
-  .l-head{display:flex;align-items:center;gap:16px}
-  .l-brand{font-size:var(--fs-h1)} .l-sub{font-size:var(--fs-h3);margin-inline-start:auto}
+  .lobby{flex:1;display:grid;grid-template-rows:auto 1fr auto auto;gap:clamp(14px,2.4vh,30px);max-width:1500px;margin:0 auto;width:100%;padding-inline:clamp(16px,2vw,40px);padding-block:clamp(10px,2vh,24px)}
+  .l-head{display:flex;align-items:center;gap:14px}
+  .l-titles{display:flex;flex-direction:column;gap:2px;line-height:1.15}
+  .l-brand{font-size:var(--fs-h1)} .l-sub{font-size:var(--fs-h3)}
   .l-body{display:grid;grid-template-columns:auto 1fr;gap:clamp(24px,4vw,64px);align-items:center}
   .qr-card{padding:20px;display:flex;flex-direction:column;gap:12px;align-items:center;background:#f4eee3;border:none}
-  .qr{width:clamp(180px,22vw,300px);height:clamp(180px,22vw,300px)} .qr-cap{color:#4a4030!important;font-weight:800}
+  .qr{width:clamp(170px,19vw,260px);height:clamp(170px,19vw,260px)} .qr-cap{color:#4a4030!important;font-weight:800}
   .l-join{display:flex;flex-direction:column;gap:14px}
   .code-host{direction:ltr;unicode-bidi:isolate;text-align:left}
   .code-host .code{display:inline-flex;direction:ltr;unicode-bidi:isolate;align-items:center;gap:4px;font-size:var(--fs-code);font-weight:900}
@@ -548,8 +561,11 @@ function tvCss(): string {
   .code-host .code i{color:var(--muted);font-style:normal;font-size:.6em}
   .j-url{font-size:clamp(14px,1.6vw,20px);direction:ltr;unicode-bidi:isolate;text-align:left} .j-hint{font-size:var(--fs-h3)}
   .l-players{display:flex;flex-direction:column;gap:12px}
-  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
   .pgrid .pcard{font-size:clamp(16px,1.6vw,22px)} .pc-badge{margin-inline-start:auto}
+  .pcard.ghost{border-style:dashed;border-color:var(--line-2);background:color-mix(in srgb,var(--surface) 40%,transparent)}
+  .pcard.ghost .ghost-av{background:transparent;color:var(--muted);border:1.6px dashed var(--line-3);font-weight:800}
+  .pcard.ghost .nm{color:var(--muted);opacity:.8}
   .l-foot{font-size:var(--fs-h3);text-align:center}
 
   .game{flex:1;display:flex;flex-direction:column;gap:20px;position:relative}

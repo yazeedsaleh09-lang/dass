@@ -168,21 +168,28 @@ function renderJoin(code: string, err?: string): void {
   r.innerHTML = `
     <div class="p-top"><span class="p-brand">${mark(24)}<span class="wordmark g">${COPY.brand}</span></span></div>
     <div class="join">
-      <div class="j-tag">${COPY.tagline}</div>
-      <div class="j-form">
-        <input id="name" class="input" placeholder="${COPY.namePlaceholder}" maxlength="20" autocomplete="off" />
-        ${hasCode ? '' : `<input id="code" class="input mono" placeholder="${COPY.codePlaceholder}" value="${escapeHtml(code)}" autocapitalize="characters" autocorrect="off" />`}
-        <button id="go" class="btn primary wide">${COPY.join}</button>
-        ${err ? `<div class="j-err">${err}</div>` : ''}
+      <div class="panel join-card">
+        <div class="jc-eyebrow">انضمام</div>
+        <div class="jc-title">خشّ المجلس</div>
+        <div class="j-form">
+          ${hasCode
+            ? `<div class="jc-code mono" aria-label="كود الغرفة">${escapeHtml(code)}</div>`
+            : `<input id="code" class="input mono" placeholder="${COPY.codePlaceholder}" value="${escapeHtml(code)}" maxlength="12" autocapitalize="characters" autocorrect="off" autocomplete="off" aria-label="كود الغرفة" />`}
+          <input id="name" class="input" placeholder="${COPY.namePlaceholder}" maxlength="20" autocomplete="off" aria-label="اسمك" enterkeyhint="go" />
+          <button id="go" class="btn primary wide">${COPY.join}</button>
+          <div class="j-err" role="alert">${err ?? ''}</div>
+        </div>
       </div>
+      <div class="join-foot muted">${uiIcon('users', 16)}<span>بتلعب من جوّالك، والتلفاز يعرض المجلس للكل</span></div>
     </div>`;
   const nameEl = qs<HTMLInputElement>('#name');
   const codeEl = qs<HTMLInputElement>('#code');
-  nameEl?.focus();
-  qs('#go')?.addEventListener('click', () => join(nameEl?.value ?? '', codeEl?.value ?? params.get('code') ?? ''));
-  nameEl?.addEventListener('keydown', (e) => {
-    if ((e as KeyboardEvent).key === 'Enter') join(nameEl.value, codeEl?.value ?? params.get('code') ?? '');
-  });
+  (codeEl ?? nameEl)?.focus();
+  const submit = (): void => {
+    void join(nameEl?.value ?? '', codeEl?.value ?? params.get('code') ?? '');
+  };
+  qs('#go')?.addEventListener('click', submit);
+  for (const elx of [nameEl, codeEl]) elx?.addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Enter') submit(); });
 }
 
 function lobby(v: ClientView): void {
@@ -430,6 +437,7 @@ void copyText;
 
 function playerCss(): string {
   return `
+  html,body{height:100%;overflow:hidden}
   #root{min-height:100dvh;display:flex;flex-direction:column;padding:calc(var(--safe-t) + 10px) 16px calc(var(--safe-b) + 16px)}
   .p-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .p-brand{display:flex;align-items:center;gap:8px;font-size:22px}
@@ -443,7 +451,13 @@ function playerCss(): string {
   .j-tag{font-size:clamp(26px,7vw,40px);font-weight:900;line-height:1.25;text-align:center}
   .j-form{display:flex;flex-direction:column;gap:12px}
   #code{direction:ltr;unicode-bidi:isolate;text-align:center}
-  .j-err{color:var(--red);font-weight:800;text-align:center}
+  .j-err{color:var(--red);font-weight:800;text-align:center;min-height:20px}
+  .join-foot{display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;font-size:14px;line-height:1.5;padding-inline:12px}
+  .join-foot svg{flex:none}
+  .join-card{width:100%;max-width:420px;margin:0 auto;padding:26px 22px}
+  .jc-eyebrow{font-size:13px;font-weight:800;letter-spacing:.14em;color:var(--gold);text-align:center}
+  .jc-title{font-size:clamp(26px,7vw,34px);font-weight:900;text-align:center;margin:4px 0 12px}
+  .jc-code{font-size:clamp(28px,8vw,42px);font-weight:900;color:var(--gold);text-align:center;letter-spacing:.12em;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-2);padding:12px;direction:ltr;unicode-bidi:isolate}
 
   .lob{flex:1;display:flex;flex-direction:column;gap:14px}
   .lob-count{text-align:center;font-weight:800}

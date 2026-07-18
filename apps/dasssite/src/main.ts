@@ -1,5 +1,6 @@
 import {
   COPY,
+  actionIcon,
   addStyle,
   dassIn,
   escapeHtml,
@@ -122,7 +123,7 @@ function home(): void {
     <section class="hero" data-mood="calm">
       <div class="hero-bgart" id="heroart">${heroArt()}</div>
       <div class="hero-copy ${firstVisit ? 'intro' : ''}">
-        <div class="hero-kicker" data-rc>لعبة مجالس · ٤ إلى ٨ لاعبين</div>
+        <div class="hero-kicker" data-rc>لعبة مجالس · من ٤ إلى ٨ لاعبين</div>
         <h1 class="hero-title wordmark">${COPY.brand}</h1>
         <p class="hero-tag" data-rc>اختياراتكم سرية… لكن كل الدسّات تنفضح.</p>
         <p class="hero-sub" data-rc>أعلن نيّتك بصوت عالي، وسوّي عكسها بالسر. الشاشة الكبيرة مسرحكم، وجوالك أداة القرار — وبالنهاية ينكشف مين دعم، مين ضرب، ومين دسّها على الكل.</p>
@@ -157,6 +158,18 @@ function home(): void {
       <div class="steps-cta" data-rc><a data-link="/how-to-play" class="btn">اشرحها لي بالتفصيل</a></div>
     </section>
 
+    <section class="scene features" data-mood="secret" data-reveal>
+      <div class="scene-head center"><span class="eyebrow" data-rc>ليش دسّ؟</span><h2 class="scene-title" data-rc>مصمّمة للمجلس</h2></div>
+      <div class="feat-grid">
+        <div class="feat" data-rc><span class="feat-ic">${uiIcon('users', 24)}</span><h3>شاشة وحدة، والكل يلعب</h3><p class="muted">التلفاز هو المسرح، وكل واحد يتحكم من جواله.</p></div>
+        <div class="feat" data-rc><span class="feat-ic gold">${uiIcon('lock', 24)}</span><h3>قراراتك تبقى بجوالك</h3><p class="muted">نيّتك وفعلك السري ما يوصلون لأحد قبل الكشف.</p></div>
+        <div class="feat" data-rc><span class="feat-ic">${uiIcon('bolt', 24)}</span><h3>بدون تحميل تطبيق</h3><p class="muted">رابط + اسم، وخلاص — تدخلون بثوانٍ.</p></div>
+        <div class="feat" data-rc><span class="feat-ic">${mark(26)}</span><h3>عربي من جد</h3><p class="muted">واجهة ونصوص بعامية طبيعية، مو ترجمة.</p></div>
+        <div class="feat" data-rc><span class="feat-ic">${uiIcon('refresh', 24)}</span><h3>جولة ورا جولة</h3><p class="muted">تعيدونها بنفس الشلة أو شلة جديدة بضغطة.</p></div>
+        <div class="feat" data-rc><span class="feat-ic">${uiIcon('users', 24)}</span><h3>من ٤ إلى ٨ لاعبين</h3><p class="muted">تكفي لسهرة صغيرة أو مجلس كامل.</p></div>
+      </div>
+    </section>
+
     <section class="cycle" data-mood="tension" id="cycle">
       <div class="cycle-pin">
         <span class="eyebrow">دورة المباراة</span>
@@ -171,6 +184,14 @@ function home(): void {
         <span class="eyebrow" data-rc>اللحظة</span>
         <h2 class="scene-title" data-rc>وعد… ثم دسّة</h2>
         <p class="betray-line" data-rc>مسار الدعم يبان ثابت… لين تنكسر الثقة أمام الجميع. هنا تعرف مين كان معك فعلاً، ومين كان يلعبها من تحت لتحت.</p>
+      </div>
+    </section>
+
+    <section class="scene atmos" data-mood="attack" data-reveal>
+      <div class="atmos-inner">
+        <span class="eyebrow" data-rc>الجو</span>
+        <blockquote class="atmos-q" data-rc>«لا واللهِ… أنا كنت أدعمك!»</blockquote>
+        <p class="atmos-p" data-rc>ضحك، اتهامات، وتحالفات تنهار بثانية. دسّ مو بس لعبة — هي قصص تتناقلونها بعد المجلس. مين خان مين؟ ومين صدّق الغلط؟ كل جولة تطلّع بطل… وضحيّة.</p>
       </div>
     </section>
 
@@ -308,34 +329,68 @@ function fieldErr(el: HTMLElement, msg: string): void {
 // ---------------- HOW TO PLAY ----------------
 function howto(): void {
   bg.setMood('calm');
+  const ar = (n: number): string => n.toLocaleString('ar-EG');
+  const setup: [string, string][] = [
+    ['افتح دسّ على الشاشة', 'شغّل الموقع على تلفاز أو شاشة كبيرة يشوفها الكل.'],
+    ['سوّي غرفة', 'اضغط «ابدأ لعبة» — يطلع كود وQR على الشاشة.'],
+    ['ادخلوا من الجوال', 'كل لاعب يصوّر الـQR، أو يكتب الكود بصفحة الانضمام.'],
+    ['حطّوا الأسماء', 'كل واحد يكتب اسمه ويضغط «جاهز».'],
+    ['ابدأوا', 'لما الكل يجهز (٤ لاعبين على الأقل) الهوست يبدأ المباراة.'],
+  ];
+  const phases: [string, string, string][] = [
+    ['var(--green)', 'الإعلان', 'كل جولة تعلن للكل: تدعم لاعب، تضربه، أو تبيع نفسك.'],
+    ['var(--violet)', 'نافذة التفاعل', 'تشوفون إعلانات بعض… وتقدر تغيّر إعلانك مرة وحدة.'],
+    ['var(--violet)', 'القفل السري', 'على جوالك بس، تختار فعلك الحقيقي — تلتزم بوعدك، أو تدسّها وتسوّي العكس. محد يشوف.'],
+    ['var(--red)', 'التحريك', 'الأسهم تتحرك على الشاشة… بس بدون ما ينكشف مين سوّى وش.'],
+    ['var(--gold)', 'الخزنة', 'لما سهمك يطلع فوق، بيع وثبّته بالخزنة — رقم مقفول ما ينزل.'],
+  ];
   app.innerHTML = `${nav('how')}
   <main class="page howto">
     <section class="howto-hero" data-reveal>
       <span class="eyebrow" data-rc>كيف تلعب</span>
-      <h1 class="page-title big" data-rc>دسّ… باختصار</h1>
-      <p class="muted page-sub" data-rc>لعبة سرية بسيطة: أعلن نيّتك للكل، ثم قرّر بالسر — تلتزم بوعدك أو تدسّها.</p>
+      <h1 class="page-title big" data-rc>دسّ… من الصفر</h1>
+      <p class="muted page-sub" data-rc>لعبة سرّية بسيطة: تعلن نيّتك قدّام الكل، وبعدين تقرّر بالسر — إما تلتزم بوعدك، أو <b class="gold">تدسّها</b> وتسوّي العكس. وبالنهاية كل الدسّات تنفضح.</p>
     </section>
-    <section class="howto-steps">
-      ${[
-        ['١', 'افتح الغرفة', 'ابدأ لعبة، تطلع الغرفة على الشاشة الكبيرة بكود وQR.'],
-        ['٢', 'ادخلوا من الجوال', 'كل لاعب يصوّر الـQR أو يكتب الكود ويحط اسمه.'],
-        ['٣', 'أعلن نيّتك', 'كل جولة تعلن: تدعم أحد، تضربه، أو تبيع نفسك.'],
-        ['٤', 'دسّها بالسر', 'بعد الإعلان، تقرّر بالسر — نفس وعدك، أو عكسه.'],
-        ['٥', 'شوف الأثر', 'الأسهم تتحرك على الشاشة، بدون ما ينكشف الفاعل.'],
-        ['٦', 'الكشف النهائي', 'بالنهاية تنفضح كل دسّة، وأكبر خزنة تفوز.'],
-      ]
-        .map(
-          (s) => `<div class="hstep" data-reveal><span class="hstep-n">${s[0]}</span><div><h3>${s[1]}</h3><p class="muted">${s[2]}</p></div></div>`,
-        )
-        .join('')}
-    </section>
-    <section class="howto-actions" data-reveal>
-      <div class="ha-actions" data-rc>
-        <div><b>دعم</b><span class="muted"> — ترفع سهم أحد.</span></div>
-        <div><b>ضرب</b><span class="muted"> — توطّي سهم أحد.</span></div>
-        <div><b>بيع</b><span class="muted"> — تثبّت مكسبك بالخزنة.</span></div>
+
+    <section class="ht-block" data-reveal>
+      <div class="ht-head"><span class="eyebrow" data-rc>أولاً · التجهيز</span><h2 class="scene-title" data-rc>من الرابط للّعب بأقل من دقيقة</h2></div>
+      <div class="howto-steps">
+        ${setup.map((s, i) => `<div class="hstep" data-rc><span class="hstep-n">${ar(i + 1)}</span><div><h3>${s[0]}</h3><p class="muted">${s[1]}</p></div></div>`).join('')}
       </div>
-      <div class="howto-cta" data-rc><a data-link="/create" class="btn primary lg">يلا نبدأ</a><a data-link="/join" class="btn lg">انضم بكود</a></div>
+    </section>
+
+    <section class="ht-block" data-reveal>
+      <div class="ht-head"><span class="eyebrow" data-rc>ثانياً · الجولة</span><h2 class="scene-title" data-rc>دورة كل جولة</h2></div>
+      <div class="hphases">
+        ${phases.map((p, i) => `<div class="hphase" data-rc style="--c:${p[0]}"><span class="hp-n">${ar(i + 1)}</span><div><h3>${p[1]}</h3><p class="muted">${p[2]}</p></div></div>`).join('')}
+      </div>
+    </section>
+
+    <section class="ht-block" data-reveal>
+      <div class="ht-head"><span class="eyebrow" data-rc>السر مقابل العلن</span><h2 class="scene-title" data-rc>جوالك يخفي… الشاشة تكشف</h2></div>
+      <div class="ht-split">
+        <div class="ht-side secret" data-rc><div class="hs-badge">جوالك · سري 🔒</div><ul><li>قرارك ونيّتك.</li><li>فعلك الحقيقي (الدسّة).</li><li>محد من اللاعبين يشوفه.</li></ul></div>
+        <div class="ht-side public" data-rc><div class="hs-badge gold">الشاشة · علني</div><ul><li>الإعلانات وحركة الأسهم.</li><li>الخزنات والترتيب.</li><li>الكشف النهائي للجميع.</li></ul></div>
+      </div>
+    </section>
+
+    <section class="ht-block" data-reveal>
+      <div class="ht-head"><span class="eyebrow" data-rc>النهاية</span><h2 class="scene-title" data-rc>الكشف… ثم مين يكسب</h2></div>
+      <p class="ht-p" data-rc>بعد آخر جولة، الشاشة تكشف كل إعلان مقابل الفعل الحقيقي — كل دسّة تطلع للنور، وتشوفون مين خان مين. <b class="gold">صاحب أكبر خزنة يفوز.</b> وبعدها تعيدونها بنفس الشلة، أو تبدأون شلة جديدة.</p>
+    </section>
+
+    <section class="ht-block" data-reveal>
+      <div class="ht-head"><span class="eyebrow" data-rc>الأفعال الثلاثة</span></div>
+      <div class="actcards">
+        <div class="actcard" data-rc style="--c:var(--green)"><span class="ac-ic">${actionIcon('back', 34)}</span><b>دعم</b><span class="muted">ترفع سهم لاعب ثاني.</span></div>
+        <div class="actcard" data-rc style="--c:var(--red)"><span class="ac-ic">${actionIcon('dump', 34)}</span><b>ضرب</b><span class="muted">توطّي سهم لاعب ثاني.</span></div>
+        <div class="actcard" data-rc style="--c:var(--gold)"><span class="ac-ic">${actionIcon('sell', 34)}</span><b>بيع</b><span class="muted">تثبّت سهمك بالخزنة.</span></div>
+      </div>
+    </section>
+
+    <section class="ht-cta-final" data-reveal>
+      <h2 class="scene-title" data-rc>جاهزين؟</h2>
+      <div class="howto-cta" data-rc><a data-link="/create" class="btn primary lg">ابدأ لعبة</a><a data-link="/join" class="btn lg">انضم بكود</a></div>
     </section>
     ${footer()}
   </main>`;
@@ -398,11 +453,17 @@ function conceptArt(): string {
 }
 function betrayArt(): string {
   return `<svg viewBox="0 0 480 340" class="art betray-svg" aria-hidden="true">
-    <path class="p-keep" d="M60 90 C160 90 200 120 300 120" stroke="var(--green)" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path class="p-keep" d="M60 160 C170 160 210 175 320 175" stroke="var(--green)" stroke-width="5" fill="none" stroke-linecap="round" opacity=".65"/>
-    <path class="p-break" d="M60 240 C150 240 190 250 250 250 L300 300 L360 240" stroke="var(--red)" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <g class="b-nodes"><circle cx="60" cy="90" r="11" fill="var(--surface-3)" stroke="var(--green)" stroke-width="2"/><circle cx="60" cy="160" r="11" fill="var(--surface-3)" stroke="var(--green)" stroke-width="2"/><circle cx="60" cy="240" r="11" fill="var(--surface-3)" stroke="var(--red)" stroke-width="2"/></g>
-    <path class="b-crack" d="M280 250 L300 290 L288 300 L316 316" stroke="#fff" stroke-width="2.5" fill="none"/>
+    <g stroke="var(--line-2)" stroke-width="1.4" opacity=".45" stroke-linecap="round">
+      <line x1="54" y1="36" x2="54" y2="302"/>
+      <line x1="54" y1="302" x2="446" y2="302"/>
+    </g>
+    <g class="b-nodes" fill="var(--surface-3)"><circle cx="54" cy="222" r="8" stroke="var(--green)" stroke-width="2.4"/><circle cx="54" cy="250" r="8" stroke="var(--green)" stroke-width="2.4" opacity=".7"/><circle cx="54" cy="240" r="8" stroke="var(--gold)" stroke-width="2.4"/></g>
+    <path class="p-keep" d="M54 222 C150 216 250 150 424 92" stroke="var(--green)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path class="p-keep" d="M54 250 C150 246 250 208 424 164" stroke="var(--green)" stroke-width="5" fill="none" stroke-linecap="round" opacity=".55"/>
+    <path class="p-keep" d="M54 240 C132 236 194 214 252 194" stroke="var(--gold)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path class="p-break" d="M252 194 L288 302 L332 250 L432 322" stroke="var(--red)" stroke-width="5.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path class="b-crack" d="M252 194 L244 170 M252 194 L276 180 M252 194 L236 208" stroke="var(--red)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <g class="b-ends"><circle cx="424" cy="92" r="9" fill="var(--surface-3)" stroke="var(--green)" stroke-width="2.4"/><circle cx="424" cy="164" r="9" fill="var(--surface-3)" stroke="var(--green)" stroke-width="2.4" opacity=".7"/><circle cx="252" cy="194" r="6" fill="var(--red)"/><circle cx="432" cy="322" r="9" fill="var(--surface-3)" stroke="var(--red)" stroke-width="2.4"/></g>
   </svg>`;
 }
 function mockTv(): string {
@@ -480,7 +541,7 @@ function siteCss(): string {
   .m-phone.p1{transform:translateY(-8px)} .m-phone.p2{transform:translateY(4px)}
   .m-reveal{text-align:center} .m-dassa{color:var(--red);font-weight:900;font-size:20px} .m-vault{color:var(--gold);font-weight:900;font-size:30px;font-variant-numeric:tabular-nums}
 
-  .cycle{position:relative;height:340vh}
+  .cycle{position:relative;height:220vh}
   .cycle-pin{position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:20px}
   .cycle-stage{--c:var(--gold);display:flex;flex-direction:column;align-items:center;gap:10px}
   .cy-num{font-size:clamp(60px,12vw,150px);font-weight:900;color:var(--c);line-height:1}
@@ -499,7 +560,23 @@ function siteCss(): string {
   .betray.in .betray-svg .p-keep{animation:crackDraw 1s var(--e-pull) forwards}
   .betray.in .betray-svg .p-break{animation:crackDraw .8s var(--e-sharp) .8s forwards}
   .betray-svg .b-crack{stroke-dasharray:120;stroke-dashoffset:120} .betray.in .betray-svg .b-crack{animation:crackDraw .3s var(--e-sharp) 1.5s forwards}
+  .betray-svg .b-ends{opacity:0} .betray.in .betray-svg .b-ends{opacity:1;transition:opacity .5s ease 1.35s}
   .betray-line{font-size:var(--fs-h3);line-height:1.7;color:var(--text-2);margin-top:14px}
+  .betray-art{min-height:300px;display:grid;place-items:center;padding:16px}
+  .betray-svg{width:100%;max-width:460px}
+  .scene-head.center{text-align:center}
+  .features .scene-head{text-align:center}
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .feat{padding:26px 22px;border-radius:var(--r-3);background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line-2);display:flex;flex-direction:column;gap:10px;transition:transform var(--t-comp) var(--e-out),border-color var(--t-comp) var(--e-out)}
+  .feat:hover{transform:translateY(-4px);border-color:var(--line-3)}
+  .feat-ic{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;background:var(--surface-3);color:var(--text)}
+  .feat-ic.gold{color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,var(--surface-3))}
+  .feat h3{margin:0;font-size:var(--fs-h3)} .feat p{margin:0;line-height:1.6}
+  .atmos{display:flex;justify-content:center;text-align:center}
+  .atmos-inner{max-width:780px}
+  .atmos-q{font-size:clamp(28px,5.2vw,58px);font-weight:900;line-height:1.3;margin:14px 0 20px;background:linear-gradient(120deg,var(--red),var(--gold-2));-webkit-background-clip:text;background-clip:text;color:transparent;text-wrap:balance}
+  .atmos-p{font-size:var(--fs-h3);line-height:1.9;color:var(--text-2)}
+  @media(min-width:861px) and (max-width:1100px){ .feat-grid{grid-template-columns:1fr 1fr} }
 
   .final{text-align:center;max-width:900px}
   .final-title{font-size:var(--fs-h1);font-weight:900;margin:0} .final-sub{font-size:var(--fs-h3);color:var(--text-2);margin:14px 0 30px}
@@ -525,6 +602,24 @@ function siteCss(): string {
   .howto-actions{margin-top:36px;text-align:center;display:flex;flex-direction:column;gap:20px}
   .ha-actions{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:var(--fs-h3)}
   .howto-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .ht-block{margin-bottom:clamp(48px,8vh,88px)}
+  .ht-head{margin-bottom:22px} .ht-head .scene-title{margin-top:8px;font-size:var(--fs-h2)}
+  .hphases{display:flex;flex-direction:column;gap:12px}
+  .hphase{display:flex;gap:16px;align-items:center;padding:18px 20px;border-radius:var(--r-2);background:var(--surface);border:1px solid var(--line-2);border-inline-start:3px solid var(--c)}
+  .hp-n{width:40px;height:40px;flex:0 0 auto;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:19px;background:color-mix(in srgb,var(--c) 16%,var(--surface-2));color:var(--c)}
+  .hphase h3{margin:0 0 3px;font-size:var(--fs-h3)}
+  .ht-split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .ht-side{padding:22px;border-radius:var(--r-2);background:var(--surface);border:1px solid var(--line-2)}
+  .ht-side.secret{border-color:color-mix(in srgb,var(--violet) 40%,transparent)}
+  .ht-side.public{border-color:color-mix(in srgb,var(--gold) 40%,transparent)}
+  .ht-side ul{margin:12px 0 0;padding-inline-start:18px;display:flex;flex-direction:column;gap:8px;color:var(--text-2);line-height:1.5}
+  .hs-badge{display:inline-block;font-weight:800;font-size:13px;letter-spacing:.06em;color:var(--violet)} .hs-badge.gold{color:var(--gold)}
+  .ht-p{font-size:var(--fs-h3);line-height:1.85;color:var(--text-2)}
+  .actcards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .actcard{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:24px 14px;border-radius:var(--r-2);background:var(--surface);border:1px solid var(--line-2);border-top:3px solid var(--c)}
+  .actcard .ac-ic{color:var(--c)} .actcard b{font-size:var(--fs-h3)}
+  .ht-cta-final{text-align:center;padding:24px 0 8px} .ht-cta-final .scene-title{margin-bottom:20px}
+  @media(max-width:640px){ .ht-split,.actcards{grid-template-columns:1fr} }
 
   @media(max-width:860px){
     .hero{min-height:auto;display:flex;flex-direction:column;text-align:center;padding:42px 18px 70px;gap:18px}
@@ -532,7 +627,7 @@ function siteCss(): string {
     .hero-copy{order:1;width:100%;padding:18px 8px 0;background:none;border:0;max-width:620px}
     .hero-bgart{order:2;position:relative;inset:auto;top:auto;transform:none;width:min(92vw,520px);margin-top:6px}
     .hero-sub{margin-inline:auto}.hero-cta{justify-content:center}.scroll-hint{display:none}
-    .concept-grid,.betray,.steps-grid{grid-template-columns:1fr}
+    .concept-grid,.betray,.steps-grid,.feat-grid{grid-template-columns:1fr}
     .betray-art{order:-1}
   }
   @media(max-width:480px){

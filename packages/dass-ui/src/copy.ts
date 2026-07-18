@@ -14,6 +14,7 @@ export const COPY = {
   scanToJoin: 'صوّر الرمز بجوالك',
   orType: 'أو اكتب الكود بصفحة',
   waiting: 'ننتظر البقية…',
+  emptySeat: 'مقعد فاضي',
   ready: 'جاهز',
   unready: 'رجعت مو جاهز',
   imReady: 'جاهز، يلا',
