@@ -56,6 +56,8 @@ async function main(): Promise<void> {
     check(siteHtml.includes('src="/bundle.js?v='), 'site loads /bundle.js (its own) with a cache-busting build id');
     check(tvHtml.includes('src="/tv/bundle.js?v=') && playerHtml.includes('src="/play/bundle.js?v='), 'TV and Player load their own versioned bundles, never cross-load');
     check(siteBundle.status === 200 && tvBundle.status === 200 && playerBundle.status === 200, 'each app serves a distinct bundle');
+    check(site.headers.get('cache-control') === 'no-store', 'HTML cannot be served from a stale production cache');
+    check(tvBundle.headers.get('cache-control') === 'no-cache' && playerBundle.headers.get('cache-control') === 'no-cache', 'stable bundle paths revalidate on every production load');
     check(missing.status === 404, 'missing assets return 404 instead of HTML');
     check(traversal.status === 404, 'encoded path traversal is rejected');
     check(site.headers.get('content-security-policy')?.includes("default-src 'self'") === true, 'security headers are attached');
@@ -65,6 +67,10 @@ async function main(): Promise<void> {
     room.onMessage('host', () => {});
     room.onMessage('sessionlog', () => {});
     check(room.roomId.length > 0, 'matchmaking and WebSocket upgrade work on the same port');
+    const activeStatus = await fetch(`${origin}/api/rooms/${room.roomId}`);
+    const invalidStatus = await fetch(`${origin}/api/rooms/not-a-code`);
+    check(activeStatus.status === 200 && (await activeStatus.json() as { status?: string }).status === 'active', 'room-status endpoint identifies an active room');
+    check(invalidStatus.status === 404 && (await invalidStatus.json() as { status?: string }).status === 'invalid', 'room-status endpoint distinguishes malformed/unknown codes');
     await room.leave();
   } finally {
     await server.gracefullyShutdown(false);

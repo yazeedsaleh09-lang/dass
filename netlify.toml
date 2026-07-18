@@ -8,6 +8,8 @@
 #   • create a second Netlify site publishing apps/dassplayer/public.
 # Point the client(s) at the server via an env var (must be wss:// on an https page):
 #   Site settings → Environment variables → DASS_SERVER_URL = wss://<your-render-host>
+# For a TV-only site also set DASS_PUBLIC_URL = https://<your-render-host> so its QR
+# opens Render's `/play` app instead of a missing route on the TV-only Netlify site.
 # If the git repo root is "GameProject", set Netlify "Base directory" to: app
 [build]
   command = "npm ci --include=dev && node apps/dasstv/build.mjs"

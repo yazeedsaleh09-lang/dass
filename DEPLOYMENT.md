@@ -11,7 +11,7 @@ The production shape is one persistent Node web service:
 
 `render.yaml` is the source of truth:
 
-- Build: `npm install --include=dev && npm run dassbuild`
+- Build: `npm ci --include=dev && npm run dassbuild`
 - Start: `npm run dassserver`
 - Health: `/health`
 - Node: pinned by `package.json` to Node 20.x
@@ -33,7 +33,7 @@ Then verify `http://localhost:8000/health`, `/`, and `/play`.
 
 ## Optional split static hosting
 
-`netlify.toml` publishes only the TV client. A second static site is required for the phone client. Set `DASS_SERVER_URL=wss://<server-host>` at build time for both static builds. Single-host deployment is simpler and avoids cross-origin configuration.
+`netlify.toml` publishes only the TV client. A second static site is required for the phone client. Set `DASS_SERVER_URL=wss://<server-host>` at build time for both static builds. For a TV-only static host, also set `DASS_PUBLIC_URL=https://<server-host>` so the QR opens Render's `/play` app. Single-host deployment is simpler and avoids cross-origin configuration.
 
 ## Pre-deploy gate
 
@@ -47,6 +47,10 @@ npm run dassbuild
 npm run dassservecheck
 npm run dassnetcheck
 npm run dassqacheck
+npm run dasshostcheck
+npm run dassreconnectcheck
+npm run dassflowcheck
+npm run dassprodcheck
 ```
 
 ## Operational limits

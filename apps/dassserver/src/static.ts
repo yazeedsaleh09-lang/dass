@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { getRoomStatus } from './lifecycle.js';
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -41,6 +42,13 @@ export function createDassHttpServer(tvDir: string, playerDir: string, siteDir: 
         if (url === '/health') {
           res.writeHead(200, headers('text/plain; charset=utf-8'));
           res.end('ok');
+          return;
+        }
+        if (url.startsWith('/api/rooms/')) {
+          const code = url.slice('/api/rooms/'.length);
+          const status = getRoomStatus(code);
+          res.writeHead(status === 'active' ? 200 : status === 'closed' ? 409 : 404, headers('application/json; charset=utf-8'));
+          res.end(JSON.stringify({ status }));
           return;
         }
         let dir = siteDir;

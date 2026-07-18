@@ -29,6 +29,7 @@ import {
 } from '@dass/ui';
 
 declare const DASS_SERVER_URL: string;
+declare const DASS_PUBLIC_URL: string;
 
 injectBase();
 addStyle(tvCss());
@@ -40,6 +41,8 @@ setupMute();
 
 const serverUrl = DASS_SERVER_URL || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
 const client = new Client(serverUrl);
+const publicUrl = (DASS_PUBLIC_URL || location.origin).replace(/\/$/, '');
+console.info('[dass] endpoint selection', { websocket: serverUrl, publicUrl, source: DASS_SERVER_URL ? 'build-env' : 'same-origin' });
 let room: Room | null = null;
 let view: ClientView | null = null;
 let prev: ClientView | null = null;
@@ -73,9 +76,9 @@ function saveHostSession(roomId: string, token: string): void {
 }
 
 async function boot(): Promise<void> {
-  await opening();
-  sfx.unlock();
   try {
+    const openingPromise = opening();
+    let openingDone = false;
     room = await openRoom();
     room.onMessage('host', (m: { token?: string }) => {
       if (m?.token && room) saveHostSession(room.roomId, m.token);
@@ -83,10 +86,15 @@ async function boot(): Promise<void> {
     room.onMessage('state', (v: ClientView) => {
       prev = view;
       view = v;
-      onState();
+      if (openingDone) onState();
     });
     room.onMessage('sessionlog', () => {});
+    room.send('syncHost', {});
     room.send('sync', {});
+    await openingPromise;
+    openingDone = true;
+    sfx.unlock();
+    if (view) onState();
     requestAnimationFrame(tick);
   } catch {
     stage.innerHTML = `<div class="tv-err">${COPY.genericError}</div>`;
@@ -158,7 +166,7 @@ function onState(): void {
 function renderLobby(v: ClientView): void {
   bg.setMood('calm');
   const code = room?.roomId ?? '';
-  const url = `${location.origin}/play?code=${code}`;
+  const url = `${publicUrl}/play?code=${encodeURIComponent(code)}`;
   stage.innerHTML = `
     <div class="lobby" data-room="${escapeHtml(code)}">
       <header class="l-head">

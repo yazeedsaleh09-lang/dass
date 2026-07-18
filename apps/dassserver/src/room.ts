@@ -18,7 +18,10 @@ import {
   type PlayerInput,
   type PublicPlayerView,
   type RoundRecord,
+  validateNickname,
 } from '@dass/domain';
+import { makeRoomCode, setRoomStatus } from './lifecycle.js';
+import { serverLog } from './log.js';
 
 /**
  * A seat's stable identity. `pid` is the DURABLE engine id used everywhere in game state
@@ -42,6 +45,7 @@ export interface DassRoomOptions {
   phaseMs?: Partial<DassConfig['phaseMs']>;
   minPlayers?: number;
   config?: Partial<Omit<DassConfig, 'phaseMs'>>;
+  emptyRoomGraceMs?: number;
 }
 
 /** Options a client may pass on join. `hostToken`/`playerToken` are durable identities. */
@@ -108,8 +112,12 @@ export class DassRoom extends Room {
 
   private messageTimes = new Map<string, number>();
   private disposeTimer: ReturnType<typeof setTimeout> | null = null;
+  private emptyRoomGraceMs = 10000;
 
   override onCreate(options: DassRoomOptions = {}): void {
+    this.roomId = makeRoomCode();
+    setRoomStatus(this.roomId, 'active');
+    serverLog('room_created', { roomId: this.roomId });
     const allowTestConfig = process.env.DASS_ALLOW_TEST_CONFIG === '1';
     this.config = {
       ...DEFAULT_CONFIG,
@@ -117,6 +125,7 @@ export class DassRoom extends Room {
       phaseMs: { ...DEFAULT_CONFIG.phaseMs, ...(allowTestConfig ? (options.phaseMs ?? {}) : {}) },
     };
     this.minPlayers = allowTestConfig ? (options.minPlayers ?? this.config.minPlayers) : this.config.minPlayers;
+    this.emptyRoomGraceMs = allowTestConfig ? (options.emptyRoomGraceMs ?? 10000) : 10000;
 
     // A join response can arrive before browser code has attached message listeners.
     // Let every client request one authoritative snapshot after wiring itself.
@@ -124,12 +133,18 @@ export class DassRoom extends Room {
       client.send('state', this.viewFor(client.sessionId));
     });
 
+    this.onMessage('syncHost', (client) => {
+      if (client.sessionId === this.hostId) client.send('host', { token: this.hostToken });
+    });
+
     this.onMessage('setNickname', (client, msg: { name?: string }) => {
       if (this.game || !this.acceptMessage(client.sessionId, 'nickname', 300)) return;
       const pid = this.sessionToPid.get(client.sessionId);
       const lp = pid ? this.lobby.find((p) => p.pid === pid) : undefined;
       if (!lp) return;
-      lp.nickname = this.uniqueNickname(msg?.name, lp.pid);
+      const nickname = validateNickname(msg?.name);
+      if (!nickname.ok) return;
+      lp.nickname = this.uniqueNickname(nickname.value, lp.pid);
       this.pushState();
     });
 
@@ -192,17 +207,30 @@ export class DassRoom extends Room {
     });
   }
 
-  override onAuth(_client: Client, options: JoinOptions = {}): boolean {
+  override onAuth(client: Client, options: JoinOptions = {}): boolean {
+    const role = options.role === 'tv' ? 'tv' : 'player';
+    serverLog('join_attempt', { roomId: this.roomId, sessionId: client.sessionId, role, reconnect: !!options.hostToken || !!options.playerToken });
+    if (options.hostToken && options.hostToken !== this.hostToken) this.rejectJoin('INVALID_HOST_TOKEN', role);
     if (options.role === 'tv') return true;
-    if (options.hostToken && options.hostToken === this.hostToken) return true;
+    if (options.hostToken === this.hostToken) return true;
+    const allowTestTokens = process.env.DASS_ALLOW_TEST_CONFIG === '1';
+    if (options.playerToken && !allowTestTokens && !/^[A-Za-z0-9_-]{24,128}$/.test(options.playerToken)) {
+      this.rejectJoin('INVALID_PLAYER_TOKEN', role);
+    }
     // A returning identity (known token → existing pid) is always admitted — it resumes a
     // seat (lobby or in-game) or watches, never consuming a fresh seat.
     if (options.playerToken && this.tokenToPid.has(options.playerToken)) return true;
+    if (this.game?.ended) this.rejectJoin('ROOM_CLOSED', role);
     if (this.game) return true; // a brand-new client during a running game becomes a spectator
-    if (this.lobby.length >= this.config.maxPlayers) {
-      throw new ServerError(ErrorCode.APPLICATION_ERROR, 'ROOM_FULL');
-    }
+    const nickname = validateNickname(options.nickname);
+    if (!nickname.ok) this.rejectJoin(nickname.reason, role);
+    if (this.lobby.length >= this.config.maxPlayers) this.rejectJoin('ROOM_FULL', role);
     return true;
+  }
+
+  private rejectJoin(reason: string, role: string): never {
+    serverLog('join_rejected', { roomId: this.roomId, role, reason });
+    throw new ServerError(ErrorCode.APPLICATION_ERROR, reason);
   }
 
   override onJoin(client: Client, options: JoinOptions = {}): void {
@@ -216,7 +244,7 @@ export class DassRoom extends Room {
     //    host token privately. This is the ONLY way host is granted.
     if (!this.creatorAssigned) {
       this.creatorAssigned = true;
-      this.bindHost(client);
+      this.bindHost(client, false);
       client.send('host', { token: this.hostToken });
       if (isTv) {
         this.viewers.add(client.sessionId); // creator is a display: host, but not a player seat
@@ -229,7 +257,7 @@ export class DassRoom extends Room {
 
     // 2) HOST RECLAIM — a valid secret token rebinds host to this connection.
     if (options.hostToken && options.hostToken === this.hostToken) {
-      this.bindHost(client);
+      this.bindHost(client, true);
       if (isTv) this.viewers.add(client.sessionId);
       this.clock.setTimeout(() => this.pushState(), 0);
       return;
@@ -247,10 +275,11 @@ export class DassRoom extends Room {
   }
 
   /** Bind the host token to a live connection. Host ownership itself is the token, not this id. */
-  private bindHost(client: Client): void {
+  private bindHost(client: Client, reconnecting: boolean): void {
     this.hostId = client.sessionId;
     this.hostConnected = true;
     if (this.game) this.game.hostId = this.hostId;
+    serverLog(reconnecting ? 'reconnect' : 'host_bound', { roomId: this.roomId, role: 'host', sessionId: client.sessionId });
   }
 
   /**
@@ -295,6 +324,7 @@ export class DassRoom extends Room {
     const nickname = this.uniqueNickname(options.nickname, newPid);
     this.lobby.push({ pid: newPid, seat: this.seatCounter++, nickname, ready: false });
     this.bindSession(newPid, client.sessionId);
+    serverLog('player_joined', { roomId: this.roomId, playerId: newPid, seat: this.seatCounter - 1 });
     this.clock.setTimeout(() => this.pushState(), 0);
   }
 
@@ -308,6 +338,7 @@ export class DassRoom extends Room {
     this.clearRecovery(pid);
     this.expiredPids.delete(pid);
     this.bindSession(pid, client.sessionId);
+    serverLog('reconnect', { roomId: this.roomId, role: 'player', playerId: pid, sessionId: client.sessionId });
     if (restored) client.send('restored', {});
     this.clock.setTimeout(() => this.pushState(), 0);
   }
@@ -356,6 +387,8 @@ export class DassRoom extends Room {
     if (this.phaseTimer) clearTimeout(this.phaseTimer);
     if (this.disposeTimer) clearTimeout(this.disposeTimer);
     for (const t of this.recoveryTimers.values()) clearTimeout(t);
+    setRoomStatus(this.roomId, 'expired');
+    serverLog('room_destroyed', { roomId: this.roomId, phase: this.game?.phase ?? 'LOBBY', players: this.game?.players.length ?? this.lobby.length });
   }
 
   // ---- identity / connection helpers ----
@@ -468,6 +501,7 @@ export class DassRoom extends Room {
       this.phaseEndsAt = undefined;
       this.broadcast('sessionlog', this.sessionLog);
       console.log('[dass] session log:', JSON.stringify(this.sessionLog));
+      setRoomStatus(this.roomId, 'closed');
       this.pushState();
       return;
     }
@@ -511,6 +545,7 @@ export class DassRoom extends Room {
     for (const pid of [...this.pidToToken.keys()]) if (!keptPids.has(pid)) this.forgetIdentity(pid);
     this.seatCounter = this.lobby.length;
     this.game = null;
+    setRoomStatus(this.roomId, 'active');
     this.sessionLog = [];
     this.reactionMoved.clear();
     this.recoveringPids.clear();
@@ -539,7 +574,8 @@ export class DassRoom extends Room {
   }
 
   private uniqueNickname(raw: string | undefined, selfPid: string): string {
-    const base = String(raw ?? '').trim().slice(0, 20) || `لاعب ${this.seatCounter + 1}`;
+    const validated = validateNickname(raw);
+    const base = validated.ok ? validated.value : `لاعب ${this.seatCounter + 1}`;
     const used = new Set([
       ...this.lobby.filter((p) => p.pid !== selfPid).map((p) => p.nickname.toLocaleLowerCase('ar')),
       ...(this.game?.players ?? []).filter((p) => p.id !== selfPid).map((p) => p.nickname.toLocaleLowerCase('ar')),
@@ -548,7 +584,7 @@ export class DassRoom extends Room {
     let suffix = 2;
     while (true) {
       const suffixText = ` ${suffix}`;
-      const candidate = `${base.slice(0, Math.max(1, 20 - suffixText.length))}${suffixText}`;
+      const candidate = `${[...base].slice(0, Math.max(1, 20 - [...suffixText].length)).join('')}${suffixText}`;
       if (!used.has(candidate.toLocaleLowerCase('ar'))) return candidate;
       suffix += 1;
     }
@@ -568,7 +604,7 @@ export class DassRoom extends Room {
     if (this.clients.length > 0) return;
     this.disposeTimer = setTimeout(() => {
       if (this.clients.length === 0) void this.disconnect();
-    }, this.game ? this.config.recoveryMs : 1000);
+    }, this.game ? this.config.recoveryMs : this.emptyRoomGraceMs);
     if (typeof this.disposeTimer.unref === 'function') this.disposeTimer.unref();
   }
 

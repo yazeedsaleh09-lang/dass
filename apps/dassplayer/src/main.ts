@@ -1,5 +1,5 @@
 import { Client, type Room } from 'colyseus.js';
-import type { ActionKind, ClientView } from '@dass/domain';
+import { isRoomCode, normalizeRoomCode, validateNickname, type ActionKind, type ClientView } from '@dass/domain';
 import {
   COPY,
   actionColor,
@@ -29,6 +29,7 @@ const app = document.getElementById('app')!;
 const params = new URLSearchParams(location.search);
 const serverUrl = DASS_SERVER_URL || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
 const client = new Client(serverUrl);
+console.info('[dass] endpoint selection', { websocket: serverUrl, source: DASS_SERVER_URL ? 'build-env' : 'same-origin' });
 
 let room: Room | null = null;
 let view: ClientView | null = null;
@@ -42,14 +43,14 @@ let changing = false;
 // a fresh socket to the SAME active seat (score/actions/state intact), in the lobby OR
 // mid-game, regardless of how the sessionId changes. Room-scoped so a different room never
 // reuses the wrong seat.
-const ptKey = (roomId: string): string => `dass_pt:${roomId}`;
+const ptKey = (roomId: string): string => `dass_pt:${normalizeRoomCode(roomId)}`;
 function playerTokenFor(roomId: string): string {
   const k = ptKey(roomId);
   let t = localStorage.getItem(k);
   if (!t) {
     const a = new Uint8Array(18);
     crypto.getRandomValues(a);
-    t = btoa(String.fromCharCode(...a)).replace(/[^a-zA-Z0-9]/g, '').slice(0, 24);
+    t = [...a].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 24);
     localStorage.setItem(k, t);
   }
   return t;
@@ -73,15 +74,23 @@ else renderJoin(urlCode ?? '');
 async function join(name: string, code: string): Promise<void> {
   if (busy) return; // hard block against a second submit landing before the first resolves
   sfx.unlock();
-  const nickname = name.trim().slice(0, 20);
-  const roomId = code.trim();
+  const nicknameResult = validateNickname(name);
+  const nickname = nicknameResult.ok ? nicknameResult.value : '';
+  const roomId = normalizeRoomCode(code);
   if (!roomId) {
     shake('#code');
+    renderJoin(code, COPY.emptyCode);
+    return;
+  }
+  if (!isRoomCode(roomId)) {
+    shake('#code');
+    renderJoin(code, COPY.invalidCode);
     return;
   }
   // A brand-new seat needs a name; a resume (we already hold this room's token) does not.
-  if (!nickname && !hasIdentity(roomId)) {
+  if (!hasIdentity(roomId) && !nicknameResult.ok) {
     shake('#name');
+    renderJoin(code, nicknameResult.reason === 'EMPTY_NAME' ? COPY.emptyName : nicknameResult.reason === 'NAME_TOO_LONG' ? COPY.nameTooLong : COPY.unsupportedName);
     return;
   }
   busy = true;
@@ -93,9 +102,28 @@ async function join(name: string, code: string): Promise<void> {
     busy = false;
     setBusy(false);
     const msg = String((e as { message?: string })?.message ?? e);
-    renderJoin(code, /full/i.test(msg) ? COPY.roomFull : COPY.roomNotFound);
+    renderJoin(code, await joinErrorMessage(roomId, msg));
     sfx.inputErr();
   }
+}
+
+async function joinErrorMessage(roomId: string, message: string): Promise<string> {
+  if (/ROOM_FULL|full/i.test(message)) return COPY.roomFull;
+  if (/ROOM_CLOSED|locked/i.test(message)) return COPY.roomClosed;
+  if (/INVALID_(?:PLAYER|HOST)_TOKEN/i.test(message)) return COPY.invalidToken;
+  if (/EMPTY_NAME/i.test(message)) return COPY.emptyName;
+  if (/NAME_TOO_LONG/i.test(message)) return COPY.nameTooLong;
+  if (/UNSUPPORTED_NAME/i.test(message)) return COPY.unsupportedName;
+  try {
+    const httpBase = serverUrl.replace(/^ws:/, 'http:').replace(/^wss:/, 'https:');
+    const response = await fetch(`${httpBase}/api/rooms/${encodeURIComponent(roomId)}`, { cache: 'no-store' });
+    const body = (await response.json()) as { status?: string };
+    if (body.status === 'closed') return COPY.roomClosed;
+    if (body.status === 'expired') return COPY.roomExpired;
+  } catch {
+    // The matchmaking error remains authoritative when an optional status lookup is unavailable.
+  }
+  return COPY.roomNotFound;
 }
 
 /** Shared success path for a join or a token-based resume. */

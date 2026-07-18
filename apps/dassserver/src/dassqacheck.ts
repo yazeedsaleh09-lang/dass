@@ -37,7 +37,7 @@ async function main(): Promise<void> {
 
   try {
     const host = new Client(ENDPOINT);
-    const hostRoom = await host.create<unknown>('dass', { phaseMs: fast, minPlayers: 4 });
+    const hostRoom = await host.create<unknown>('dass', { nickname: 'Host', phaseMs: fast, minPlayers: 4 });
     rooms.push(hostRoom);
     for (let i = 2; i <= 4; i++) rooms.push(await new Client(ENDPOINT).joinById<unknown>(hostRoom.roomId, { nickname: `P${i}` }));
 
@@ -137,7 +137,7 @@ async function main(): Promise<void> {
     migrationHost.onMessage('sessionlog', () => {});
     const originalHostId = migrationHost.sessionId;
     const successorClient = new Client(ENDPOINT);
-    const successor = await successorClient.joinById<unknown>(migrationHost.roomId, { nickname: 'Next', playerToken: 'succ' });
+    const successor = await successorClient.joinById<unknown>(migrationHost.roomId, { nickname: 'Next', playerToken: 'successor-token-0000000001' });
     let successorView: ClientView | null = null;
     successor.onMessage('state', (v: ClientView) => (successorView = v));
     successor.onMessage('host', () => {});
@@ -154,7 +154,7 @@ async function main(): Promise<void> {
     // An unconsented drop is resumed by the DURABLE token onto the same seat (a fresh socket
     // with the same pid), not by a Colyseus reconnection token.
     const reconnectClient = new Client(ENDPOINT);
-    const beforeDrop = await reconnectClient.create<unknown>('dass', { nickname: 'Reconnect', playerToken: 'recon-pt' });
+    const beforeDrop = await reconnectClient.create<unknown>('dass', { nickname: 'Reconnect', playerToken: 'reconnect-token-0000000001' });
     let beforeView: ClientView | null = null;
     beforeDrop.onMessage('state', (v: ClientView) => (beforeView = v));
     beforeDrop.onMessage('host', () => {});
@@ -166,7 +166,7 @@ async function main(): Promise<void> {
     await beforeDrop.leave(false);
     await wait(200);
     const afterClient = new Client(ENDPOINT);
-    const afterDrop = await afterClient.joinById<unknown>(beforeDrop.roomId, { playerToken: 'recon-pt' });
+    const afterDrop = await afterClient.joinById<unknown>(beforeDrop.roomId, { playerToken: 'reconnect-token-0000000001' });
     let reconnectedView: ClientView | null = null;
     afterDrop.onMessage('state', (v: ClientView) => (reconnectedView = v));
     afterDrop.onMessage('host', () => {});

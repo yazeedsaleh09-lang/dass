@@ -16,7 +16,10 @@ const ctx = await esbuild.context({
   sourcemap: true,
   minify: !serve,
   logLevel: 'info',
-  define: { DASS_SERVER_URL: JSON.stringify(process.env.DASS_SERVER_URL ?? '') },
+  define: {
+    DASS_SERVER_URL: JSON.stringify(process.env.DASS_SERVER_URL ?? ''),
+    DASS_PUBLIC_URL: JSON.stringify(process.env.DASS_PUBLIC_URL ?? ''),
+  },
 });
 
 if (serve) {

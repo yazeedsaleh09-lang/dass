@@ -31,6 +31,8 @@
     "dassreconnectcheck": "tsx apps/dassserver/src/reconnectcheck.ts",
     "dassqacheck": "tsx apps/dassserver/src/dassqacheck.ts",
     "dassservecheck": "tsx apps/dassserver/src/servecheck.ts",
+    "dassflowcheck": "tsx apps/dassserver/src/flowcheck.ts",
+    "dassprodcheck": "tsx apps/dassserver/src/productioncheck.ts",
     "dasstv:build": "node apps/dasstv/build.mjs",
     "dasstv:dev": "node apps/dasstv/build.mjs --serve",
     "dassplayer:build": "node apps/dassplayer/build.mjs",
