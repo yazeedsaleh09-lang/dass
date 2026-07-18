@@ -20,9 +20,15 @@ import {
   uiIcon,
   type Mood,
 } from '@dass/ui';
+import { platform } from './product/platform.js';
+import { configuredPublicOrigin } from './product/config.js';
+import { PRODUCT_PATHS, renderProductPage } from './product/pages.js';
+import { productCss } from './product/product-css.js';
+import { formatPrice, PLANS, PRODUCTS } from './product/catalog.js';
 
 injectBase();
 addStyle(siteCss());
+addStyle(productCss());
 const bg = mountBackground();
 const app = document.getElementById('app')!;
 let cleanups: Array<() => void> = [];
@@ -36,12 +42,13 @@ addEventListener('pointerdown', () => {
 }, { once: true });
 
 // ---------------- router ----------------
-const SPA = new Set(['/', '/create', '/join', '/how-to-play']);
+const SPA = new Set(['/', '/create', '/join', '/how-to-play', ...PRODUCT_PATHS]);
 function go(path: string): void {
   const clean = path.split('?')[0] ?? '/';
   if (SPA.has(clean)) {
     history.pushState({}, '', path);
     render();
+    qs<HTMLElement>('#main-content')?.focus({ preventScroll: true });
     scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
   } else {
     location.href = path;
@@ -63,38 +70,96 @@ function teardown(): void {
 
 function render(): void {
   teardown();
+  applyProductPreferences();
   const path = location.pathname;
-  if (path === '/create') create();
-  else if (path === '/join') join();
-  else if (path === '/how-to-play') howto();
-  else home();
+  try {
+    if (path === '/create') { updateMeta('إنشاء غرفة', 'افتح غرفة دسّ جديدة على الشاشة الكبيرة.'); create(); }
+    else if (path === '/join') { updateMeta('الانضمام', 'انضم إلى غرفة دسّ بالكود.'); join(); }
+    else if (path === '/how-to-play') { updateMeta('كيف تلعب', 'تعرف على جولات وقرارات لعبة دسّ.'); howto(); }
+    else if (path === '/') { updateMeta('لعبة القرارات السرية والخيانات', 'دسّ لعبة مجالس عربية من ٤ إلى ٨ لاعبين.'); home(); }
+    else productRoute(path);
+  } catch {
+    updateMeta('تعذر فتح الصفحة', 'حدث خطأ آمن أثناء عرض الصفحة.');
+    app.innerHTML = `${nav()}<main id="main-content" class="page center-page"><section class="page-card panel"><span class="eyebrow">خطأ آمن</span><h1 class="page-title">ما قدرنا نفتح الصفحة</h1><p class="muted page-sub">بياناتك لم تُرسل. حدّث الصفحة أو ارجع للرئيسية.</p><button id="retry-render" class="btn primary wide">إعادة المحاولة</button><a data-link="/support" class="back-link">الدعم</a></section></main>`;
+    qs('#retry-render')?.addEventListener('click', render);
+  }
   bindMute();
+  bindChrome();
+  bindNetworkNotice();
+}
+function applyProductPreferences(): void {
+  try {
+    const settings = platform.getSettings();
+    document.documentElement.classList.toggle('dass-high-contrast', settings.highContrast);
+    document.documentElement.classList.toggle('dass-large-text', settings.textScale === 'large');
+    document.documentElement.classList.toggle('dass-reduced-motion', settings.reducedMotion || !settings.animations);
+  } catch {
+    document.documentElement.classList.remove('dass-high-contrast', 'dass-large-text', 'dass-reduced-motion');
+  }
 }
 // Defer the first route render until module-level scene data is initialized.
 queueMicrotask(render);
 
 // ---------------- shared chrome ----------------
 function nav(active = ''): string {
-  return `<nav class="nav">
+  const session = platform.getSession();
+  const accountLabel = session ? escapeHtml(session.displayName) : 'الحساب';
+  const initial = session ? escapeHtml(session.displayName.slice(0, 1)) : uiIcon('users', 17);
+  return `<a class="skip-link" href="#main-content">تخطَّ إلى المحتوى</a><nav class="nav">
     <a class="nav-logo" data-link="/">${mark(30)}<span class="wordmark g">${COPY.brand}</span></a>
-    <div class="nav-links">
+    <div class="nav-primary">
       <a data-link="/how-to-play" class="nav-a ${active === 'how' ? 'on' : ''}">كيف تلعب</a>
-      <a data-link="/join" class="nav-a ${active === 'join' ? 'on' : ''}">انضم بكود</a>
+      <a data-link="/store" class="nav-a ${active === 'store' ? 'on' : ''}">المتجر</a>
+      <a data-link="/pricing" class="nav-a ${active === 'pricing' ? 'on' : ''}">الأسعار</a>
+      <a data-link="/support" class="nav-a ${active === 'support' ? 'on' : ''}">الدعم</a>
+    </div>
+    <div class="nav-links">
       <button id="mute" class="icon-btn sm" aria-label="صوت">${uiIcon(sfx.isMuted() ? 'soundOff' : 'soundOn', 18)}</button>
+      <div class="account-menu">
+        <button id="account-toggle" class="account-toggle ${active === 'account' ? 'on' : ''}" aria-expanded="false" aria-controls="account-panel"><span class="account-initial">${initial}</span><span>${accountLabel}</span></button>
+        <div id="account-panel" class="account-panel" hidden>
+          ${session ? `<a data-link="/account/profile">الملف الشخصي</a><a data-link="/account/history">سجل المباريات</a><a data-link="/account/achievements">الإنجازات</a><a data-link="/account/inventory">المقتنيات</a><a data-link="/account/billing">الاشتراك والفوترة</a><a data-link="/account/settings">الإعدادات</a><button id="nav-logout">تسجيل الخروج</button>` : `<a data-link="/login">تسجيل الدخول</a><a data-link="/signup">إنشاء حساب</a><button id="nav-guest">الاستمرار كضيف</button>`}
+        </div>
+      </div>
       <a data-link="/create" class="btn primary nav-cta">ابدأ لعبة</a>
+      <button id="mobile-toggle" class="icon-btn sm mobile-toggle" aria-label="فتح القائمة" aria-expanded="false"><span aria-hidden="true">☰</span></button>
+    </div>
+    <div id="mobile-panel" class="mobile-panel" hidden>
+      <a data-link="/how-to-play">كيف تلعب</a><a data-link="/join">انضم بكود</a><a data-link="/store">المتجر</a><a data-link="/pricing">الأسعار</a><a data-link="/support">الدعم</a><a data-link="${session ? '/account/profile' : '/login'}">${accountLabel}</a>
     </div>
   </nav>`;
 }
 function footer(): string {
   return `<footer class="foot" data-reveal>
     <div class="foot-brand">${mark(26)}<span class="wordmark g">${COPY.brand}</span></div>
-    <div class="foot-links">
-      <a data-link="/how-to-play" class="foot-a">كيف تلعب</a>
-      <a data-link="/join" class="foot-a">انضم بكود</a>
-      <a data-link="/create" class="foot-a">سوّي غرفة</a>
+    <div class="foot-map">
+      <div><b>العب</b><a data-link="/create">سوّي غرفة</a><a data-link="/join">انضم بكود</a><a data-link="/invite">شارك دعوة</a><a data-link="/how-to-play">كيف تلعب</a></div>
+      <div><b>المنتج</b><a data-link="/store">المتجر</a><a data-link="/pricing">الأسعار</a><a data-link="/changelog">التحديثات</a></div>
+      <div><b>دسّ</b><a data-link="/about">عنّا</a><a data-link="/faq">الأسئلة الشائعة</a><a data-link="/support">الدعم</a><a data-link="/status">حالة الخدمة</a><a data-link="/credits">الاعتمادات</a></div>
+      <div><b>قانوني</b><a data-link="/legal/privacy">الخصوصية</a><a data-link="/legal/terms">الشروط</a><a data-link="/legal/refunds">الاسترجاع</a><a data-link="/legal/cookies">ملفات الارتباط</a></div>
     </div>
-    <div class="foot-cap muted">دسّ · لعبة مجالس · نسخة ٠.١</div>
+    <div class="foot-cap muted">دسّ · لعبة مجالس سعودية · ٢٠٢٦</div>
   </footer>`;
+}
+function productRoute(path: string): void {
+  bg.setMood('secret');
+  const page = renderProductPage(path, location.search);
+  updateMeta(page.title, page.description);
+  app.innerHTML = `${nav(page.active)}${page.html}${footer()}`;
+  page.bind?.(go, render);
+}
+function updateMeta(title: string, description: string): void {
+  document.title = `دسّ — ${title}`;
+  const descriptionEl = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+  if (descriptionEl) descriptionEl.content = description;
+  const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]') ?? document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'canonical' }));
+  canonical.href = new URL(location.pathname, configuredPublicOrigin || location.origin).href;
+  document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute('content', canonical.href);
+  const preview = new URL('/og-preview.png', configuredPublicOrigin || location.origin).href;
+  document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.setAttribute('content', preview);
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:image"]')?.setAttribute('content', preview);
+  document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute('content', document.title);
+  document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute('content', description);
 }
 function bindMute(): void {
   qs('#mute')?.addEventListener('click', () => {
@@ -102,6 +167,60 @@ function bindMute(): void {
     if (!sfx.isMuted()) sfx.press();
     qs('#mute')!.innerHTML = uiIcon(sfx.isMuted() ? 'soundOff' : 'soundOn', 18);
   });
+}
+function bindChrome(): void {
+  const accountToggle = qs<HTMLButtonElement>('#account-toggle');
+  const accountPanel = qs<HTMLElement>('#account-panel');
+  const mobileToggle = qs<HTMLButtonElement>('#mobile-toggle');
+  const mobilePanel = qs<HTMLElement>('#mobile-panel');
+  const closeMenus = (): void => {
+    if (accountPanel) accountPanel.hidden = true;
+    if (accountToggle) accountToggle.setAttribute('aria-expanded', 'false');
+    if (mobilePanel) mobilePanel.hidden = true;
+    if (mobileToggle) mobileToggle.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('menu-open');
+  };
+  accountToggle?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (!accountPanel) return;
+    accountPanel.hidden = !accountPanel.hidden;
+    accountToggle.setAttribute('aria-expanded', String(!accountPanel.hidden));
+    if (!accountPanel.hidden) requestAnimationFrame(() => accountPanel.querySelector<HTMLElement>('a,button')?.focus());
+  });
+  mobileToggle?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (!mobilePanel) return;
+    mobilePanel.hidden = !mobilePanel.hidden;
+    mobileToggle.setAttribute('aria-expanded', String(!mobilePanel.hidden));
+    document.body.classList.toggle('menu-open', !mobilePanel.hidden);
+    if (!mobilePanel.hidden) requestAnimationFrame(() => mobilePanel.querySelector<HTMLElement>('a')?.focus());
+  });
+  const onClick = (event: Event): void => {
+    const target = event.target as Node;
+    if (!accountPanel?.contains(target) && !accountToggle?.contains(target) && !mobilePanel?.contains(target) && !mobileToggle?.contains(target)) closeMenus();
+  };
+  const onKey = (event: KeyboardEvent): void => {
+    if (event.key !== 'Escape') return;
+    const returnTo = !mobilePanel?.hidden ? mobileToggle : !accountPanel?.hidden ? accountToggle : null;
+    closeMenus(); returnTo?.focus();
+  };
+  document.addEventListener('click', onClick);
+  document.addEventListener('keydown', onKey);
+  cleanups.push(() => document.removeEventListener('click', onClick), () => document.removeEventListener('keydown', onKey), () => document.body.classList.remove('menu-open'));
+  qs('#nav-logout')?.addEventListener('click', async () => { await platform.signOut(); go('/'); });
+  qs('#nav-guest')?.addEventListener('click', async () => { await platform.continueAsGuest(); go('/account/profile'); });
+}
+function bindNetworkNotice(): void {
+  const paint = (): void => {
+    qs('#network-notice')?.remove();
+    if (navigator.onLine) return;
+    const banner = document.createElement('div');
+    banner.id = 'network-notice'; banner.className = 'network-notice'; banner.setAttribute('role', 'status');
+    banner.textContent = 'أنت غير متصل — صفحات الموقع قد تفتح، لكن إنشاء الغرف والانضمام يحتاجان إنترنت.';
+    document.body.append(banner);
+  };
+  addEventListener('online', paint); addEventListener('offline', paint); paint();
+  cleanups.push(() => { removeEventListener('online', paint); removeEventListener('offline', paint); qs('#network-notice')?.remove(); });
 }
 function moodObserver(): void {
   const io = new IntersectionObserver(
@@ -119,7 +238,7 @@ function home(): void {
   const firstVisit = !sessionStorage.getItem('dass_seen');
   sessionStorage.setItem('dass_seen', '1');
   app.innerHTML = `${nav()}
-  <main class="site">
+  <main id="main-content" class="site" tabindex="-1">
     <section class="hero" data-mood="calm">
       <div class="hero-bgart" id="heroart">${heroArt()}</div>
       <div class="hero-copy ${firstVisit ? 'intro' : ''}">
@@ -195,6 +314,13 @@ function home(): void {
       </div>
     </section>
 
+    <section class="scene home-commerce" data-mood="secret" data-reveal>
+      <div class="scene-head"><span class="eyebrow" data-rc>خلّها مجلسكم</span><h2 class="scene-title" data-rc>اللعبة كاملة… والمظهر على ذوقكم</h2><p class="muted commerce-intro" data-rc>الثيمات والمؤثرات تجميلية فقط. لا نقاط مدفوعة، ولا أفضلية لعب، ولا شراء عشوائي.</p></div>
+      <div class="home-store-grid">${PRODUCTS.slice(1, 4).map((product) => `<a data-link="/store/product?id=${product.id}" class="home-store-item" style="--accent:${product.accent}"><span>${escapeHtml(product.glyph)}</span><div><b>${escapeHtml(product.name)}</b><small>${formatPrice(product.price)}</small></div></a>`).join('')}</div>
+      <div class="home-plan-strip"><div><span class="eyebrow">الباقات</span><h3>ابدأ مجانًا، وطوّر التخصيص إذا احتجت</h3></div><div class="home-plan-names">${PLANS.map((plan) => `<span>${escapeHtml(plan.name)}</span>`).join('')}</div><a class="btn" data-link="/pricing">قارن الباقات</a></div>
+      <div class="home-device-row"><p><b>بدون تحميل</b><span>متصفح حديث على التلفاز والجوال.</span></p><p><b>من ٤ إلى ٨</b><span>شاشة واحدة، وقرار سري لكل لاعب.</span></p><p><b>وضع عرض صريح</b><span>الحساب والدفع محليان حتى توصيل المزود.</span></p></div>
+    </section>
+
     <section class="scene final" data-mood="win" data-reveal>
       <h2 class="final-title" data-rc>مجلسكم… ناقص دسّة</h2>
       <p class="final-sub" data-rc>اجمعوا الشلة، افتحوا الشاشة، وشوفوا مين يطلع أذكى واحد.</p>
@@ -257,7 +383,7 @@ function initCycle(): void {
 function create(): void {
   bg.setMood('secret');
   app.innerHTML = `${nav()}
-  <main class="page center-page">
+  <main id="main-content" class="page center-page" tabindex="-1">
     <div class="page-card panel" data-reveal>
       <span class="eyebrow" data-rc>غرفة جديدة</span>
       <h1 class="page-title" data-rc>افتح المسرح</h1>
@@ -286,7 +412,7 @@ function join(): void {
   bg.setMood('calm');
   const code = new URLSearchParams(location.search).get('code') ?? '';
   app.innerHTML = `${nav('join')}
-  <main class="page center-page">
+  <main id="main-content" class="page center-page" tabindex="-1">
     <div class="page-card panel" data-reveal>
       <span class="eyebrow" data-rc>انضمام</span>
       <h1 class="page-title" data-rc>خشّ المجلس</h1>
@@ -345,7 +471,7 @@ function howto(): void {
     ['var(--gold)', 'الخزنة', 'لما سهمك يطلع فوق، بيع وثبّته بالخزنة — رقم مقفول ما ينزل.'],
   ];
   app.innerHTML = `${nav('how')}
-  <main class="page howto">
+  <main id="main-content" class="page howto" tabindex="-1">
     <section class="howto-hero" data-reveal>
       <span class="eyebrow" data-rc>كيف تلعب</span>
       <h1 class="page-title big" data-rc>دسّ… من الصفر</h1>
@@ -480,15 +606,20 @@ function mockReveal(): string {
 function siteCss(): string {
   return `
   .site,.page{position:relative;z-index:var(--z-content)}
+  .skip-link{position:fixed;z-index:9999;top:8px;inset-inline-start:8px;transform:translateY(-160%);padding:10px 14px;border-radius:10px;background:var(--gold);color:var(--bg);font-weight:900;text-decoration:none}.skip-link:focus{transform:none}
+  .network-notice{position:fixed;z-index:9998;bottom:12px;left:50%;transform:translateX(-50%);width:min(620px,calc(100% - 24px));padding:13px 16px;border:1px solid color-mix(in srgb,var(--red) 45%,transparent);border-radius:12px;background:color-mix(in srgb,var(--bg-1) 94%,transparent);backdrop-filter:blur(12px);box-shadow:var(--shadow-3);color:var(--text);font-weight:800;text-align:center}
   .nav{position:sticky;top:0;z-index:var(--z-hud);display:flex;align-items:center;justify-content:space-between;gap:16px;
     padding:14px clamp(16px,4vw,48px);backdrop-filter:blur(12px);background:color-mix(in srgb,var(--bg) 70%,transparent);border-bottom:1px solid var(--line)}
   .nav-logo{display:flex;align-items:center;gap:8px;font-size:24px;text-decoration:none}
-  .nav-links{display:flex;align-items:center;gap:clamp(10px,2vw,22px)}
+  .nav-primary,.nav-links{display:flex;align-items:center;gap:clamp(10px,2vw,22px)}
   .nav-a{color:var(--text-2);text-decoration:none;font-weight:700;transition:color var(--t-micro)}
   .nav-a:hover,.nav-a.on{color:var(--text)}
   .nav-cta{min-height:44px;padding:10px 20px;text-decoration:none}
   .icon-btn.sm{width:40px;height:40px}
-  @media(max-width:640px){ .nav-a{display:none} }
+  .account-menu{position:relative}.account-toggle{min-height:42px;border:1px solid var(--line-2);background:var(--surface);color:var(--text-2);border-radius:var(--r-pill);font:inherit;font-weight:800;padding:5px 10px 5px 13px;display:flex;align-items:center;gap:8px;cursor:pointer}.account-toggle:hover,.account-toggle.on{border-color:var(--line-3);color:var(--text)}
+  .account-initial{width:29px;height:29px;border-radius:50%;display:grid;place-items:center;background:var(--surface-3);color:var(--gold);font-weight:900}.account-panel{position:absolute;top:calc(100% + 10px);inset-inline-end:0;min-width:190px;padding:7px;border:1px solid var(--line-2);border-radius:14px;background:color-mix(in srgb,var(--bg-1) 94%,transparent);backdrop-filter:blur(16px);box-shadow:var(--shadow-3)}.account-panel a,.account-panel button{display:block;width:100%;padding:11px 12px;border:0;border-radius:9px;background:transparent;color:var(--text-2);text-align:start;text-decoration:none;font:inherit;font-weight:700;cursor:pointer}.account-panel a:hover,.account-panel button:hover{background:var(--surface-3);color:var(--text)}
+  .mobile-toggle,.mobile-panel{display:none}.mobile-toggle span{font-size:20px;line-height:1}.mobile-panel{position:absolute;top:100%;inset-inline:12px;padding:10px;border:1px solid var(--line-2);border-radius:0 0 16px 16px;background:color-mix(in srgb,var(--bg-1) 96%,transparent);backdrop-filter:blur(16px);box-shadow:var(--shadow-3)}.mobile-panel a{display:block;padding:13px 12px;border-bottom:1px solid var(--line);color:var(--text-2);text-decoration:none;font-weight:800}.mobile-panel a:last-child{border:0}
+  body.menu-open{overflow:hidden}
 
   .btn.lg{padding:17px 34px;font-size:clamp(17px,2vw,21px);min-height:58px;text-decoration:none}
   .eyebrow{display:inline-block;font-size:var(--fs-label);font-weight:800;letter-spacing:.14em;color:var(--gold);text-transform:uppercase}
@@ -576,14 +707,15 @@ function siteCss(): string {
   .atmos-inner{max-width:780px}
   .atmos-q{font-size:clamp(28px,5.2vw,58px);font-weight:900;line-height:1.3;margin:14px 0 20px;background:linear-gradient(120deg,var(--red),var(--gold-2));-webkit-background-clip:text;background-clip:text;color:transparent;text-wrap:balance}
   .atmos-p{font-size:var(--fs-h3);line-height:1.9;color:var(--text-2)}
+  .commerce-intro{font-size:var(--fs-h3);line-height:1.7;max-width:58ch}.home-store-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.home-store-item{display:flex;align-items:center;gap:14px;padding:18px;border:1px solid var(--line-2);border-radius:var(--r-2);background:var(--surface);color:var(--text);text-decoration:none;transition:transform var(--t-comp),border-color var(--t-comp)}.home-store-item:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}.home-store-item>span{width:58px;height:58px;display:grid;place-items:center;border-radius:17px;background:color-mix(in srgb,var(--accent) 12%,var(--surface-3));color:var(--accent);font-size:20px;font-weight:900}.home-store-item>div{display:grid;gap:4px}.home-store-item small{color:var(--muted)}.home-plan-strip{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:18px;padding:24px;border:1px solid color-mix(in srgb,var(--gold) 32%,transparent);border-radius:var(--r-3);background:radial-gradient(circle at 80% 20%,color-mix(in srgb,var(--gold) 10%,transparent),transparent 45%),var(--surface)}.home-plan-strip h3{font-size:var(--fs-h3);margin:7px 0}.home-plan-names{display:flex;gap:7px;flex-wrap:wrap}.home-plan-names span{padding:7px 10px;border-radius:var(--r-pill);background:var(--surface-3);color:var(--text-2);font-size:13px;font-weight:800}.home-device-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}.home-device-row p{display:grid;gap:5px;margin:0;padding:18px;border-top:1px solid var(--line-2)}.home-device-row span{color:var(--muted);line-height:1.5}
   @media(min-width:861px) and (max-width:1100px){ .feat-grid{grid-template-columns:1fr 1fr} }
 
   .final{text-align:center;max-width:900px}
   .final-title{font-size:var(--fs-h1);font-weight:900;margin:0} .final-sub{font-size:var(--fs-h3);color:var(--text-2);margin:14px 0 30px}
   .final-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 
-  .foot{max-width:1180px;margin:0 auto;padding:40px clamp(20px,5vw,48px);display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid var(--line)}
-  .foot-brand{display:flex;align-items:center;gap:8px;font-size:22px} .foot-links{display:flex;gap:20px} .foot-a{color:var(--text-2);text-decoration:none;font-weight:700} .foot-a:hover{color:var(--text)}
+  .foot{max-width:1180px;margin:0 auto;padding:48px clamp(20px,5vw,48px);display:grid;grid-template-columns:150px 1fr;align-items:start;gap:36px;border-top:1px solid var(--line)}
+  .foot-brand{display:flex;align-items:center;gap:8px;font-size:22px}.foot-map{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}.foot-map>div{display:grid;align-content:start;gap:9px}.foot-map b{color:var(--text);margin-bottom:3px}.foot-map a{color:var(--muted);text-decoration:none;font-weight:700}.foot-map a:hover{color:var(--gold)}.foot-cap{grid-column:1/-1;border-top:1px solid var(--line);padding-top:18px;font-size:13px}
 
   .page{min-height:100dvh} .center-page{display:grid;place-items:center;padding:90px 20px}
   .page-card{width:100%;max-width:440px;padding:clamp(26px,5vw,40px);display:flex;flex-direction:column;gap:14px;text-align:center}
@@ -622,18 +754,22 @@ function siteCss(): string {
   @media(max-width:640px){ .ht-split,.actcards{grid-template-columns:1fr} }
 
   @media(max-width:860px){
+    .nav-primary{display:none}.mobile-toggle{display:grid}.mobile-panel:not([hidden]){display:block}.account-toggle>span:last-child{display:none}
     .hero{min-height:auto;display:flex;flex-direction:column;text-align:center;padding:42px 18px 70px;gap:18px}
     .hero::after{inset:20px 10px 30px;border-radius:28px}
     .hero-copy{order:1;width:100%;padding:18px 8px 0;background:none;border:0;max-width:620px}
     .hero-bgart{order:2;position:relative;inset:auto;top:auto;transform:none;width:min(92vw,520px);margin-top:6px}
     .hero-sub{margin-inline:auto}.hero-cta{justify-content:center}.scroll-hint{display:none}
-    .concept-grid,.betray,.steps-grid,.feat-grid{grid-template-columns:1fr}
+    .concept-grid,.betray,.steps-grid,.feat-grid,.home-store-grid,.home-device-row{grid-template-columns:1fr}
+    .home-plan-strip{align-items:flex-start;flex-direction:column}
     .betray-art{order:-1}
   }
   @media(max-width:480px){
+    .nav{padding:10px 12px}.nav-logo .wordmark{display:none}.nav-cta{padding-inline:13px}.account-menu{display:none}.nav-links{gap:7px}
     .hero{padding-top:26px}.hero-kicker{margin-bottom:8px}.hero-tag{font-size:clamp(25px,8vw,34px)}
     .hero-sub{font-size:15px;line-height:1.72;margin-bottom:20px}.hero-cta{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hero-cta .btn{padding-inline:12px}
     .hero-bgart{width:min(96vw,430px)}.scene{padding-block:72px}.cycle{height:280vh}
+    .foot{grid-template-columns:1fr}.foot-map{grid-template-columns:1fr 1fr}.foot-cap{grid-column:auto}
   }
   `;
 }

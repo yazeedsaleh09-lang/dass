@@ -11,3 +11,7 @@ services:
     envVars:
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
+      # Account, store checkout, receipts and support remain browser-local until
+      # production providers are implemented. The UI labels this mode explicitly.
+      - key: DASS_DEMO_MODE
+        value: "true"

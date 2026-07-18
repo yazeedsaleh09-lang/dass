@@ -13,6 +13,7 @@ const MIME: Record<string, string> = {
   '.ico': 'image/x-icon',
   '.webmanifest': 'application/manifest+json',
   '.png': 'image/png',
+  '.xml': 'application/xml; charset=utf-8',
 };
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -42,6 +43,35 @@ export function createDassHttpServer(tvDir: string, playerDir: string, siteDir: 
         if (url === '/health') {
           res.writeHead(200, headers('text/plain; charset=utf-8'));
           res.end('ok');
+          return;
+        }
+        if (url === '/sitemap.xml') {
+          const forwardedHost = String(req.headers['x-forwarded-host'] ?? req.headers.host ?? '').split(',')[0]!.trim();
+          if (!/^[a-z0-9.-]+(?::\d+)?$/i.test(forwardedHost)) {
+            res.writeHead(400, headers('text/plain; charset=utf-8'));
+            res.end('bad host');
+            return;
+          }
+          const forwardedProto = String(req.headers['x-forwarded-proto'] ?? '').split(',')[0]!.trim();
+          const protocol = forwardedProto === 'https' ? 'https' : 'http';
+          const origin = `${protocol}://${forwardedHost}`;
+          const routes = ['/', '/how-to-play', '/store', '/pricing', '/about', '/faq', '/support', '/status', '/changelog', '/legal/privacy', '/legal/terms', '/legal/refunds', '/legal/cookies'];
+          const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${routes.map((route) => `\n  <url><loc>${origin}${route}</loc></url>`).join('')}\n</urlset>\n`;
+          res.writeHead(200, headers(MIME['.xml']!, 'public, max-age=300'));
+          res.end(body);
+          return;
+        }
+        if (url === '/robots.txt') {
+          const forwardedHost = String(req.headers['x-forwarded-host'] ?? req.headers.host ?? '').split(',')[0]!.trim();
+          if (!/^[a-z0-9.-]+(?::\d+)?$/i.test(forwardedHost)) {
+            res.writeHead(400, headers('text/plain; charset=utf-8'));
+            res.end('bad host');
+            return;
+          }
+          const forwardedProto = String(req.headers['x-forwarded-proto'] ?? '').split(',')[0]!.trim();
+          const protocol = forwardedProto === 'https' ? 'https' : 'http';
+          res.writeHead(200, headers('text/plain; charset=utf-8', 'public, max-age=300'));
+          res.end(`User-agent: *\nAllow: /\nSitemap: ${protocol}://${forwardedHost}/sitemap.xml\n`);
           return;
         }
         if (url.startsWith('/api/rooms/')) {

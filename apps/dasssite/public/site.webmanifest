@@ -1,0 +1,15 @@
+{
+  "name": "دسّ — لعبة مجالس",
+  "short_name": "دسّ",
+  "description": "لعبة قرارات سرية للمجالس من ٤ إلى ٨ لاعبين.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#08070C",
+  "theme_color": "#08070C",
+  "icons": [
+    { "src": "/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

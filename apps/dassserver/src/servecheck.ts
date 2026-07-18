@@ -62,6 +62,18 @@ async function main(): Promise<void> {
     check(traversal.status === 404, 'encoded path traversal is rejected');
     check(site.headers.get('content-security-policy')?.includes("default-src 'self'") === true, 'security headers are attached');
 
+    const productPaths = ['/store', '/store/product', '/pricing', '/login', '/signup', '/account/settings', '/checkout', '/faq', '/support', '/legal/privacy', '/legal/refunds', '/not-a-real-route'];
+    const productResponses = await Promise.all(productPaths.map((route) => fetch(origin + route)));
+    const productBodies = await Promise.all(productResponses.map((response) => response.text()));
+    check(productResponses.every((response) => response.status === 200) && productBodies.every((body) => body.includes('<div id="app">')), 'all commercial routes and the client 404 refresh through the site shell');
+    const [manifest, preview, sitemap, robots] = await Promise.all([
+      fetch(`${origin}/site.webmanifest`), fetch(`${origin}/og-preview.png`), fetch(`${origin}/sitemap.xml`), fetch(`${origin}/robots.txt`),
+    ]);
+    check(manifest.status === 200 && manifest.headers.get('content-type')?.includes('manifest') === true, 'installable web manifest is served');
+    check(preview.status === 200 && preview.headers.get('content-type') === 'image/png', 'social preview image is served');
+    check(sitemap.status === 200 && (await sitemap.text()).includes(`${origin}/store`), 'sitemap derives its origin from the request host');
+    check(robots.status === 200 && (await robots.text()).includes(`${origin}/sitemap.xml`), 'robots advertises the same-origin sitemap');
+
     const room = await new Client(endpoint).create<unknown>('dass', { role: 'tv' });
     room.onMessage('state', () => {});
     room.onMessage('host', () => {});
