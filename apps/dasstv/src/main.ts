@@ -229,7 +229,7 @@ function updateLobby(v: ClientView, first = false): void {
       bg.flash('support');
     }
   }
-  if (allReady && first === false) sfx.ready();
+  if (canStart && first === false) sfx.ready();
 }
 
 function ghostSeat(seat: number): string {
@@ -264,6 +264,7 @@ function buildStage(v: ClientView): void {
         <span class="hud-round muted mono"></span>
         <span class="ring hud-ring" style="--rs:52px"></span>
       </header>
+      <div class="stage-prompt" id="prompt"></div>
       <div class="floor">${v.players.map(stageCol).join('')}</div>
       <div class="moment" id="moment"></div>
       <div class="waseet-slot" id="wslot"></div>
@@ -309,6 +310,31 @@ function updateStage(v: ClientView): void {
     lastSec = -1;
   }
   if (!v.phaseEndsAt) phaseEnd = 0;
+  updatePrompt(v);
+}
+
+/** Fills the dead band during input phases: what to do on the phone + a live countdown. */
+function updatePrompt(v: ClientView): void {
+  const prompt = qs<HTMLElement>('#prompt');
+  if (!prompt) return;
+  const inst =
+    v.phase === 'DECLARE'
+      ? 'أعلنوا نيّاتكم على جوّالاتكم'
+      : v.phase === 'REACTION_WINDOW'
+        ? 'غيّروا فعلكم… أو ثبّتوه'
+        : v.phase === 'LOCK'
+          ? 'اقفلوا فعلكم السرّي'
+          : '';
+  if (!inst) {
+    prompt.classList.remove('show');
+    prompt.dataset.phase = '';
+    return;
+  }
+  if (prompt.dataset.phase !== v.phase) {
+    prompt.dataset.phase = v.phase;
+    prompt.innerHTML = `<div class="prompt-text">${inst}</div><div class="prompt-count mono" id="pcount"></div>`;
+  }
+  prompt.classList.add('show');
 }
 
 function transitions(p: ClientView | null, v: ClientView): void {
@@ -532,6 +558,12 @@ function tick(): void {
     const sec = Math.ceil(remain / 1000);
     const urgent = sec <= 3 && sec > 0;
     ring.classList.toggle('urgent', urgent);
+    const pc = qs<HTMLElement>('#pcount');
+    if (pc) {
+      const txt = sec.toLocaleString('ar-EG');
+      if (pc.textContent !== txt) pc.textContent = txt;
+      pc.classList.toggle('urgent', urgent);
+    }
     if (sec !== lastSec && urgent) {
       lastSec = sec;
       sfx.countdown(true);
@@ -634,6 +666,13 @@ function tvCss(): string {
   .hud-ring{margin-inline-start:auto}
   .floor{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:clamp(14px,2.4vw,44px);position:relative;padding-bottom:8px}
   .col{flex:1;max-width:180px;min-width:96px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:12px}
+  .stage-prompt{position:absolute;top:11vh;left:0;right:0;z-index:2;display:none;flex-direction:column;align-items:center;gap:6px;text-align:center;pointer-events:none;opacity:0;transition:opacity .5s var(--e-out)}
+  .stage-prompt.show{display:flex;opacity:1;animation:promptIn .5s var(--e-out)}
+  .prompt-text{font-size:var(--fs-h2);font-weight:900;color:var(--text);text-wrap:balance}
+  .prompt-count{font-size:clamp(38px,7vh,72px);font-weight:900;line-height:1;color:var(--gold);letter-spacing:.02em}
+  .prompt-count.urgent{color:var(--red);animation:pulseUrgent .5s var(--e-out)}
+  @keyframes promptIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+  @keyframes pulseUrgent{from{transform:scale(1.18)}to{transform:scale(1)}}
   .col.is-off{opacity:.4}
   .col-recon{position:absolute;inset-inline:0;bottom:8px;display:none;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:800;color:var(--gold);text-align:center}
   .col.is-recon .col-recon{display:flex} .col.is-recon .bar{opacity:.25}
