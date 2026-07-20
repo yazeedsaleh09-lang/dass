@@ -1,4 +1,4 @@
-// Production-shaped single-host check: three separate apps (site / TV / player) + health +
+﻿// Production-shaped single-host check: three separate apps (site / TV / player) + health +
 // SPA fallback (refresh) + path safety + matchmaking/WebSocket on the same port.
 
 import path from 'node:path';
@@ -14,8 +14,8 @@ const origin = `http://localhost:${port}`;
 const endpoint = `ws://localhost:${port}`;
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const httpServer = createDassHttpServer(
-  path.resolve(dirname, '../../dasstv/public'),
-  path.resolve(dirname, '../../dassplayer/public'),
+  path.resolve(dirname, '../../bftv/public'),
+  path.resolve(dirname, '../../bfplayer/public'),
   path.resolve(dirname, '../../dasssite/public'),
 );
 const server = new Server({ transport: new WebSocketTransport({ server: httpServer }), greet: false });
@@ -52,8 +52,8 @@ async function main(): Promise<void> {
 
     check(health.status === 200 && (await health.text()) === 'ok', 'health endpoint responds');
     check(site.status === 200 && siteHtml.includes('<title>BACKFIRE — كل حركة لها عواقب</title>'), '/ serves the BACKFIRE site (not the game)');
-    check(tv.status === 200 && tvHtml.includes('<title>دسّ — TV</title>'), '/tv serves the TV app');
-    check(player.status === 200 && playerHtml.includes('<title>دسّ</title>') && !playerHtml.includes('— TV'), '/play serves the Player app');
+    check(tv.status === 200 && tvHtml.includes('<title>BACKFIRE — TV</title>'), '/tv serves the TV app');
+    check(player.status === 200 && playerHtml.includes('<title>BACKFIRE</title>') && !playerHtml.includes('— TV'), '/play serves the Player app');
     check(playerCode.status === 200 && playerNamed.status === 200, '/play query routes serve the same Player app shell');
     check(create.status === 200 && (await create.text()).includes('<title>BACKFIRE — كل حركة لها عواقب</title>'), '/create refresh works (SPA fallback → site)');
     check(join.status === 200 && (await join.text()).includes('<title>BACKFIRE — كل حركة لها عواقب</title>'), '/join refresh works (SPA fallback → site)');

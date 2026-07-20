@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { Server } from 'colyseus';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { DassRoom } from './room.js';
+import { BackfireRoom } from './backfire-room.js';
 import { createDassHttpServer } from './static.js';
 import { serverLog } from './log.js';
 
@@ -15,13 +16,14 @@ const publicUrl =
 // Single host: TV client at `/`, Player at `/play`, WS on the same origin (no CORS/mixed-content).
 // If a client isn't built, its route 404s and the WS server still runs.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const tvDir = path.resolve(__dirname, '../../dasstv/public');
-const playerDir = path.resolve(__dirname, '../../dassplayer/public');
+const tvDir = path.resolve(__dirname, '../../bftv/public');
+const playerDir = path.resolve(__dirname, '../../bfplayer/public');
 const siteDir = path.resolve(__dirname, '../../dasssite/public');
 const httpServer = createDassHttpServer(tvDir, playerDir, siteDir);
 
 const gameServer = new Server({ transport: new WebSocketTransport({ server: httpServer }) });
 gameServer.define('dass', DassRoom);
+gameServer.define('backfire', BackfireRoom);
 
 gameServer
   .listen(Number(port), '0.0.0.0')

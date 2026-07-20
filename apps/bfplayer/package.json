@@ -1,0 +1,10 @@
+{
+  "name": "@backfire/player",
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "@backfire/domain": "0.1.0",
+    "@backfire/ui": "0.1.0",
+    "colyseus.js": "^0.16.0"
+  }
+}

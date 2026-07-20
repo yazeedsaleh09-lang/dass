@@ -1,0 +1,162 @@
+// BACKFIRE — every visible string for the slice, in one place.
+// TV copy is short by rule: never a paragraph, never more than two lines on screen at once (§31).
+
+export const COPY = {
+  brand: 'BACKFIRE',
+  scenario: 'المُرحِّل المكسور',
+  tagline: 'كل حركة لها عواقب.',
+
+  // lobby
+  scanToJoin: 'امسح الرمز للانضمام',
+  orType: 'أو ادخل بالكود',
+  seats: 'المقاعد',
+  ready: 'جاهز',
+  notReady: 'بانتظاره',
+  needFive: 'الجولة الأولى تحتاج خمسة لاعبين بالضبط',
+  everyoneReady: 'الكل جاهز',
+  hostStarts: 'التلفاز يبدأ الجولة',
+  start: 'ابدأ',
+  youAreHost: 'هذه الشاشة تدير الجلسة',
+  emptySeat: 'مقعد فاضي',
+  waitingHost: 'بانتظار الشاشة',
+
+  // intro (§8)
+  introA: 'مُرحِّلٌ واحد. خمس حقائق ناقصة.',
+  introB: 'ما تقرّرونه في السرّ سيعود في العلن.',
+  introC: 'أبقوا التهديد بعيداً عن الانهيار. اتبعوا هدفكم. ثقوا بحذر.',
+
+  // world
+  threat: 'التهديد',
+  echo: 'الصدى',
+  echoOn: 'الصدى ملتصق بـ',
+  charge: 'الشحنة',
+  carrier: 'الحامل',
+  operator: 'المُشغِّل',
+  redirector: 'المحوِّل',
+  guardian: 'الحارس',
+  round: 'الجولة',
+
+  // round 1 (§9)
+  r1EventA: 'المُرحِّل تعطّل.',
+  r1EventB: 'اختاروا مُشغِّلاً واحداً لإصلاحه.',
+  intelArrived: 'وصلت معلومات خاصة إلى جوّالاتكم.',
+  intelRead: 'اقرأوا بتركيز. لا أحد يملك الصورة كاملة.',
+  r1Discussion: 'من يُصلح المُرحِّل؟',
+  r1Decision: 'صوّتوا سرّاً من جوّالاتكم',
+  relayBack: 'المُرحِّل يعمل من جديد.',
+  echoAttached: 'صدىً غير محسوم التصق بـ',
+  r1Aftershock: 'المُرحِّل يعمل — لكن الأثر لم ينتهِ.',
+  r1Prompt: 'مَن دفع هذا القرار أكثر من غيره؟',
+  r1Bridge: 'الصدى سيؤثّر على المسار القادم.',
+
+  // round 2 (§10)
+  r2EventA: 'النواة يجب أن تعبر المُرحِّل.',
+  r2EventB: 'اختاروا من يحملها.',
+  r2Discussion: 'من يحمل النواة؟',
+  r2Decision: 'نفّذوا أدواتكم سرّاً',
+  routeForming: 'المسار بدأ يتشكّل.',
+  routeDisrupted: 'مسارُ دعمٍ انقطع.',
+  routeChanged: 'المسار تغيّر.',
+  willCarry: 'سيحمل النواة',
+  echoRecognized: 'الصدى تعرّف على صاحبه.',
+  shieldBlocked: 'حمايةٌ خفيّة منعت الشحن.',
+  routeFailed: 'المسار انهار. لا أحد حمل النواة.',
+  r2Aftershock: 'أحدهم غيّر المسار.',
+  r2Prompt: 'من تدخّل؟',
+  r2Prompt2: 'أحدكم قال شيئاً وفعل غيره.',
+  r2Bridge: 'الصدى عائد الآن.',
+  tiebreak: 'تعادل. صوّتوا لكسر التعادل.',
+  tiebreakSeat: 'استمر التعادل، فحُسم بترتيب المقاعد.',
+
+  // round 3 (§19)
+  r3EventA: 'الصدى عائد.',
+  r3EventB: 'إمّا أن تحتووه — أو ترسلوه إلى مكانٍ آخر.',
+  r3Discussion: 'احتواء… أم تحويل؟',
+  r3Decision: 'اختاروا جانبكم سرّاً',
+  redirectSide: 'التحويل',
+  shieldSide: 'الدرع',
+  contained: 'الصدى احتُوي.',
+  bounced: 'الحماية رفضت الصدى.',
+  returnedTo: 'العاقبة رجعت إلى',
+  landedOn: 'الصدى نزل على',
+
+  // reveal / results
+  finalTitle: 'كيف حدث هذا',
+  resultsTitle: 'النتيجة',
+  influence: 'نفوذ',
+  winner: 'الفائز',
+  coWinners: 'فائزون',
+  collapseTitle: 'انهيار',
+  collapseLine: 'تركتم النظام ينهار. لا أحد فاز.',
+  playAgain: 'جولة ثانية',
+  newCrew: 'مجموعة جديدة',
+
+  // phone
+  join: 'انضم',
+  namePlaceholder: 'اسمك',
+  codePlaceholder: 'كود الغرفة',
+  yourIntel: 'معلومتك',
+  yourObjective: 'هدفك',
+  keepPrivate: 'خلّ شاشتك لك وحدك.',
+  continueRead: 'قرأتها',
+  waitingOthers: 'بانتظار البقية…',
+  lookUp: 'ارفع نظرك للشاشة.',
+  locked: 'قرارك مقفل.',
+  lockedSub: 'شوف الشاشة.',
+  confirm: 'ثبّت',
+  change: 'غيّر',
+  chooseOne: 'اختر واحداً',
+  chooseSource: 'من أين تنقل الدعم؟',
+  chooseDest: 'إلى أين؟',
+  discussNow: 'تكلّموا الآن',
+  noAction: 'لا حركة لك في هذه اللحظة.',
+  reconnecting: 'جارٍ إعادة الاتصال…',
+  restored: 'رجعت لمقعدك.',
+  disconnected: 'انقطع الاتصال.',
+  recoveryExpired: 'انتهت مهلة العودة. تقدر تتفرّج فقط.',
+  roomFull: 'الغرفة مكتملة.',
+  roomClosed: 'الجولة بدأت أو انتهت.',
+  roomNotFound: 'ما لقينا هذي الغرفة.',
+  invalidCode: 'الكود غير صحيح.',
+  emptyName: 'اكتب اسمك.',
+  nameTooLong: 'الاسم طويل.',
+  unsupportedName: 'الاسم غير مدعوم.',
+  genericError: 'صار خطأ. جرّب مرة ثانية.',
+
+  // tool names on the phone
+  toolVote: 'صوتك',
+  toolSupport: 'ادعم لاعباً',
+  toolDisrupt: 'عطّل لاعباً',
+  toolRedirect: 'انقل دعماً',
+  toolShield: 'احمِ لاعباً',
+  toolSide: 'انحياز',
+  toolEchoTarget: 'إلى من ترسل الصدى؟',
+  toolEchoShield: 'من تحمي؟',
+  supportHint: '+١ لقوة مساره',
+  disruptHint: '−١ من قوة مساره',
+  redirectHint: 'ينجح فقط إذا كان على المصدر دعمٌ موجب',
+  shieldHint: 'يمنع شحن الصدى هذه الجولة',
+  abstain: 'امتناع',
+
+  // accessibility captions for critical sound cues (§32)
+  cueDisrupt: '[صوت قطع]',
+  cueRedirect: '[صوت تحويل]',
+  cueShield: '[صوت درع]',
+  cueBackfire: '[صوت ارتداد]',
+  cueCollapse: '[صوت انهيار]',
+} as const;
+
+export const WORLD_TEXT: Record<string, string> = {
+  stable: 'مستقر',
+  unstable: 'مضطرب',
+  critical: 'حرِج',
+  collapse: 'انهيار',
+};
+
+export const ECHO_TEXT: Record<string, string> = {
+  none: '—',
+  dormant: 'خامل',
+  charged: 'مشحون',
+  critical: 'حرِج',
+  resolved: 'محسوم',
+};
