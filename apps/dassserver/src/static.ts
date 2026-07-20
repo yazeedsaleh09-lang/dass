@@ -57,7 +57,7 @@ export function createDassHttpServer(tvDir: string, playerDir: string, siteDir: 
           const forwardedProto = String(req.headers['x-forwarded-proto'] ?? '').split(',')[0]!.trim();
           const protocol = forwardedProto === 'https' ? 'https' : 'http';
           const origin = `${protocol}://${forwardedHost}`;
-          const routes = ['/', '/how-to-play', '/store', '/pricing', '/about', '/faq', '/support', '/status', '/changelog', '/legal/privacy', '/legal/terms', '/legal/refunds', '/legal/cookies'];
+          const routes = ['/', '/how-to-play', '/modes', '/store', '/pricing', '/about', '/faq', '/support', '/status', '/changelog', '/legal/privacy', '/legal/terms', '/legal/refunds', '/legal/cookies'];
           const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${routes.map((route) => `\n  <url><loc>${origin}${route}</loc></url>`).join('')}\n</urlset>\n`;
           res.writeHead(200, headers(MIME['.xml']!, 'public, max-age=300'));
           res.end(body);

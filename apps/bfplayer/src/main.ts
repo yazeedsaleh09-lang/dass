@@ -14,6 +14,7 @@ import {
   WORLD_TEXT,
   addStyle,
   arNum,
+  arDigits,
   escapeHtml,
   haptic,
   injectBase,
@@ -615,7 +616,7 @@ function resultsScreen(v: BfClientView): void {
     <section class="results">
       <div class="eyebrow">${COPY.resultsTitle}</div>
       <h1 class="rs-me">${v.sharedFailure ? COPY.collapseTitle : won ? COPY.winner : `${arNum(me?.influence ?? 0)} ${COPY.influence}`}</h1>
-      <p class="rs-line">${escapeHtml(v.finalReveal?.summary ?? '')}</p>
+      <p class="rs-line">${escapeHtml(arDigits(v.finalReveal?.summary ?? ''))}</p>
       <div class="rs-objs">
         ${(me?.objectivesWon ?? [])
           .map((ok, i) => `<span class="rs-obj ${ok ? 'won' : ''}">${COPY.round} ${arNum(i + 1)}</span>`)

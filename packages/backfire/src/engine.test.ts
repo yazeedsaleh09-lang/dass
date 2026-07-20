@@ -374,29 +374,141 @@ describe('determinism', () => {
   });
 });
 
+const CANON = ['first_choice', 'hidden_interference', 'changed_path', 'protection', 'backfire'] as const;
+const FILLER = ['لم يقع أي تعطيل', 'لم يُنقل أي دعم', 'بلا حماية مستخدَمة'];
+/** True when `ids` appears inside CANON in order (omissions allowed, no reordering). */
+function isCausalSubsequence(ids: string[]): boolean {
+  let k = 0;
+  for (const id of ids) {
+    while (k < CANON.length && CANON[k] !== id) k++;
+    if (k >= CANON.length) return false;
+    k++;
+  }
+  return true;
+}
+
 describe('final reveal', () => {
-  it('produces exactly five cards and a one-sentence causal summary', () => {
+  it('opens on the first choice, lands on the outcome, and keeps causal order with no filler', () => {
     const game = newGame();
     for (let i = 0; i < 40 && game.phase !== 'RESULTS'; i++) {
       autoDecide(game);
       advancePhase(game);
     }
     const reveal = buildFinalReveal(game);
-    expect(reveal.cards).toHaveLength(5);
-    expect(reveal.cards.map((c) => c.id)).toEqual([
-      'first_choice',
-      'hidden_interference',
-      'changed_path',
-      'protection',
-      'backfire',
-    ]);
+    const ids = reveal.cards.map((c) => c.id);
+    expect(ids[0]).toBe('first_choice'); // origin is load-bearing — always first
+    expect(ids[ids.length - 1]).toBe('backfire'); // outcome is load-bearing — always last
+    expect(isCausalSubsequence(ids)).toBe(true); // omission never reorders the chain
+    expect(reveal.cards.length).toBeGreaterThanOrEqual(2);
+    expect(reveal.cards.length).toBeLessThanOrEqual(5);
     for (const card of reveal.cards) expect(card.line.length).toBeGreaterThan(8);
     expect(reveal.summary.split('.').filter((s) => s.trim()).length).toBe(1);
     expect(reveal.origin).toContain('بدأ الصدى');
-    // Generated Arabic must not assume gender agreement: player names are free text.
+    // No card ever announces that nothing happened.
     const generated = [reveal.summary, reveal.origin, ...reveal.cards.map((c) => c.line)].join(' ');
+    for (const filler of FILLER) expect(generated).not.toContain(filler);
+    // Generated Arabic must not assume gender agreement: player names are free text.
     for (const gendered of ['اختير ', 'عطّل ', ' حمى ', 'نقل دعماً', 'محميّاً', 'غيره.']) {
       expect(generated).not.toContain(gendered);
     }
+  });
+
+  it('compresses beats that never happened while still showing why the outcome landed', () => {
+    // Only the two Supports and the Redirector's aim + sides are ever cast: no Disrupt, no
+    // Redirect move, no Guardian protection. Those three cards must simply not appear.
+    const game = newGame();
+    runTo(game, 'R1_DECISION', () => {});
+    for (const p of game.players) submitDecision(game, p.id, { kind: 'vote', target: game.r1.stableId });
+    runTo(game, 'R2_DECISION', () => {});
+    const supporters = game.players.filter((p) => p.roundTool === 'support');
+    const backed = game.players[0]!.id;
+    for (const s of supporters) submitDecision(game, s.id, { kind: 'support', target: backed });
+    advancePhase(game); // clean single carrier, no tie-break
+    runTo(game, 'R3_DECISION', () => {});
+    const redirector = game.r3.redirectorId!;
+    const others = game.players.filter((p) => p.id !== redirector && p.id !== game.r3.guardianId);
+    submitDecision(game, redirector, { kind: 'echo_target', target: others[0]!.id });
+    for (const p of others) submitDecision(game, p.id, { kind: 'side', side: 'redirect' });
+    advancePhase(game);
+
+    const reveal = buildFinalReveal(game);
+    const ids = reveal.cards.map((c) => c.id);
+    expect(ids[0]).toBe('first_choice');
+    expect(ids[ids.length - 1]).toBe('backfire');
+    expect(ids).not.toContain('hidden_interference');
+    expect(ids).not.toContain('changed_path');
+    expect(ids).not.toContain('protection');
+    expect(reveal.cards.length).toBeLessThan(5);
+    // The causal floor still holds: summary + origin explain the whole chain.
+    expect(reveal.summary.split('.').filter((s) => s.trim()).length).toBe(1);
+    expect(reveal.origin).toContain('بدأ الصدى');
+    const text = reveal.cards.map((c) => c.line).join(' ');
+    for (const filler of FILLER) expect(text).not.toContain(filler);
+  });
+
+  it('still keeps a beat that happened but changed nothing (betrayal is shown, not hidden)', () => {
+    // A Disrupt that lands but does not flip the carrier is still surfaced — the fact someone
+    // tried is the thing the room argues about.
+    const game = newGame();
+    runTo(game, 'R1_DECISION', () => {});
+    for (const p of game.players) submitDecision(game, p.id, { kind: 'vote', target: game.r1.stableId });
+    runTo(game, 'R2_DECISION', () => {});
+    const supporters = game.players.filter((p) => p.roundTool === 'support').map((p) => p.id);
+    const backed = game.players[0]!.id;
+    for (const s of supporters) submitDecision(game, s, { kind: 'support', target: backed });
+    // Disrupt a player who has no support: it lands (-1) but cannot change the carrier.
+    submitDecision(game, holderOf(game, 'disrupt'), { kind: 'disrupt', target: game.players[3]!.id });
+    advancePhase(game);
+    runTo(game, 'RESULTS', autoDecide);
+    const reveal = buildFinalReveal(game);
+    const disruptCard = reveal.cards.find((c) => c.id === 'hidden_interference');
+    expect(disruptCard).toBeDefined();
+    expect(disruptCard!.line).toContain('لم يتغيّر'); // shown as "carrier did not change", not dropped
+  });
+});
+
+describe('round 1 minority objective', () => {
+  const holderId = (g: BfGame): string => g.players.find((p) => p.privateObjectiveId === 'r1o_minority')!.id;
+
+  it('is real agency for the holder — never an automatic win', () => {
+    // Game A: the holder votes WITH the majority → must NOT win the objective.
+    const a = newGame();
+    runTo(a, 'R1_DECISION', () => {});
+    const ca = a.r1.candidateIds[0];
+    for (const p of a.players) submitDecision(a, p.id, { kind: 'vote', target: ca });
+    advancePhase(a);
+    const ha = a.players.find((p) => p.id === holderId(a))!;
+    expect(a.r1.operatorId).toBe(ca);
+    expect(ha.objectivesWon[0]).toBe(false);
+
+    // Game B (same seed → identical holder + candidates): only the holder's own vote differs,
+    // and that single losing vote is what flips the objective to a win.
+    const b = newGame();
+    runTo(b, 'R1_DECISION', () => {});
+    const [cb0, cb1] = b.r1.candidateIds;
+    const hbId = holderId(b);
+    for (const p of b.players) submitDecision(b, p.id, { kind: 'vote', target: p.id === hbId ? cb1 : cb0 });
+    advancePhase(b);
+    expect(b.r1.operatorId).toBe(cb0); // a 4–1 majority still elects the same Operator
+    const hb = b.players.find((p) => p.id === hbId)!;
+    expect(hb.objectivesWon[0]).toBe(true);
+  });
+
+  it('does not award the objective on a tie (no minority exists)', () => {
+    // Two players, split 2–2 with one abstaining voter forced onto stable by the tie default.
+    const game = newGame();
+    runTo(game, 'R1_DECISION', () => {});
+    const [c0, c1] = game.r1.candidateIds;
+    const ids = game.players.map((p) => p.id);
+    // 2 vs 2 vs 1 for c0 → make it an exact tie: two for c0, two for c1, and the last also c0? No:
+    // force a clean tie by voting two each and skipping the fifth (disconnected-style).
+    submitDecision(game, ids[0]!, { kind: 'vote', target: c0 });
+    submitDecision(game, ids[1]!, { kind: 'vote', target: c0 });
+    submitDecision(game, ids[2]!, { kind: 'vote', target: c1 });
+    submitDecision(game, ids[3]!, { kind: 'vote', target: c1 });
+    advancePhase(game);
+    expect(game.r1.tiedDefault).toBe(true);
+    const holder = game.players.find((p) => p.id === holderId(game))!;
+    expect(holder.objectivesWon[0]).toBe(false);
   });
 });

@@ -1,1767 +1,6 @@
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __commonJS = (cb, mod) => function __require() {
-  try {
-    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-  } catch (e) {
-    throw mod = 0, e;
-  }
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-
-// node_modules/qrcode-generator/qrcode.js
-var require_qrcode = __commonJS({
-  "node_modules/qrcode-generator/qrcode.js"(exports, module) {
-    var qrcode2 = (function() {
-      var qrcode3 = function(typeNumber, errorCorrectionLevel) {
-        var PAD0 = 236;
-        var PAD1 = 17;
-        var _typeNumber = typeNumber;
-        var _errorCorrectionLevel = QRErrorCorrectionLevel[errorCorrectionLevel];
-        var _modules = null;
-        var _moduleCount = 0;
-        var _dataCache = null;
-        var _dataList = [];
-        var _this = {};
-        var makeImpl = function(test, maskPattern) {
-          _moduleCount = _typeNumber * 4 + 17;
-          _modules = (function(moduleCount) {
-            var modules = new Array(moduleCount);
-            for (var row = 0; row < moduleCount; row += 1) {
-              modules[row] = new Array(moduleCount);
-              for (var col = 0; col < moduleCount; col += 1) {
-                modules[row][col] = null;
-              }
-            }
-            return modules;
-          })(_moduleCount);
-          setupPositionProbePattern(0, 0);
-          setupPositionProbePattern(_moduleCount - 7, 0);
-          setupPositionProbePattern(0, _moduleCount - 7);
-          setupPositionAdjustPattern();
-          setupTimingPattern();
-          setupTypeInfo(test, maskPattern);
-          if (_typeNumber >= 7) {
-            setupTypeNumber(test);
-          }
-          if (_dataCache == null) {
-            _dataCache = createData(_typeNumber, _errorCorrectionLevel, _dataList);
-          }
-          mapData(_dataCache, maskPattern);
-        };
-        var setupPositionProbePattern = function(row, col) {
-          for (var r = -1; r <= 7; r += 1) {
-            if (row + r <= -1 || _moduleCount <= row + r) continue;
-            for (var c = -1; c <= 7; c += 1) {
-              if (col + c <= -1 || _moduleCount <= col + c) continue;
-              if (0 <= r && r <= 6 && (c == 0 || c == 6) || 0 <= c && c <= 6 && (r == 0 || r == 6) || 2 <= r && r <= 4 && 2 <= c && c <= 4) {
-                _modules[row + r][col + c] = true;
-              } else {
-                _modules[row + r][col + c] = false;
-              }
-            }
-          }
-        };
-        var getBestMaskPattern = function() {
-          var minLostPoint = 0;
-          var pattern = 0;
-          for (var i = 0; i < 8; i += 1) {
-            makeImpl(true, i);
-            var lostPoint = QRUtil.getLostPoint(_this);
-            if (i == 0 || minLostPoint > lostPoint) {
-              minLostPoint = lostPoint;
-              pattern = i;
-            }
-          }
-          return pattern;
-        };
-        var setupTimingPattern = function() {
-          for (var r = 8; r < _moduleCount - 8; r += 1) {
-            if (_modules[r][6] != null) {
-              continue;
-            }
-            _modules[r][6] = r % 2 == 0;
-          }
-          for (var c = 8; c < _moduleCount - 8; c += 1) {
-            if (_modules[6][c] != null) {
-              continue;
-            }
-            _modules[6][c] = c % 2 == 0;
-          }
-        };
-        var setupPositionAdjustPattern = function() {
-          var pos = QRUtil.getPatternPosition(_typeNumber);
-          for (var i = 0; i < pos.length; i += 1) {
-            for (var j = 0; j < pos.length; j += 1) {
-              var row = pos[i];
-              var col = pos[j];
-              if (_modules[row][col] != null) {
-                continue;
-              }
-              for (var r = -2; r <= 2; r += 1) {
-                for (var c = -2; c <= 2; c += 1) {
-                  if (r == -2 || r == 2 || c == -2 || c == 2 || r == 0 && c == 0) {
-                    _modules[row + r][col + c] = true;
-                  } else {
-                    _modules[row + r][col + c] = false;
-                  }
-                }
-              }
-            }
-          }
-        };
-        var setupTypeNumber = function(test) {
-          var bits = QRUtil.getBCHTypeNumber(_typeNumber);
-          for (var i = 0; i < 18; i += 1) {
-            var mod = !test && (bits >> i & 1) == 1;
-            _modules[Math.floor(i / 3)][i % 3 + _moduleCount - 8 - 3] = mod;
-          }
-          for (var i = 0; i < 18; i += 1) {
-            var mod = !test && (bits >> i & 1) == 1;
-            _modules[i % 3 + _moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
-          }
-        };
-        var setupTypeInfo = function(test, maskPattern) {
-          var data = _errorCorrectionLevel << 3 | maskPattern;
-          var bits = QRUtil.getBCHTypeInfo(data);
-          for (var i = 0; i < 15; i += 1) {
-            var mod = !test && (bits >> i & 1) == 1;
-            if (i < 6) {
-              _modules[i][8] = mod;
-            } else if (i < 8) {
-              _modules[i + 1][8] = mod;
-            } else {
-              _modules[_moduleCount - 15 + i][8] = mod;
-            }
-          }
-          for (var i = 0; i < 15; i += 1) {
-            var mod = !test && (bits >> i & 1) == 1;
-            if (i < 8) {
-              _modules[8][_moduleCount - i - 1] = mod;
-            } else if (i < 9) {
-              _modules[8][15 - i - 1 + 1] = mod;
-            } else {
-              _modules[8][15 - i - 1] = mod;
-            }
-          }
-          _modules[_moduleCount - 8][8] = !test;
-        };
-        var mapData = function(data, maskPattern) {
-          var inc = -1;
-          var row = _moduleCount - 1;
-          var bitIndex = 7;
-          var byteIndex = 0;
-          var maskFunc = QRUtil.getMaskFunction(maskPattern);
-          for (var col = _moduleCount - 1; col > 0; col -= 2) {
-            if (col == 6) col -= 1;
-            while (true) {
-              for (var c = 0; c < 2; c += 1) {
-                if (_modules[row][col - c] == null) {
-                  var dark = false;
-                  if (byteIndex < data.length) {
-                    dark = (data[byteIndex] >>> bitIndex & 1) == 1;
-                  }
-                  var mask = maskFunc(row, col - c);
-                  if (mask) {
-                    dark = !dark;
-                  }
-                  _modules[row][col - c] = dark;
-                  bitIndex -= 1;
-                  if (bitIndex == -1) {
-                    byteIndex += 1;
-                    bitIndex = 7;
-                  }
-                }
-              }
-              row += inc;
-              if (row < 0 || _moduleCount <= row) {
-                row -= inc;
-                inc = -inc;
-                break;
-              }
-            }
-          }
-        };
-        var createBytes = function(buffer, rsBlocks) {
-          var offset = 0;
-          var maxDcCount = 0;
-          var maxEcCount = 0;
-          var dcdata = new Array(rsBlocks.length);
-          var ecdata = new Array(rsBlocks.length);
-          for (var r = 0; r < rsBlocks.length; r += 1) {
-            var dcCount = rsBlocks[r].dataCount;
-            var ecCount = rsBlocks[r].totalCount - dcCount;
-            maxDcCount = Math.max(maxDcCount, dcCount);
-            maxEcCount = Math.max(maxEcCount, ecCount);
-            dcdata[r] = new Array(dcCount);
-            for (var i = 0; i < dcdata[r].length; i += 1) {
-              dcdata[r][i] = 255 & buffer.getBuffer()[i + offset];
-            }
-            offset += dcCount;
-            var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
-            var rawPoly = qrPolynomial(dcdata[r], rsPoly.getLength() - 1);
-            var modPoly = rawPoly.mod(rsPoly);
-            ecdata[r] = new Array(rsPoly.getLength() - 1);
-            for (var i = 0; i < ecdata[r].length; i += 1) {
-              var modIndex = i + modPoly.getLength() - ecdata[r].length;
-              ecdata[r][i] = modIndex >= 0 ? modPoly.getAt(modIndex) : 0;
-            }
-          }
-          var totalCodeCount = 0;
-          for (var i = 0; i < rsBlocks.length; i += 1) {
-            totalCodeCount += rsBlocks[i].totalCount;
-          }
-          var data = new Array(totalCodeCount);
-          var index = 0;
-          for (var i = 0; i < maxDcCount; i += 1) {
-            for (var r = 0; r < rsBlocks.length; r += 1) {
-              if (i < dcdata[r].length) {
-                data[index] = dcdata[r][i];
-                index += 1;
-              }
-            }
-          }
-          for (var i = 0; i < maxEcCount; i += 1) {
-            for (var r = 0; r < rsBlocks.length; r += 1) {
-              if (i < ecdata[r].length) {
-                data[index] = ecdata[r][i];
-                index += 1;
-              }
-            }
-          }
-          return data;
-        };
-        var createData = function(typeNumber2, errorCorrectionLevel2, dataList) {
-          var rsBlocks = QRRSBlock.getRSBlocks(typeNumber2, errorCorrectionLevel2);
-          var buffer = qrBitBuffer();
-          for (var i = 0; i < dataList.length; i += 1) {
-            var data = dataList[i];
-            buffer.put(data.getMode(), 4);
-            buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber2));
-            data.write(buffer);
-          }
-          var totalDataCount = 0;
-          for (var i = 0; i < rsBlocks.length; i += 1) {
-            totalDataCount += rsBlocks[i].dataCount;
-          }
-          if (buffer.getLengthInBits() > totalDataCount * 8) {
-            throw "code length overflow. (" + buffer.getLengthInBits() + ">" + totalDataCount * 8 + ")";
-          }
-          if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
-            buffer.put(0, 4);
-          }
-          while (buffer.getLengthInBits() % 8 != 0) {
-            buffer.putBit(false);
-          }
-          while (true) {
-            if (buffer.getLengthInBits() >= totalDataCount * 8) {
-              break;
-            }
-            buffer.put(PAD0, 8);
-            if (buffer.getLengthInBits() >= totalDataCount * 8) {
-              break;
-            }
-            buffer.put(PAD1, 8);
-          }
-          return createBytes(buffer, rsBlocks);
-        };
-        _this.addData = function(data, mode) {
-          mode = mode || "Byte";
-          var newData = null;
-          switch (mode) {
-            case "Numeric":
-              newData = qrNumber(data);
-              break;
-            case "Alphanumeric":
-              newData = qrAlphaNum(data);
-              break;
-            case "Byte":
-              newData = qr8BitByte(data);
-              break;
-            case "Kanji":
-              newData = qrKanji(data);
-              break;
-            default:
-              throw "mode:" + mode;
-          }
-          _dataList.push(newData);
-          _dataCache = null;
-        };
-        _this.isDark = function(row, col) {
-          if (row < 0 || _moduleCount <= row || col < 0 || _moduleCount <= col) {
-            throw row + "," + col;
-          }
-          return _modules[row][col];
-        };
-        _this.getModuleCount = function() {
-          return _moduleCount;
-        };
-        _this.make = function() {
-          if (_typeNumber < 1) {
-            var typeNumber2 = 1;
-            for (; typeNumber2 < 40; typeNumber2++) {
-              var rsBlocks = QRRSBlock.getRSBlocks(typeNumber2, _errorCorrectionLevel);
-              var buffer = qrBitBuffer();
-              for (var i = 0; i < _dataList.length; i++) {
-                var data = _dataList[i];
-                buffer.put(data.getMode(), 4);
-                buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber2));
-                data.write(buffer);
-              }
-              var totalDataCount = 0;
-              for (var i = 0; i < rsBlocks.length; i++) {
-                totalDataCount += rsBlocks[i].dataCount;
-              }
-              if (buffer.getLengthInBits() <= totalDataCount * 8) {
-                break;
-              }
-            }
-            _typeNumber = typeNumber2;
-          }
-          makeImpl(false, getBestMaskPattern());
-        };
-        _this.createTableTag = function(cellSize, margin) {
-          cellSize = cellSize || 2;
-          margin = typeof margin == "undefined" ? cellSize * 4 : margin;
-          var qrHtml = "";
-          qrHtml += '<table style="';
-          qrHtml += " border-width: 0px; border-style: none;";
-          qrHtml += " border-collapse: collapse;";
-          qrHtml += " padding: 0px; margin: " + margin + "px;";
-          qrHtml += '">';
-          qrHtml += "<tbody>";
-          for (var r = 0; r < _this.getModuleCount(); r += 1) {
-            qrHtml += "<tr>";
-            for (var c = 0; c < _this.getModuleCount(); c += 1) {
-              qrHtml += '<td style="';
-              qrHtml += " border-width: 0px; border-style: none;";
-              qrHtml += " border-collapse: collapse;";
-              qrHtml += " padding: 0px; margin: 0px;";
-              qrHtml += " width: " + cellSize + "px;";
-              qrHtml += " height: " + cellSize + "px;";
-              qrHtml += " background-color: ";
-              qrHtml += _this.isDark(r, c) ? "#000000" : "#ffffff";
-              qrHtml += ";";
-              qrHtml += '"/>';
-            }
-            qrHtml += "</tr>";
-          }
-          qrHtml += "</tbody>";
-          qrHtml += "</table>";
-          return qrHtml;
-        };
-        _this.createSvgTag = function(cellSize, margin, alt, title) {
-          var opts = {};
-          if (typeof arguments[0] == "object") {
-            opts = arguments[0];
-            cellSize = opts.cellSize;
-            margin = opts.margin;
-            alt = opts.alt;
-            title = opts.title;
-          }
-          cellSize = cellSize || 2;
-          margin = typeof margin == "undefined" ? cellSize * 4 : margin;
-          alt = typeof alt === "string" ? { text: alt } : alt || {};
-          alt.text = alt.text || null;
-          alt.id = alt.text ? alt.id || "qrcode-description" : null;
-          title = typeof title === "string" ? { text: title } : title || {};
-          title.text = title.text || null;
-          title.id = title.text ? title.id || "qrcode-title" : null;
-          var size = _this.getModuleCount() * cellSize + margin * 2;
-          var c, mc, r, mr, qrSvg2 = "", rect2;
-          rect2 = "l" + cellSize + ",0 0," + cellSize + " -" + cellSize + ",0 0,-" + cellSize + "z ";
-          qrSvg2 += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"';
-          qrSvg2 += !opts.scalable ? ' width="' + size + 'px" height="' + size + 'px"' : "";
-          qrSvg2 += ' viewBox="0 0 ' + size + " " + size + '" ';
-          qrSvg2 += ' preserveAspectRatio="xMinYMin meet"';
-          qrSvg2 += title.text || alt.text ? ' role="img" aria-labelledby="' + escapeXml([title.id, alt.id].join(" ").trim()) + '"' : "";
-          qrSvg2 += ">";
-          qrSvg2 += title.text ? '<title id="' + escapeXml(title.id) + '">' + escapeXml(title.text) + "</title>" : "";
-          qrSvg2 += alt.text ? '<description id="' + escapeXml(alt.id) + '">' + escapeXml(alt.text) + "</description>" : "";
-          qrSvg2 += '<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>';
-          qrSvg2 += '<path d="';
-          for (r = 0; r < _this.getModuleCount(); r += 1) {
-            mr = r * cellSize + margin;
-            for (c = 0; c < _this.getModuleCount(); c += 1) {
-              if (_this.isDark(r, c)) {
-                mc = c * cellSize + margin;
-                qrSvg2 += "M" + mc + "," + mr + rect2;
-              }
-            }
-          }
-          qrSvg2 += '" stroke="transparent" fill="black"/>';
-          qrSvg2 += "</svg>";
-          return qrSvg2;
-        };
-        _this.createDataURL = function(cellSize, margin) {
-          cellSize = cellSize || 2;
-          margin = typeof margin == "undefined" ? cellSize * 4 : margin;
-          var size = _this.getModuleCount() * cellSize + margin * 2;
-          var min = margin;
-          var max = size - margin;
-          return createDataURL(size, size, function(x, y) {
-            if (min <= x && x < max && min <= y && y < max) {
-              var c = Math.floor((x - min) / cellSize);
-              var r = Math.floor((y - min) / cellSize);
-              return _this.isDark(r, c) ? 0 : 1;
-            } else {
-              return 1;
-            }
-          });
-        };
-        _this.createImgTag = function(cellSize, margin, alt) {
-          cellSize = cellSize || 2;
-          margin = typeof margin == "undefined" ? cellSize * 4 : margin;
-          var size = _this.getModuleCount() * cellSize + margin * 2;
-          var img = "";
-          img += "<img";
-          img += ' src="';
-          img += _this.createDataURL(cellSize, margin);
-          img += '"';
-          img += ' width="';
-          img += size;
-          img += '"';
-          img += ' height="';
-          img += size;
-          img += '"';
-          if (alt) {
-            img += ' alt="';
-            img += escapeXml(alt);
-            img += '"';
-          }
-          img += "/>";
-          return img;
-        };
-        var escapeXml = function(s) {
-          var escaped = "";
-          for (var i = 0; i < s.length; i += 1) {
-            var c = s.charAt(i);
-            switch (c) {
-              case "<":
-                escaped += "&lt;";
-                break;
-              case ">":
-                escaped += "&gt;";
-                break;
-              case "&":
-                escaped += "&amp;";
-                break;
-              case '"':
-                escaped += "&quot;";
-                break;
-              default:
-                escaped += c;
-                break;
-            }
-          }
-          return escaped;
-        };
-        var _createHalfASCII = function(margin) {
-          var cellSize = 1;
-          margin = typeof margin == "undefined" ? cellSize * 2 : margin;
-          var size = _this.getModuleCount() * cellSize + margin * 2;
-          var min = margin;
-          var max = size - margin;
-          var y, x, r1, r2, p;
-          var blocks = {
-            "██": "█",
-            "█ ": "▀",
-            " █": "▄",
-            "  ": " "
-          };
-          var blocksLastLineNoMargin = {
-            "██": "▀",
-            "█ ": "▀",
-            " █": " ",
-            "  ": " "
-          };
-          var ascii = "";
-          for (y = 0; y < size; y += 2) {
-            r1 = Math.floor((y - min) / cellSize);
-            r2 = Math.floor((y + 1 - min) / cellSize);
-            for (x = 0; x < size; x += 1) {
-              p = "█";
-              if (min <= x && x < max && min <= y && y < max && _this.isDark(r1, Math.floor((x - min) / cellSize))) {
-                p = " ";
-              }
-              if (min <= x && x < max && min <= y + 1 && y + 1 < max && _this.isDark(r2, Math.floor((x - min) / cellSize))) {
-                p += " ";
-              } else {
-                p += "█";
-              }
-              ascii += margin < 1 && y + 1 >= max ? blocksLastLineNoMargin[p] : blocks[p];
-            }
-            ascii += "\n";
-          }
-          if (size % 2 && margin > 0) {
-            return ascii.substring(0, ascii.length - size - 1) + Array(size + 1).join("▀");
-          }
-          return ascii.substring(0, ascii.length - 1);
-        };
-        _this.createASCII = function(cellSize, margin) {
-          cellSize = cellSize || 1;
-          if (cellSize < 2) {
-            return _createHalfASCII(margin);
-          }
-          cellSize -= 1;
-          margin = typeof margin == "undefined" ? cellSize * 2 : margin;
-          var size = _this.getModuleCount() * cellSize + margin * 2;
-          var min = margin;
-          var max = size - margin;
-          var y, x, r, p;
-          var white = Array(cellSize + 1).join("██");
-          var black = Array(cellSize + 1).join("  ");
-          var ascii = "";
-          var line = "";
-          for (y = 0; y < size; y += 1) {
-            r = Math.floor((y - min) / cellSize);
-            line = "";
-            for (x = 0; x < size; x += 1) {
-              p = 1;
-              if (min <= x && x < max && min <= y && y < max && _this.isDark(r, Math.floor((x - min) / cellSize))) {
-                p = 0;
-              }
-              line += p ? white : black;
-            }
-            for (r = 0; r < cellSize; r += 1) {
-              ascii += line + "\n";
-            }
-          }
-          return ascii.substring(0, ascii.length - 1);
-        };
-        _this.renderTo2dContext = function(context, cellSize) {
-          cellSize = cellSize || 2;
-          var length = _this.getModuleCount();
-          for (var row = 0; row < length; row++) {
-            for (var col = 0; col < length; col++) {
-              context.fillStyle = _this.isDark(row, col) ? "black" : "white";
-              context.fillRect(row * cellSize, col * cellSize, cellSize, cellSize);
-            }
-          }
-        };
-        return _this;
-      };
-      qrcode3.stringToBytesFuncs = {
-        "default": function(s) {
-          var bytes = [];
-          for (var i = 0; i < s.length; i += 1) {
-            var c = s.charCodeAt(i);
-            bytes.push(c & 255);
-          }
-          return bytes;
-        }
-      };
-      qrcode3.stringToBytes = qrcode3.stringToBytesFuncs["default"];
-      qrcode3.createStringToBytes = function(unicodeData, numChars) {
-        var unicodeMap = (function() {
-          var bin = base64DecodeInputStream(unicodeData);
-          var read = function() {
-            var b = bin.read();
-            if (b == -1) throw "eof";
-            return b;
-          };
-          var count = 0;
-          var unicodeMap2 = {};
-          while (true) {
-            var b0 = bin.read();
-            if (b0 == -1) break;
-            var b1 = read();
-            var b2 = read();
-            var b3 = read();
-            var k = String.fromCharCode(b0 << 8 | b1);
-            var v = b2 << 8 | b3;
-            unicodeMap2[k] = v;
-            count += 1;
-          }
-          if (count != numChars) {
-            throw count + " != " + numChars;
-          }
-          return unicodeMap2;
-        })();
-        var unknownChar = "?".charCodeAt(0);
-        return function(s) {
-          var bytes = [];
-          for (var i = 0; i < s.length; i += 1) {
-            var c = s.charCodeAt(i);
-            if (c < 128) {
-              bytes.push(c);
-            } else {
-              var b = unicodeMap[s.charAt(i)];
-              if (typeof b == "number") {
-                if ((b & 255) == b) {
-                  bytes.push(b);
-                } else {
-                  bytes.push(b >>> 8);
-                  bytes.push(b & 255);
-                }
-              } else {
-                bytes.push(unknownChar);
-              }
-            }
-          }
-          return bytes;
-        };
-      };
-      var QRMode = {
-        MODE_NUMBER: 1 << 0,
-        MODE_ALPHA_NUM: 1 << 1,
-        MODE_8BIT_BYTE: 1 << 2,
-        MODE_KANJI: 1 << 3
-      };
-      var QRErrorCorrectionLevel = {
-        L: 1,
-        M: 0,
-        Q: 3,
-        H: 2
-      };
-      var QRMaskPattern = {
-        PATTERN000: 0,
-        PATTERN001: 1,
-        PATTERN010: 2,
-        PATTERN011: 3,
-        PATTERN100: 4,
-        PATTERN101: 5,
-        PATTERN110: 6,
-        PATTERN111: 7
-      };
-      var QRUtil = (function() {
-        var PATTERN_POSITION_TABLE = [
-          [],
-          [6, 18],
-          [6, 22],
-          [6, 26],
-          [6, 30],
-          [6, 34],
-          [6, 22, 38],
-          [6, 24, 42],
-          [6, 26, 46],
-          [6, 28, 50],
-          [6, 30, 54],
-          [6, 32, 58],
-          [6, 34, 62],
-          [6, 26, 46, 66],
-          [6, 26, 48, 70],
-          [6, 26, 50, 74],
-          [6, 30, 54, 78],
-          [6, 30, 56, 82],
-          [6, 30, 58, 86],
-          [6, 34, 62, 90],
-          [6, 28, 50, 72, 94],
-          [6, 26, 50, 74, 98],
-          [6, 30, 54, 78, 102],
-          [6, 28, 54, 80, 106],
-          [6, 32, 58, 84, 110],
-          [6, 30, 58, 86, 114],
-          [6, 34, 62, 90, 118],
-          [6, 26, 50, 74, 98, 122],
-          [6, 30, 54, 78, 102, 126],
-          [6, 26, 52, 78, 104, 130],
-          [6, 30, 56, 82, 108, 134],
-          [6, 34, 60, 86, 112, 138],
-          [6, 30, 58, 86, 114, 142],
-          [6, 34, 62, 90, 118, 146],
-          [6, 30, 54, 78, 102, 126, 150],
-          [6, 24, 50, 76, 102, 128, 154],
-          [6, 28, 54, 80, 106, 132, 158],
-          [6, 32, 58, 84, 110, 136, 162],
-          [6, 26, 54, 82, 110, 138, 166],
-          [6, 30, 58, 86, 114, 142, 170]
-        ];
-        var G15 = 1 << 10 | 1 << 8 | 1 << 5 | 1 << 4 | 1 << 2 | 1 << 1 | 1 << 0;
-        var G18 = 1 << 12 | 1 << 11 | 1 << 10 | 1 << 9 | 1 << 8 | 1 << 5 | 1 << 2 | 1 << 0;
-        var G15_MASK = 1 << 14 | 1 << 12 | 1 << 10 | 1 << 4 | 1 << 1;
-        var _this = {};
-        var getBCHDigit = function(data) {
-          var digit = 0;
-          while (data != 0) {
-            digit += 1;
-            data >>>= 1;
-          }
-          return digit;
-        };
-        _this.getBCHTypeInfo = function(data) {
-          var d = data << 10;
-          while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
-            d ^= G15 << getBCHDigit(d) - getBCHDigit(G15);
-          }
-          return (data << 10 | d) ^ G15_MASK;
-        };
-        _this.getBCHTypeNumber = function(data) {
-          var d = data << 12;
-          while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
-            d ^= G18 << getBCHDigit(d) - getBCHDigit(G18);
-          }
-          return data << 12 | d;
-        };
-        _this.getPatternPosition = function(typeNumber) {
-          return PATTERN_POSITION_TABLE[typeNumber - 1];
-        };
-        _this.getMaskFunction = function(maskPattern) {
-          switch (maskPattern) {
-            case QRMaskPattern.PATTERN000:
-              return function(i, j) {
-                return (i + j) % 2 == 0;
-              };
-            case QRMaskPattern.PATTERN001:
-              return function(i, j) {
-                return i % 2 == 0;
-              };
-            case QRMaskPattern.PATTERN010:
-              return function(i, j) {
-                return j % 3 == 0;
-              };
-            case QRMaskPattern.PATTERN011:
-              return function(i, j) {
-                return (i + j) % 3 == 0;
-              };
-            case QRMaskPattern.PATTERN100:
-              return function(i, j) {
-                return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 == 0;
-              };
-            case QRMaskPattern.PATTERN101:
-              return function(i, j) {
-                return i * j % 2 + i * j % 3 == 0;
-              };
-            case QRMaskPattern.PATTERN110:
-              return function(i, j) {
-                return (i * j % 2 + i * j % 3) % 2 == 0;
-              };
-            case QRMaskPattern.PATTERN111:
-              return function(i, j) {
-                return (i * j % 3 + (i + j) % 2) % 2 == 0;
-              };
-            default:
-              throw "bad maskPattern:" + maskPattern;
-          }
-        };
-        _this.getErrorCorrectPolynomial = function(errorCorrectLength) {
-          var a = qrPolynomial([1], 0);
-          for (var i = 0; i < errorCorrectLength; i += 1) {
-            a = a.multiply(qrPolynomial([1, QRMath.gexp(i)], 0));
-          }
-          return a;
-        };
-        _this.getLengthInBits = function(mode, type) {
-          if (1 <= type && type < 10) {
-            switch (mode) {
-              case QRMode.MODE_NUMBER:
-                return 10;
-              case QRMode.MODE_ALPHA_NUM:
-                return 9;
-              case QRMode.MODE_8BIT_BYTE:
-                return 8;
-              case QRMode.MODE_KANJI:
-                return 8;
-              default:
-                throw "mode:" + mode;
-            }
-          } else if (type < 27) {
-            switch (mode) {
-              case QRMode.MODE_NUMBER:
-                return 12;
-              case QRMode.MODE_ALPHA_NUM:
-                return 11;
-              case QRMode.MODE_8BIT_BYTE:
-                return 16;
-              case QRMode.MODE_KANJI:
-                return 10;
-              default:
-                throw "mode:" + mode;
-            }
-          } else if (type < 41) {
-            switch (mode) {
-              case QRMode.MODE_NUMBER:
-                return 14;
-              case QRMode.MODE_ALPHA_NUM:
-                return 13;
-              case QRMode.MODE_8BIT_BYTE:
-                return 16;
-              case QRMode.MODE_KANJI:
-                return 12;
-              default:
-                throw "mode:" + mode;
-            }
-          } else {
-            throw "type:" + type;
-          }
-        };
-        _this.getLostPoint = function(qrcode4) {
-          var moduleCount = qrcode4.getModuleCount();
-          var lostPoint = 0;
-          for (var row = 0; row < moduleCount; row += 1) {
-            for (var col = 0; col < moduleCount; col += 1) {
-              var sameCount = 0;
-              var dark = qrcode4.isDark(row, col);
-              for (var r = -1; r <= 1; r += 1) {
-                if (row + r < 0 || moduleCount <= row + r) {
-                  continue;
-                }
-                for (var c = -1; c <= 1; c += 1) {
-                  if (col + c < 0 || moduleCount <= col + c) {
-                    continue;
-                  }
-                  if (r == 0 && c == 0) {
-                    continue;
-                  }
-                  if (dark == qrcode4.isDark(row + r, col + c)) {
-                    sameCount += 1;
-                  }
-                }
-              }
-              if (sameCount > 5) {
-                lostPoint += 3 + sameCount - 5;
-              }
-            }
-          }
-          ;
-          for (var row = 0; row < moduleCount - 1; row += 1) {
-            for (var col = 0; col < moduleCount - 1; col += 1) {
-              var count = 0;
-              if (qrcode4.isDark(row, col)) count += 1;
-              if (qrcode4.isDark(row + 1, col)) count += 1;
-              if (qrcode4.isDark(row, col + 1)) count += 1;
-              if (qrcode4.isDark(row + 1, col + 1)) count += 1;
-              if (count == 0 || count == 4) {
-                lostPoint += 3;
-              }
-            }
-          }
-          for (var row = 0; row < moduleCount; row += 1) {
-            for (var col = 0; col < moduleCount - 6; col += 1) {
-              if (qrcode4.isDark(row, col) && !qrcode4.isDark(row, col + 1) && qrcode4.isDark(row, col + 2) && qrcode4.isDark(row, col + 3) && qrcode4.isDark(row, col + 4) && !qrcode4.isDark(row, col + 5) && qrcode4.isDark(row, col + 6)) {
-                lostPoint += 40;
-              }
-            }
-          }
-          for (var col = 0; col < moduleCount; col += 1) {
-            for (var row = 0; row < moduleCount - 6; row += 1) {
-              if (qrcode4.isDark(row, col) && !qrcode4.isDark(row + 1, col) && qrcode4.isDark(row + 2, col) && qrcode4.isDark(row + 3, col) && qrcode4.isDark(row + 4, col) && !qrcode4.isDark(row + 5, col) && qrcode4.isDark(row + 6, col)) {
-                lostPoint += 40;
-              }
-            }
-          }
-          var darkCount = 0;
-          for (var col = 0; col < moduleCount; col += 1) {
-            for (var row = 0; row < moduleCount; row += 1) {
-              if (qrcode4.isDark(row, col)) {
-                darkCount += 1;
-              }
-            }
-          }
-          var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
-          lostPoint += ratio * 10;
-          return lostPoint;
-        };
-        return _this;
-      })();
-      var QRMath = (function() {
-        var EXP_TABLE = new Array(256);
-        var LOG_TABLE = new Array(256);
-        for (var i = 0; i < 8; i += 1) {
-          EXP_TABLE[i] = 1 << i;
-        }
-        for (var i = 8; i < 256; i += 1) {
-          EXP_TABLE[i] = EXP_TABLE[i - 4] ^ EXP_TABLE[i - 5] ^ EXP_TABLE[i - 6] ^ EXP_TABLE[i - 8];
-        }
-        for (var i = 0; i < 255; i += 1) {
-          LOG_TABLE[EXP_TABLE[i]] = i;
-        }
-        var _this = {};
-        _this.glog = function(n) {
-          if (n < 1) {
-            throw "glog(" + n + ")";
-          }
-          return LOG_TABLE[n];
-        };
-        _this.gexp = function(n) {
-          while (n < 0) {
-            n += 255;
-          }
-          while (n >= 256) {
-            n -= 255;
-          }
-          return EXP_TABLE[n];
-        };
-        return _this;
-      })();
-      function qrPolynomial(num, shift) {
-        if (typeof num.length == "undefined") {
-          throw num.length + "/" + shift;
-        }
-        var _num = (function() {
-          var offset = 0;
-          while (offset < num.length && num[offset] == 0) {
-            offset += 1;
-          }
-          var _num2 = new Array(num.length - offset + shift);
-          for (var i = 0; i < num.length - offset; i += 1) {
-            _num2[i] = num[i + offset];
-          }
-          return _num2;
-        })();
-        var _this = {};
-        _this.getAt = function(index) {
-          return _num[index];
-        };
-        _this.getLength = function() {
-          return _num.length;
-        };
-        _this.multiply = function(e) {
-          var num2 = new Array(_this.getLength() + e.getLength() - 1);
-          for (var i = 0; i < _this.getLength(); i += 1) {
-            for (var j = 0; j < e.getLength(); j += 1) {
-              num2[i + j] ^= QRMath.gexp(QRMath.glog(_this.getAt(i)) + QRMath.glog(e.getAt(j)));
-            }
-          }
-          return qrPolynomial(num2, 0);
-        };
-        _this.mod = function(e) {
-          if (_this.getLength() - e.getLength() < 0) {
-            return _this;
-          }
-          var ratio = QRMath.glog(_this.getAt(0)) - QRMath.glog(e.getAt(0));
-          var num2 = new Array(_this.getLength());
-          for (var i = 0; i < _this.getLength(); i += 1) {
-            num2[i] = _this.getAt(i);
-          }
-          for (var i = 0; i < e.getLength(); i += 1) {
-            num2[i] ^= QRMath.gexp(QRMath.glog(e.getAt(i)) + ratio);
-          }
-          return qrPolynomial(num2, 0).mod(e);
-        };
-        return _this;
-      }
-      ;
-      var QRRSBlock = (function() {
-        var RS_BLOCK_TABLE = [
-          // L
-          // M
-          // Q
-          // H
-          // 1
-          [1, 26, 19],
-          [1, 26, 16],
-          [1, 26, 13],
-          [1, 26, 9],
-          // 2
-          [1, 44, 34],
-          [1, 44, 28],
-          [1, 44, 22],
-          [1, 44, 16],
-          // 3
-          [1, 70, 55],
-          [1, 70, 44],
-          [2, 35, 17],
-          [2, 35, 13],
-          // 4
-          [1, 100, 80],
-          [2, 50, 32],
-          [2, 50, 24],
-          [4, 25, 9],
-          // 5
-          [1, 134, 108],
-          [2, 67, 43],
-          [2, 33, 15, 2, 34, 16],
-          [2, 33, 11, 2, 34, 12],
-          // 6
-          [2, 86, 68],
-          [4, 43, 27],
-          [4, 43, 19],
-          [4, 43, 15],
-          // 7
-          [2, 98, 78],
-          [4, 49, 31],
-          [2, 32, 14, 4, 33, 15],
-          [4, 39, 13, 1, 40, 14],
-          // 8
-          [2, 121, 97],
-          [2, 60, 38, 2, 61, 39],
-          [4, 40, 18, 2, 41, 19],
-          [4, 40, 14, 2, 41, 15],
-          // 9
-          [2, 146, 116],
-          [3, 58, 36, 2, 59, 37],
-          [4, 36, 16, 4, 37, 17],
-          [4, 36, 12, 4, 37, 13],
-          // 10
-          [2, 86, 68, 2, 87, 69],
-          [4, 69, 43, 1, 70, 44],
-          [6, 43, 19, 2, 44, 20],
-          [6, 43, 15, 2, 44, 16],
-          // 11
-          [4, 101, 81],
-          [1, 80, 50, 4, 81, 51],
-          [4, 50, 22, 4, 51, 23],
-          [3, 36, 12, 8, 37, 13],
-          // 12
-          [2, 116, 92, 2, 117, 93],
-          [6, 58, 36, 2, 59, 37],
-          [4, 46, 20, 6, 47, 21],
-          [7, 42, 14, 4, 43, 15],
-          // 13
-          [4, 133, 107],
-          [8, 59, 37, 1, 60, 38],
-          [8, 44, 20, 4, 45, 21],
-          [12, 33, 11, 4, 34, 12],
-          // 14
-          [3, 145, 115, 1, 146, 116],
-          [4, 64, 40, 5, 65, 41],
-          [11, 36, 16, 5, 37, 17],
-          [11, 36, 12, 5, 37, 13],
-          // 15
-          [5, 109, 87, 1, 110, 88],
-          [5, 65, 41, 5, 66, 42],
-          [5, 54, 24, 7, 55, 25],
-          [11, 36, 12, 7, 37, 13],
-          // 16
-          [5, 122, 98, 1, 123, 99],
-          [7, 73, 45, 3, 74, 46],
-          [15, 43, 19, 2, 44, 20],
-          [3, 45, 15, 13, 46, 16],
-          // 17
-          [1, 135, 107, 5, 136, 108],
-          [10, 74, 46, 1, 75, 47],
-          [1, 50, 22, 15, 51, 23],
-          [2, 42, 14, 17, 43, 15],
-          // 18
-          [5, 150, 120, 1, 151, 121],
-          [9, 69, 43, 4, 70, 44],
-          [17, 50, 22, 1, 51, 23],
-          [2, 42, 14, 19, 43, 15],
-          // 19
-          [3, 141, 113, 4, 142, 114],
-          [3, 70, 44, 11, 71, 45],
-          [17, 47, 21, 4, 48, 22],
-          [9, 39, 13, 16, 40, 14],
-          // 20
-          [3, 135, 107, 5, 136, 108],
-          [3, 67, 41, 13, 68, 42],
-          [15, 54, 24, 5, 55, 25],
-          [15, 43, 15, 10, 44, 16],
-          // 21
-          [4, 144, 116, 4, 145, 117],
-          [17, 68, 42],
-          [17, 50, 22, 6, 51, 23],
-          [19, 46, 16, 6, 47, 17],
-          // 22
-          [2, 139, 111, 7, 140, 112],
-          [17, 74, 46],
-          [7, 54, 24, 16, 55, 25],
-          [34, 37, 13],
-          // 23
-          [4, 151, 121, 5, 152, 122],
-          [4, 75, 47, 14, 76, 48],
-          [11, 54, 24, 14, 55, 25],
-          [16, 45, 15, 14, 46, 16],
-          // 24
-          [6, 147, 117, 4, 148, 118],
-          [6, 73, 45, 14, 74, 46],
-          [11, 54, 24, 16, 55, 25],
-          [30, 46, 16, 2, 47, 17],
-          // 25
-          [8, 132, 106, 4, 133, 107],
-          [8, 75, 47, 13, 76, 48],
-          [7, 54, 24, 22, 55, 25],
-          [22, 45, 15, 13, 46, 16],
-          // 26
-          [10, 142, 114, 2, 143, 115],
-          [19, 74, 46, 4, 75, 47],
-          [28, 50, 22, 6, 51, 23],
-          [33, 46, 16, 4, 47, 17],
-          // 27
-          [8, 152, 122, 4, 153, 123],
-          [22, 73, 45, 3, 74, 46],
-          [8, 53, 23, 26, 54, 24],
-          [12, 45, 15, 28, 46, 16],
-          // 28
-          [3, 147, 117, 10, 148, 118],
-          [3, 73, 45, 23, 74, 46],
-          [4, 54, 24, 31, 55, 25],
-          [11, 45, 15, 31, 46, 16],
-          // 29
-          [7, 146, 116, 7, 147, 117],
-          [21, 73, 45, 7, 74, 46],
-          [1, 53, 23, 37, 54, 24],
-          [19, 45, 15, 26, 46, 16],
-          // 30
-          [5, 145, 115, 10, 146, 116],
-          [19, 75, 47, 10, 76, 48],
-          [15, 54, 24, 25, 55, 25],
-          [23, 45, 15, 25, 46, 16],
-          // 31
-          [13, 145, 115, 3, 146, 116],
-          [2, 74, 46, 29, 75, 47],
-          [42, 54, 24, 1, 55, 25],
-          [23, 45, 15, 28, 46, 16],
-          // 32
-          [17, 145, 115],
-          [10, 74, 46, 23, 75, 47],
-          [10, 54, 24, 35, 55, 25],
-          [19, 45, 15, 35, 46, 16],
-          // 33
-          [17, 145, 115, 1, 146, 116],
-          [14, 74, 46, 21, 75, 47],
-          [29, 54, 24, 19, 55, 25],
-          [11, 45, 15, 46, 46, 16],
-          // 34
-          [13, 145, 115, 6, 146, 116],
-          [14, 74, 46, 23, 75, 47],
-          [44, 54, 24, 7, 55, 25],
-          [59, 46, 16, 1, 47, 17],
-          // 35
-          [12, 151, 121, 7, 152, 122],
-          [12, 75, 47, 26, 76, 48],
-          [39, 54, 24, 14, 55, 25],
-          [22, 45, 15, 41, 46, 16],
-          // 36
-          [6, 151, 121, 14, 152, 122],
-          [6, 75, 47, 34, 76, 48],
-          [46, 54, 24, 10, 55, 25],
-          [2, 45, 15, 64, 46, 16],
-          // 37
-          [17, 152, 122, 4, 153, 123],
-          [29, 74, 46, 14, 75, 47],
-          [49, 54, 24, 10, 55, 25],
-          [24, 45, 15, 46, 46, 16],
-          // 38
-          [4, 152, 122, 18, 153, 123],
-          [13, 74, 46, 32, 75, 47],
-          [48, 54, 24, 14, 55, 25],
-          [42, 45, 15, 32, 46, 16],
-          // 39
-          [20, 147, 117, 4, 148, 118],
-          [40, 75, 47, 7, 76, 48],
-          [43, 54, 24, 22, 55, 25],
-          [10, 45, 15, 67, 46, 16],
-          // 40
-          [19, 148, 118, 6, 149, 119],
-          [18, 75, 47, 31, 76, 48],
-          [34, 54, 24, 34, 55, 25],
-          [20, 45, 15, 61, 46, 16]
-        ];
-        var qrRSBlock = function(totalCount, dataCount) {
-          var _this2 = {};
-          _this2.totalCount = totalCount;
-          _this2.dataCount = dataCount;
-          return _this2;
-        };
-        var _this = {};
-        var getRsBlockTable = function(typeNumber, errorCorrectionLevel) {
-          switch (errorCorrectionLevel) {
-            case QRErrorCorrectionLevel.L:
-              return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
-            case QRErrorCorrectionLevel.M:
-              return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
-            case QRErrorCorrectionLevel.Q:
-              return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
-            case QRErrorCorrectionLevel.H:
-              return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
-            default:
-              return void 0;
-          }
-        };
-        _this.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
-          var rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
-          if (typeof rsBlock == "undefined") {
-            throw "bad rs block @ typeNumber:" + typeNumber + "/errorCorrectionLevel:" + errorCorrectionLevel;
-          }
-          var length = rsBlock.length / 3;
-          var list = [];
-          for (var i = 0; i < length; i += 1) {
-            var count = rsBlock[i * 3 + 0];
-            var totalCount = rsBlock[i * 3 + 1];
-            var dataCount = rsBlock[i * 3 + 2];
-            for (var j = 0; j < count; j += 1) {
-              list.push(qrRSBlock(totalCount, dataCount));
-            }
-          }
-          return list;
-        };
-        return _this;
-      })();
-      var qrBitBuffer = function() {
-        var _buffer = [];
-        var _length = 0;
-        var _this = {};
-        _this.getBuffer = function() {
-          return _buffer;
-        };
-        _this.getAt = function(index) {
-          var bufIndex = Math.floor(index / 8);
-          return (_buffer[bufIndex] >>> 7 - index % 8 & 1) == 1;
-        };
-        _this.put = function(num, length) {
-          for (var i = 0; i < length; i += 1) {
-            _this.putBit((num >>> length - i - 1 & 1) == 1);
-          }
-        };
-        _this.getLengthInBits = function() {
-          return _length;
-        };
-        _this.putBit = function(bit) {
-          var bufIndex = Math.floor(_length / 8);
-          if (_buffer.length <= bufIndex) {
-            _buffer.push(0);
-          }
-          if (bit) {
-            _buffer[bufIndex] |= 128 >>> _length % 8;
-          }
-          _length += 1;
-        };
-        return _this;
-      };
-      var qrNumber = function(data) {
-        var _mode = QRMode.MODE_NUMBER;
-        var _data = data;
-        var _this = {};
-        _this.getMode = function() {
-          return _mode;
-        };
-        _this.getLength = function(buffer) {
-          return _data.length;
-        };
-        _this.write = function(buffer) {
-          var data2 = _data;
-          var i = 0;
-          while (i + 2 < data2.length) {
-            buffer.put(strToNum(data2.substring(i, i + 3)), 10);
-            i += 3;
-          }
-          if (i < data2.length) {
-            if (data2.length - i == 1) {
-              buffer.put(strToNum(data2.substring(i, i + 1)), 4);
-            } else if (data2.length - i == 2) {
-              buffer.put(strToNum(data2.substring(i, i + 2)), 7);
-            }
-          }
-        };
-        var strToNum = function(s) {
-          var num = 0;
-          for (var i = 0; i < s.length; i += 1) {
-            num = num * 10 + chatToNum(s.charAt(i));
-          }
-          return num;
-        };
-        var chatToNum = function(c) {
-          if ("0" <= c && c <= "9") {
-            return c.charCodeAt(0) - "0".charCodeAt(0);
-          }
-          throw "illegal char :" + c;
-        };
-        return _this;
-      };
-      var qrAlphaNum = function(data) {
-        var _mode = QRMode.MODE_ALPHA_NUM;
-        var _data = data;
-        var _this = {};
-        _this.getMode = function() {
-          return _mode;
-        };
-        _this.getLength = function(buffer) {
-          return _data.length;
-        };
-        _this.write = function(buffer) {
-          var s = _data;
-          var i = 0;
-          while (i + 1 < s.length) {
-            buffer.put(
-              getCode(s.charAt(i)) * 45 + getCode(s.charAt(i + 1)),
-              11
-            );
-            i += 2;
-          }
-          if (i < s.length) {
-            buffer.put(getCode(s.charAt(i)), 6);
-          }
-        };
-        var getCode = function(c) {
-          if ("0" <= c && c <= "9") {
-            return c.charCodeAt(0) - "0".charCodeAt(0);
-          } else if ("A" <= c && c <= "Z") {
-            return c.charCodeAt(0) - "A".charCodeAt(0) + 10;
-          } else {
-            switch (c) {
-              case " ":
-                return 36;
-              case "$":
-                return 37;
-              case "%":
-                return 38;
-              case "*":
-                return 39;
-              case "+":
-                return 40;
-              case "-":
-                return 41;
-              case ".":
-                return 42;
-              case "/":
-                return 43;
-              case ":":
-                return 44;
-              default:
-                throw "illegal char :" + c;
-            }
-          }
-        };
-        return _this;
-      };
-      var qr8BitByte = function(data) {
-        var _mode = QRMode.MODE_8BIT_BYTE;
-        var _data = data;
-        var _bytes = qrcode3.stringToBytes(data);
-        var _this = {};
-        _this.getMode = function() {
-          return _mode;
-        };
-        _this.getLength = function(buffer) {
-          return _bytes.length;
-        };
-        _this.write = function(buffer) {
-          for (var i = 0; i < _bytes.length; i += 1) {
-            buffer.put(_bytes[i], 8);
-          }
-        };
-        return _this;
-      };
-      var qrKanji = function(data) {
-        var _mode = QRMode.MODE_KANJI;
-        var _data = data;
-        var stringToBytes = qrcode3.stringToBytesFuncs["SJIS"];
-        if (!stringToBytes) {
-          throw "sjis not supported.";
-        }
-        !(function(c, code) {
-          var test = stringToBytes(c);
-          if (test.length != 2 || (test[0] << 8 | test[1]) != code) {
-            throw "sjis not supported.";
-          }
-        })("友", 38726);
-        var _bytes = stringToBytes(data);
-        var _this = {};
-        _this.getMode = function() {
-          return _mode;
-        };
-        _this.getLength = function(buffer) {
-          return ~~(_bytes.length / 2);
-        };
-        _this.write = function(buffer) {
-          var data2 = _bytes;
-          var i = 0;
-          while (i + 1 < data2.length) {
-            var c = (255 & data2[i]) << 8 | 255 & data2[i + 1];
-            if (33088 <= c && c <= 40956) {
-              c -= 33088;
-            } else if (57408 <= c && c <= 60351) {
-              c -= 49472;
-            } else {
-              throw "illegal char at " + (i + 1) + "/" + c;
-            }
-            c = (c >>> 8 & 255) * 192 + (c & 255);
-            buffer.put(c, 13);
-            i += 2;
-          }
-          if (i < data2.length) {
-            throw "illegal char at " + (i + 1);
-          }
-        };
-        return _this;
-      };
-      var byteArrayOutputStream = function() {
-        var _bytes = [];
-        var _this = {};
-        _this.writeByte = function(b) {
-          _bytes.push(b & 255);
-        };
-        _this.writeShort = function(i) {
-          _this.writeByte(i);
-          _this.writeByte(i >>> 8);
-        };
-        _this.writeBytes = function(b, off, len) {
-          off = off || 0;
-          len = len || b.length;
-          for (var i = 0; i < len; i += 1) {
-            _this.writeByte(b[i + off]);
-          }
-        };
-        _this.writeString = function(s) {
-          for (var i = 0; i < s.length; i += 1) {
-            _this.writeByte(s.charCodeAt(i));
-          }
-        };
-        _this.toByteArray = function() {
-          return _bytes;
-        };
-        _this.toString = function() {
-          var s = "";
-          s += "[";
-          for (var i = 0; i < _bytes.length; i += 1) {
-            if (i > 0) {
-              s += ",";
-            }
-            s += _bytes[i];
-          }
-          s += "]";
-          return s;
-        };
-        return _this;
-      };
-      var base64EncodeOutputStream = function() {
-        var _buffer = 0;
-        var _buflen = 0;
-        var _length = 0;
-        var _base64 = "";
-        var _this = {};
-        var writeEncoded = function(b) {
-          _base64 += String.fromCharCode(encode(b & 63));
-        };
-        var encode = function(n) {
-          if (n < 0) {
-          } else if (n < 26) {
-            return 65 + n;
-          } else if (n < 52) {
-            return 97 + (n - 26);
-          } else if (n < 62) {
-            return 48 + (n - 52);
-          } else if (n == 62) {
-            return 43;
-          } else if (n == 63) {
-            return 47;
-          }
-          throw "n:" + n;
-        };
-        _this.writeByte = function(n) {
-          _buffer = _buffer << 8 | n & 255;
-          _buflen += 8;
-          _length += 1;
-          while (_buflen >= 6) {
-            writeEncoded(_buffer >>> _buflen - 6);
-            _buflen -= 6;
-          }
-        };
-        _this.flush = function() {
-          if (_buflen > 0) {
-            writeEncoded(_buffer << 6 - _buflen);
-            _buffer = 0;
-            _buflen = 0;
-          }
-          if (_length % 3 != 0) {
-            var padlen = 3 - _length % 3;
-            for (var i = 0; i < padlen; i += 1) {
-              _base64 += "=";
-            }
-          }
-        };
-        _this.toString = function() {
-          return _base64;
-        };
-        return _this;
-      };
-      var base64DecodeInputStream = function(str) {
-        var _str = str;
-        var _pos = 0;
-        var _buffer = 0;
-        var _buflen = 0;
-        var _this = {};
-        _this.read = function() {
-          while (_buflen < 8) {
-            if (_pos >= _str.length) {
-              if (_buflen == 0) {
-                return -1;
-              }
-              throw "unexpected end of file./" + _buflen;
-            }
-            var c = _str.charAt(_pos);
-            _pos += 1;
-            if (c == "=") {
-              _buflen = 0;
-              return -1;
-            } else if (c.match(/^\s$/)) {
-              continue;
-            }
-            _buffer = _buffer << 6 | decode(c.charCodeAt(0));
-            _buflen += 6;
-          }
-          var n = _buffer >>> _buflen - 8 & 255;
-          _buflen -= 8;
-          return n;
-        };
-        var decode = function(c) {
-          if (65 <= c && c <= 90) {
-            return c - 65;
-          } else if (97 <= c && c <= 122) {
-            return c - 97 + 26;
-          } else if (48 <= c && c <= 57) {
-            return c - 48 + 52;
-          } else if (c == 43) {
-            return 62;
-          } else if (c == 47) {
-            return 63;
-          } else {
-            throw "c:" + c;
-          }
-        };
-        return _this;
-      };
-      var gifImage = function(width, height) {
-        var _width = width;
-        var _height = height;
-        var _data = new Array(width * height);
-        var _this = {};
-        _this.setPixel = function(x, y, pixel) {
-          _data[y * _width + x] = pixel;
-        };
-        _this.write = function(out) {
-          out.writeString("GIF87a");
-          out.writeShort(_width);
-          out.writeShort(_height);
-          out.writeByte(128);
-          out.writeByte(0);
-          out.writeByte(0);
-          out.writeByte(0);
-          out.writeByte(0);
-          out.writeByte(0);
-          out.writeByte(255);
-          out.writeByte(255);
-          out.writeByte(255);
-          out.writeString(",");
-          out.writeShort(0);
-          out.writeShort(0);
-          out.writeShort(_width);
-          out.writeShort(_height);
-          out.writeByte(0);
-          var lzwMinCodeSize = 2;
-          var raster = getLZWRaster(lzwMinCodeSize);
-          out.writeByte(lzwMinCodeSize);
-          var offset = 0;
-          while (raster.length - offset > 255) {
-            out.writeByte(255);
-            out.writeBytes(raster, offset, 255);
-            offset += 255;
-          }
-          out.writeByte(raster.length - offset);
-          out.writeBytes(raster, offset, raster.length - offset);
-          out.writeByte(0);
-          out.writeString(";");
-        };
-        var bitOutputStream = function(out) {
-          var _out = out;
-          var _bitLength = 0;
-          var _bitBuffer = 0;
-          var _this2 = {};
-          _this2.write = function(data, length) {
-            if (data >>> length != 0) {
-              throw "length over";
-            }
-            while (_bitLength + length >= 8) {
-              _out.writeByte(255 & (data << _bitLength | _bitBuffer));
-              length -= 8 - _bitLength;
-              data >>>= 8 - _bitLength;
-              _bitBuffer = 0;
-              _bitLength = 0;
-            }
-            _bitBuffer = data << _bitLength | _bitBuffer;
-            _bitLength = _bitLength + length;
-          };
-          _this2.flush = function() {
-            if (_bitLength > 0) {
-              _out.writeByte(_bitBuffer);
-            }
-          };
-          return _this2;
-        };
-        var getLZWRaster = function(lzwMinCodeSize) {
-          var clearCode = 1 << lzwMinCodeSize;
-          var endCode = (1 << lzwMinCodeSize) + 1;
-          var bitLength = lzwMinCodeSize + 1;
-          var table = lzwTable();
-          for (var i = 0; i < clearCode; i += 1) {
-            table.add(String.fromCharCode(i));
-          }
-          table.add(String.fromCharCode(clearCode));
-          table.add(String.fromCharCode(endCode));
-          var byteOut = byteArrayOutputStream();
-          var bitOut = bitOutputStream(byteOut);
-          bitOut.write(clearCode, bitLength);
-          var dataIndex = 0;
-          var s = String.fromCharCode(_data[dataIndex]);
-          dataIndex += 1;
-          while (dataIndex < _data.length) {
-            var c = String.fromCharCode(_data[dataIndex]);
-            dataIndex += 1;
-            if (table.contains(s + c)) {
-              s = s + c;
-            } else {
-              bitOut.write(table.indexOf(s), bitLength);
-              if (table.size() < 4095) {
-                if (table.size() == 1 << bitLength) {
-                  bitLength += 1;
-                }
-                table.add(s + c);
-              }
-              s = c;
-            }
-          }
-          bitOut.write(table.indexOf(s), bitLength);
-          bitOut.write(endCode, bitLength);
-          bitOut.flush();
-          return byteOut.toByteArray();
-        };
-        var lzwTable = function() {
-          var _map = {};
-          var _size = 0;
-          var _this2 = {};
-          _this2.add = function(key) {
-            if (_this2.contains(key)) {
-              throw "dup key:" + key;
-            }
-            _map[key] = _size;
-            _size += 1;
-          };
-          _this2.size = function() {
-            return _size;
-          };
-          _this2.indexOf = function(key) {
-            return _map[key];
-          };
-          _this2.contains = function(key) {
-            return typeof _map[key] != "undefined";
-          };
-          return _this2;
-        };
-        return _this;
-      };
-      var createDataURL = function(width, height, getPixel) {
-        var gif = gifImage(width, height);
-        for (var y = 0; y < height; y += 1) {
-          for (var x = 0; x < width; x += 1) {
-            gif.setPixel(x, y, getPixel(x, y));
-          }
-        }
-        var b = byteArrayOutputStream();
-        gif.write(b);
-        var base64 = base64EncodeOutputStream();
-        var bytes = b.toByteArray();
-        for (var i = 0; i < bytes.length; i += 1) {
-          base64.writeByte(bytes[i]);
-        }
-        base64.flush();
-        return "data:image/gif;base64," + base64;
-      };
-      return qrcode3;
-    })();
-    !(function() {
-      qrcode2.stringToBytesFuncs["UTF-8"] = function(s) {
-        function toUTF8Array(str) {
-          var utf8 = [];
-          for (var i = 0; i < str.length; i++) {
-            var charcode = str.charCodeAt(i);
-            if (charcode < 128) utf8.push(charcode);
-            else if (charcode < 2048) {
-              utf8.push(
-                192 | charcode >> 6,
-                128 | charcode & 63
-              );
-            } else if (charcode < 55296 || charcode >= 57344) {
-              utf8.push(
-                224 | charcode >> 12,
-                128 | charcode >> 6 & 63,
-                128 | charcode & 63
-              );
-            } else {
-              i++;
-              charcode = 65536 + ((charcode & 1023) << 10 | str.charCodeAt(i) & 1023);
-              utf8.push(
-                240 | charcode >> 18,
-                128 | charcode >> 12 & 63,
-                128 | charcode >> 6 & 63,
-                128 | charcode & 63
-              );
-            }
-          }
-          return utf8;
-        }
-        return toUTF8Array(s);
-      };
-    })();
-    (function(factory) {
-      if (typeof define === "function" && define.amd) {
-        define([], factory);
-      } else if (typeof exports === "object") {
-        module.exports = factory();
-      }
-    })(function() {
-      return qrcode2;
-    });
-  }
-});
-
-// packages/dass-ui/src/dom.ts
-var qs = (sel, root = document) => root.querySelector(sel);
-var qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-}
-function addStyle(css) {
-  const s = document.createElement("style");
-  s.textContent = css;
-  document.head.appendChild(s);
-  return s;
-}
-
-// packages/dass-ui/src/motion.ts
-var M = {
-  // durations (ms), layered per the brief
-  instant: 110,
-  micro: 190,
-  comp: 340,
-  scene: 680,
-  cine: 1600,
-  // easing curves (original, consistent)
-  out: "cubic-bezier(.2,.85,.25,1)",
-  inOut: "cubic-bezier(.65,0,.35,1)",
-  sharp: "cubic-bezier(.9,.03,.2,1)",
-  // ضربة
-  pull: "cubic-bezier(.16,1,.3,1)",
-  // كشف
-  spring: "cubic-bezier(.34,1.56,.64,1)"
-  // RESERVED: reveal + win
-};
-var reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-function anim(node, frames, opts) {
-  if (reduced()) {
-    return node.animate({ opacity: [1e-3, 1] }, {
-      duration: 1,
-      fill: "both"
-    });
-  }
-  return node.animate(frames, { fill: "both", ...opts });
-}
-function press(node) {
-  return anim(node, { transform: ["scale(1)", "scale(.955)", "scale(1)"] }, { duration: M.instant, easing: M.out });
-}
-
-// packages/dass-ui/src/tokens.ts
-var baseCss = `
+var br=Object.create;var $t=Object.defineProperty;var xr=Object.getOwnPropertyDescriptor;var yr=Object.getOwnPropertyNames;var wr=Object.getPrototypeOf,kr=Object.prototype.hasOwnProperty;var $r=(e,t)=>()=>{try{return t||e((t={exports:{}}).exports,t),t.exports}catch(r){throw t=0,r}};var Er=(e,t,r,a)=>{if(t&&typeof t=="object"||typeof t=="function")for(let n of yr(t))!kr.call(e,n)&&n!==r&&$t(e,n,{get:()=>t[n],enumerable:!(a=xr(t,n))||a.enumerable});return e};var Mr=(e,t,r)=>(r=e!=null?br(wr(e)):{},Er(t||!e||!e.__esModule?$t(r,"default",{value:e,enumerable:!0}):r,e));var Rt=$r((Tt,Pt)=>{var Lt=(function(){var e=function(A,S){var w=236,k=17,u=A,x=r[S],l=null,o=0,y=null,f=[],b={},I=function(m,g){o=u*4+17,l=(function(c){for(var h=new Array(c),v=0;v<c;v+=1){h[v]=new Array(c);for(var M=0;M<c;M+=1)h[v][M]=null}return h})(o),B(0,0),B(o-7,0),B(0,o-7),Z(),K(),pe(m,g),u>=7&&de(m),y==null&&(y=hr(u,x,f)),ue(y,g)},B=function(m,g){for(var c=-1;c<=7;c+=1)if(!(m+c<=-1||o<=m+c))for(var h=-1;h<=7;h+=1)g+h<=-1||o<=g+h||(0<=c&&c<=6&&(h==0||h==6)||0<=h&&h<=6&&(c==0||c==6)||2<=c&&c<=4&&2<=h&&h<=4?l[m+c][g+h]=!0:l[m+c][g+h]=!1)},j=function(){for(var m=0,g=0,c=0;c<8;c+=1){I(!0,c);var h=n.getLostPoint(b);(c==0||m>h)&&(m=h,g=c)}return g},K=function(){for(var m=8;m<o-8;m+=1)l[m][6]==null&&(l[m][6]=m%2==0);for(var g=8;g<o-8;g+=1)l[6][g]==null&&(l[6][g]=g%2==0)},Z=function(){for(var m=n.getPatternPosition(u),g=0;g<m.length;g+=1)for(var c=0;c<m.length;c+=1){var h=m[g],v=m[c];if(l[h][v]==null)for(var M=-2;M<=2;M+=1)for(var T=-2;T<=2;T+=1)M==-2||M==2||T==-2||T==2||M==0&&T==0?l[h+M][v+T]=!0:l[h+M][v+T]=!1}},de=function(m){for(var g=n.getBCHTypeNumber(u),c=0;c<18;c+=1){var h=!m&&(g>>c&1)==1;l[Math.floor(c/3)][c%3+o-8-3]=h}for(var c=0;c<18;c+=1){var h=!m&&(g>>c&1)==1;l[c%3+o-8-3][Math.floor(c/3)]=h}},pe=function(m,g){for(var c=x<<3|g,h=n.getBCHTypeInfo(c),v=0;v<15;v+=1){var M=!m&&(h>>v&1)==1;v<6?l[v][8]=M:v<8?l[v+1][8]=M:l[o-15+v][8]=M}for(var v=0;v<15;v+=1){var M=!m&&(h>>v&1)==1;v<8?l[8][o-v-1]=M:v<9?l[8][15-v-1+1]=M:l[8][15-v-1]=M}l[o-8][8]=!m},ue=function(m,g){for(var c=-1,h=o-1,v=7,M=0,T=n.getMaskFunction(g),L=o-1;L>0;L-=2)for(L==6&&(L-=1);;){for(var O=0;O<2;O+=1)if(l[h][L-O]==null){var Y=!1;M<m.length&&(Y=(m[M]>>>v&1)==1);var R=T(h,L-O);R&&(Y=!Y),l[h][L-O]=Y,v-=1,v==-1&&(M+=1,v=7)}if(h+=c,h<0||o<=h){h-=c,c=-c;break}}},we=function(m,g){for(var c=0,h=0,v=0,M=new Array(g.length),T=new Array(g.length),L=0;L<g.length;L+=1){var O=g[L].dataCount,Y=g[L].totalCount-O;h=Math.max(h,O),v=Math.max(v,Y),M[L]=new Array(O);for(var R=0;R<M[L].length;R+=1)M[L][R]=255&m.getBuffer()[R+c];c+=O;var ie=n.getErrorCorrectPolynomial(Y),ne=s(M[L],ie.getLength()-1),yt=ne.mod(ie);T[L]=new Array(ie.getLength()-1);for(var R=0;R<T[L].length;R+=1){var wt=R+yt.getLength()-T[L].length;T[L][R]=wt>=0?yt.getAt(wt):0}}for(var kt=0,R=0;R<g.length;R+=1)kt+=g[R].totalCount;for(var at=new Array(kt),We=0,R=0;R<h;R+=1)for(var L=0;L<g.length;L+=1)R<M[L].length&&(at[We]=M[L][R],We+=1);for(var R=0;R<v;R+=1)for(var L=0;L<g.length;L+=1)R<T[L].length&&(at[We]=T[L][R],We+=1);return at},hr=function(m,g,c){for(var h=d.getRSBlocks(m,g),v=p(),M=0;M<c.length;M+=1){var T=c[M];v.put(T.getMode(),4),v.put(T.getLength(),n.getLengthInBits(T.getMode(),m)),T.write(v)}for(var L=0,M=0;M<h.length;M+=1)L+=h[M].dataCount;if(v.getLengthInBits()>L*8)throw"code length overflow. ("+v.getLengthInBits()+">"+L*8+")";for(v.getLengthInBits()+4<=L*8&&v.put(0,4);v.getLengthInBits()%8!=0;)v.putBit(!1);for(;!(v.getLengthInBits()>=L*8||(v.put(w,8),v.getLengthInBits()>=L*8));)v.put(k,8);return we(v,h)};b.addData=function(m,g){g=g||"Byte";var c=null;switch(g){case"Numeric":c=E(m);break;case"Alphanumeric":c=N(m);break;case"Byte":c=V(m);break;case"Kanji":c=U(m);break;default:throw"mode:"+g}f.push(c),y=null},b.isDark=function(m,g){if(m<0||o<=m||g<0||o<=g)throw m+","+g;return l[m][g]},b.getModuleCount=function(){return o},b.make=function(){if(u<1){for(var m=1;m<40;m++){for(var g=d.getRSBlocks(m,x),c=p(),h=0;h<f.length;h++){var v=f[h];c.put(v.getMode(),4),c.put(v.getLength(),n.getLengthInBits(v.getMode(),m)),v.write(c)}for(var M=0,h=0;h<g.length;h++)M+=g[h].dataCount;if(c.getLengthInBits()<=M*8)break}u=m}I(!1,j())},b.createTableTag=function(m,g){m=m||2,g=typeof g>"u"?m*4:g;var c="";c+='<table style="',c+=" border-width: 0px; border-style: none;",c+=" border-collapse: collapse;",c+=" padding: 0px; margin: "+g+"px;",c+='">',c+="<tbody>";for(var h=0;h<b.getModuleCount();h+=1){c+="<tr>";for(var v=0;v<b.getModuleCount();v+=1)c+='<td style="',c+=" border-width: 0px; border-style: none;",c+=" border-collapse: collapse;",c+=" padding: 0px; margin: 0px;",c+=" width: "+m+"px;",c+=" height: "+m+"px;",c+=" background-color: ",c+=b.isDark(h,v)?"#000000":"#ffffff",c+=";",c+='"/>';c+="</tr>"}return c+="</tbody>",c+="</table>",c},b.createSvgTag=function(m,g,c,h){var v={};typeof arguments[0]=="object"&&(v=arguments[0],m=v.cellSize,g=v.margin,c=v.alt,h=v.title),m=m||2,g=typeof g>"u"?m*4:g,c=typeof c=="string"?{text:c}:c||{},c.text=c.text||null,c.id=c.text?c.id||"qrcode-description":null,h=typeof h=="string"?{text:h}:h||{},h.text=h.text||null,h.id=h.text?h.id||"qrcode-title":null;var M=b.getModuleCount()*m+g*2,T,L,O,Y,R="",ie;for(ie="l"+m+",0 0,"+m+" -"+m+",0 0,-"+m+"z ",R+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',R+=v.scalable?"":' width="'+M+'px" height="'+M+'px"',R+=' viewBox="0 0 '+M+" "+M+'" ',R+=' preserveAspectRatio="xMinYMin meet"',R+=h.text||c.text?' role="img" aria-labelledby="'+ke([h.id,c.id].join(" ").trim())+'"':"",R+=">",R+=h.text?'<title id="'+ke(h.id)+'">'+ke(h.text)+"</title>":"",R+=c.text?'<description id="'+ke(c.id)+'">'+ke(c.text)+"</description>":"",R+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',R+='<path d="',O=0;O<b.getModuleCount();O+=1)for(Y=O*m+g,T=0;T<b.getModuleCount();T+=1)b.isDark(O,T)&&(L=T*m+g,R+="M"+L+","+Y+ie);return R+='" stroke="transparent" fill="black"/>',R+="</svg>",R},b.createDataURL=function(m,g){m=m||2,g=typeof g>"u"?m*4:g;var c=b.getModuleCount()*m+g*2,h=g,v=c-g;return fr(c,c,function(M,T){if(h<=M&&M<v&&h<=T&&T<v){var L=Math.floor((M-h)/m),O=Math.floor((T-h)/m);return b.isDark(O,L)?0:1}else return 1})},b.createImgTag=function(m,g,c){m=m||2,g=typeof g>"u"?m*4:g;var h=b.getModuleCount()*m+g*2,v="";return v+="<img",v+=' src="',v+=b.createDataURL(m,g),v+='"',v+=' width="',v+=h,v+='"',v+=' height="',v+=h,v+='"',c&&(v+=' alt="',v+=ke(c),v+='"'),v+="/>",v};var ke=function(m){for(var g="",c=0;c<m.length;c+=1){var h=m.charAt(c);switch(h){case"<":g+="&lt;";break;case">":g+="&gt;";break;case"&":g+="&amp;";break;case'"':g+="&quot;";break;default:g+=h;break}}return g},vr=function(m){var g=1;m=typeof m>"u"?g*2:m;var c=b.getModuleCount()*g+m*2,h=m,v=c-m,M,T,L,O,Y,R={"██":"█","█ ":"▀"," █":"▄","  ":" "},ie={"██":"▀","█ ":"▀"," █":" ","  ":" "},ne="";for(M=0;M<c;M+=2){for(L=Math.floor((M-h)/g),O=Math.floor((M+1-h)/g),T=0;T<c;T+=1)Y="█",h<=T&&T<v&&h<=M&&M<v&&b.isDark(L,Math.floor((T-h)/g))&&(Y=" "),h<=T&&T<v&&h<=M+1&&M+1<v&&b.isDark(O,Math.floor((T-h)/g))?Y+=" ":Y+="█",ne+=m<1&&M+1>=v?ie[Y]:R[Y];ne+=`
+`}return c%2&&m>0?ne.substring(0,ne.length-c-1)+Array(c+1).join("▀"):ne.substring(0,ne.length-1)};return b.createASCII=function(m,g){if(m=m||1,m<2)return vr(g);m-=1,g=typeof g>"u"?m*2:g;var c=b.getModuleCount()*m+g*2,h=g,v=c-g,M,T,L,O,Y=Array(m+1).join("██"),R=Array(m+1).join("  "),ie="",ne="";for(M=0;M<c;M+=1){for(L=Math.floor((M-h)/m),ne="",T=0;T<c;T+=1)O=1,h<=T&&T<v&&h<=M&&M<v&&b.isDark(L,Math.floor((T-h)/m))&&(O=0),ne+=O?Y:R;for(L=0;L<m;L+=1)ie+=ne+`
+`}return ie.substring(0,ie.length-1)},b.renderTo2dContext=function(m,g){g=g||2;for(var c=b.getModuleCount(),h=0;h<c;h++)for(var v=0;v<c;v++)m.fillStyle=b.isDark(h,v)?"black":"white",m.fillRect(h*g,v*g,g,g)},b};e.stringToBytesFuncs={default:function(A){for(var S=[],w=0;w<A.length;w+=1){var k=A.charCodeAt(w);S.push(k&255)}return S}},e.stringToBytes=e.stringToBytesFuncs.default,e.createStringToBytes=function(A,S){var w=(function(){for(var u=mr(A),x=function(){var K=u.read();if(K==-1)throw"eof";return K},l=0,o={};;){var y=u.read();if(y==-1)break;var f=x(),b=x(),I=x(),B=String.fromCharCode(y<<8|f),j=b<<8|I;o[B]=j,l+=1}if(l!=S)throw l+" != "+S;return o})(),k=63;return function(u){for(var x=[],l=0;l<u.length;l+=1){var o=u.charCodeAt(l);if(o<128)x.push(o);else{var y=w[u.charAt(l)];typeof y=="number"?(y&255)==y?x.push(y):(x.push(y>>>8),x.push(y&255)):x.push(k)}}return x}};var t={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},r={L:1,M:0,Q:3,H:2},a={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},n=(function(){var A=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],S=1335,w=7973,k=21522,u={},x=function(l){for(var o=0;l!=0;)o+=1,l>>>=1;return o};return u.getBCHTypeInfo=function(l){for(var o=l<<10;x(o)-x(S)>=0;)o^=S<<x(o)-x(S);return(l<<10|o)^k},u.getBCHTypeNumber=function(l){for(var o=l<<12;x(o)-x(w)>=0;)o^=w<<x(o)-x(w);return l<<12|o},u.getPatternPosition=function(l){return A[l-1]},u.getMaskFunction=function(l){switch(l){case a.PATTERN000:return function(o,y){return(o+y)%2==0};case a.PATTERN001:return function(o,y){return o%2==0};case a.PATTERN010:return function(o,y){return y%3==0};case a.PATTERN011:return function(o,y){return(o+y)%3==0};case a.PATTERN100:return function(o,y){return(Math.floor(o/2)+Math.floor(y/3))%2==0};case a.PATTERN101:return function(o,y){return o*y%2+o*y%3==0};case a.PATTERN110:return function(o,y){return(o*y%2+o*y%3)%2==0};case a.PATTERN111:return function(o,y){return(o*y%3+(o+y)%2)%2==0};default:throw"bad maskPattern:"+l}},u.getErrorCorrectPolynomial=function(l){for(var o=s([1],0),y=0;y<l;y+=1)o=o.multiply(s([1,i.gexp(y)],0));return o},u.getLengthInBits=function(l,o){if(1<=o&&o<10)switch(l){case t.MODE_NUMBER:return 10;case t.MODE_ALPHA_NUM:return 9;case t.MODE_8BIT_BYTE:return 8;case t.MODE_KANJI:return 8;default:throw"mode:"+l}else if(o<27)switch(l){case t.MODE_NUMBER:return 12;case t.MODE_ALPHA_NUM:return 11;case t.MODE_8BIT_BYTE:return 16;case t.MODE_KANJI:return 10;default:throw"mode:"+l}else if(o<41)switch(l){case t.MODE_NUMBER:return 14;case t.MODE_ALPHA_NUM:return 13;case t.MODE_8BIT_BYTE:return 16;case t.MODE_KANJI:return 12;default:throw"mode:"+l}else throw"type:"+o},u.getLostPoint=function(l){for(var o=l.getModuleCount(),y=0,f=0;f<o;f+=1)for(var b=0;b<o;b+=1){for(var I=0,B=l.isDark(f,b),j=-1;j<=1;j+=1)if(!(f+j<0||o<=f+j))for(var K=-1;K<=1;K+=1)b+K<0||o<=b+K||j==0&&K==0||B==l.isDark(f+j,b+K)&&(I+=1);I>5&&(y+=3+I-5)}for(var f=0;f<o-1;f+=1)for(var b=0;b<o-1;b+=1){var Z=0;l.isDark(f,b)&&(Z+=1),l.isDark(f+1,b)&&(Z+=1),l.isDark(f,b+1)&&(Z+=1),l.isDark(f+1,b+1)&&(Z+=1),(Z==0||Z==4)&&(y+=3)}for(var f=0;f<o;f+=1)for(var b=0;b<o-6;b+=1)l.isDark(f,b)&&!l.isDark(f,b+1)&&l.isDark(f,b+2)&&l.isDark(f,b+3)&&l.isDark(f,b+4)&&!l.isDark(f,b+5)&&l.isDark(f,b+6)&&(y+=40);for(var b=0;b<o;b+=1)for(var f=0;f<o-6;f+=1)l.isDark(f,b)&&!l.isDark(f+1,b)&&l.isDark(f+2,b)&&l.isDark(f+3,b)&&l.isDark(f+4,b)&&!l.isDark(f+5,b)&&l.isDark(f+6,b)&&(y+=40);for(var de=0,b=0;b<o;b+=1)for(var f=0;f<o;f+=1)l.isDark(f,b)&&(de+=1);var pe=Math.abs(100*de/o/o-50)/5;return y+=pe*10,y},u})(),i=(function(){for(var A=new Array(256),S=new Array(256),w=0;w<8;w+=1)A[w]=1<<w;for(var w=8;w<256;w+=1)A[w]=A[w-4]^A[w-5]^A[w-6]^A[w-8];for(var w=0;w<255;w+=1)S[A[w]]=w;var k={};return k.glog=function(u){if(u<1)throw"glog("+u+")";return S[u]},k.gexp=function(u){for(;u<0;)u+=255;for(;u>=256;)u-=255;return A[u]},k})();function s(A,S){if(typeof A.length>"u")throw A.length+"/"+S;var w=(function(){for(var u=0;u<A.length&&A[u]==0;)u+=1;for(var x=new Array(A.length-u+S),l=0;l<A.length-u;l+=1)x[l]=A[l+u];return x})(),k={};return k.getAt=function(u){return w[u]},k.getLength=function(){return w.length},k.multiply=function(u){for(var x=new Array(k.getLength()+u.getLength()-1),l=0;l<k.getLength();l+=1)for(var o=0;o<u.getLength();o+=1)x[l+o]^=i.gexp(i.glog(k.getAt(l))+i.glog(u.getAt(o)));return s(x,0)},k.mod=function(u){if(k.getLength()-u.getLength()<0)return k;for(var x=i.glog(k.getAt(0))-i.glog(u.getAt(0)),l=new Array(k.getLength()),o=0;o<k.getLength();o+=1)l[o]=k.getAt(o);for(var o=0;o<u.getLength();o+=1)l[o]^=i.gexp(i.glog(u.getAt(o))+x);return s(l,0).mod(u)},k}var d=(function(){var A=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],S=function(u,x){var l={};return l.totalCount=u,l.dataCount=x,l},w={},k=function(u,x){switch(x){case r.L:return A[(u-1)*4+0];case r.M:return A[(u-1)*4+1];case r.Q:return A[(u-1)*4+2];case r.H:return A[(u-1)*4+3];default:return}};return w.getRSBlocks=function(u,x){var l=k(u,x);if(typeof l>"u")throw"bad rs block @ typeNumber:"+u+"/errorCorrectionLevel:"+x;for(var o=l.length/3,y=[],f=0;f<o;f+=1)for(var b=l[f*3+0],I=l[f*3+1],B=l[f*3+2],j=0;j<b;j+=1)y.push(S(I,B));return y},w})(),p=function(){var A=[],S=0,w={};return w.getBuffer=function(){return A},w.getAt=function(k){var u=Math.floor(k/8);return(A[u]>>>7-k%8&1)==1},w.put=function(k,u){for(var x=0;x<u;x+=1)w.putBit((k>>>u-x-1&1)==1)},w.getLengthInBits=function(){return S},w.putBit=function(k){var u=Math.floor(S/8);A.length<=u&&A.push(0),k&&(A[u]|=128>>>S%8),S+=1},w},E=function(A){var S=t.MODE_NUMBER,w=A,k={};k.getMode=function(){return S},k.getLength=function(l){return w.length},k.write=function(l){for(var o=w,y=0;y+2<o.length;)l.put(u(o.substring(y,y+3)),10),y+=3;y<o.length&&(o.length-y==1?l.put(u(o.substring(y,y+1)),4):o.length-y==2&&l.put(u(o.substring(y,y+2)),7))};var u=function(l){for(var o=0,y=0;y<l.length;y+=1)o=o*10+x(l.charAt(y));return o},x=function(l){if("0"<=l&&l<="9")return l.charCodeAt(0)-48;throw"illegal char :"+l};return k},N=function(A){var S=t.MODE_ALPHA_NUM,w=A,k={};k.getMode=function(){return S},k.getLength=function(x){return w.length},k.write=function(x){for(var l=w,o=0;o+1<l.length;)x.put(u(l.charAt(o))*45+u(l.charAt(o+1)),11),o+=2;o<l.length&&x.put(u(l.charAt(o)),6)};var u=function(x){if("0"<=x&&x<="9")return x.charCodeAt(0)-48;if("A"<=x&&x<="Z")return x.charCodeAt(0)-65+10;switch(x){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+x}};return k},V=function(A){var S=t.MODE_8BIT_BYTE,w=A,k=e.stringToBytes(A),u={};return u.getMode=function(){return S},u.getLength=function(x){return k.length},u.write=function(x){for(var l=0;l<k.length;l+=1)x.put(k[l],8)},u},U=function(A){var S=t.MODE_KANJI,w=A,k=e.stringToBytesFuncs.SJIS;if(!k)throw"sjis not supported.";(function(l,o){var y=k(l);if(y.length!=2||(y[0]<<8|y[1])!=o)throw"sjis not supported."})("友",38726);var u=k(A),x={};return x.getMode=function(){return S},x.getLength=function(l){return~~(u.length/2)},x.write=function(l){for(var o=u,y=0;y+1<o.length;){var f=(255&o[y])<<8|255&o[y+1];if(33088<=f&&f<=40956)f-=33088;else if(57408<=f&&f<=60351)f-=49472;else throw"illegal char at "+(y+1)+"/"+f;f=(f>>>8&255)*192+(f&255),l.put(f,13),y+=2}if(y<o.length)throw"illegal char at "+(y+1)},x},J=function(){var A=[],S={};return S.writeByte=function(w){A.push(w&255)},S.writeShort=function(w){S.writeByte(w),S.writeByte(w>>>8)},S.writeBytes=function(w,k,u){k=k||0,u=u||w.length;for(var x=0;x<u;x+=1)S.writeByte(w[x+k])},S.writeString=function(w){for(var k=0;k<w.length;k+=1)S.writeByte(w.charCodeAt(k))},S.toByteArray=function(){return A},S.toString=function(){var w="";w+="[";for(var k=0;k<A.length;k+=1)k>0&&(w+=","),w+=A[k];return w+="]",w},S},se=function(){var A=0,S=0,w=0,k="",u={},x=function(o){k+=String.fromCharCode(l(o&63))},l=function(o){if(!(o<0)){if(o<26)return 65+o;if(o<52)return 97+(o-26);if(o<62)return 48+(o-52);if(o==62)return 43;if(o==63)return 47}throw"n:"+o};return u.writeByte=function(o){for(A=A<<8|o&255,S+=8,w+=1;S>=6;)x(A>>>S-6),S-=6},u.flush=function(){if(S>0&&(x(A<<6-S),A=0,S=0),w%3!=0)for(var o=3-w%3,y=0;y<o;y+=1)k+="="},u.toString=function(){return k},u},mr=function(A){var S=A,w=0,k=0,u=0,x={};x.read=function(){for(;u<8;){if(w>=S.length){if(u==0)return-1;throw"unexpected end of file./"+u}var o=S.charAt(w);if(w+=1,o=="=")return u=0,-1;if(o.match(/^\s$/))continue;k=k<<6|l(o.charCodeAt(0)),u+=6}var y=k>>>u-8&255;return u-=8,y};var l=function(o){if(65<=o&&o<=90)return o-65;if(97<=o&&o<=122)return o-97+26;if(48<=o&&o<=57)return o-48+52;if(o==43)return 62;if(o==47)return 63;throw"c:"+o};return x},gr=function(A,S){var w=A,k=S,u=new Array(A*S),x={};x.setPixel=function(f,b,I){u[b*w+f]=I},x.write=function(f){f.writeString("GIF87a"),f.writeShort(w),f.writeShort(k),f.writeByte(128),f.writeByte(0),f.writeByte(0),f.writeByte(0),f.writeByte(0),f.writeByte(0),f.writeByte(255),f.writeByte(255),f.writeByte(255),f.writeString(","),f.writeShort(0),f.writeShort(0),f.writeShort(w),f.writeShort(k),f.writeByte(0);var b=2,I=o(b);f.writeByte(b);for(var B=0;I.length-B>255;)f.writeByte(255),f.writeBytes(I,B,255),B+=255;f.writeByte(I.length-B),f.writeBytes(I,B,I.length-B),f.writeByte(0),f.writeString(";")};var l=function(f){var b=f,I=0,B=0,j={};return j.write=function(K,Z){if(K>>>Z)throw"length over";for(;I+Z>=8;)b.writeByte(255&(K<<I|B)),Z-=8-I,K>>>=8-I,B=0,I=0;B=K<<I|B,I=I+Z},j.flush=function(){I>0&&b.writeByte(B)},j},o=function(f){for(var b=1<<f,I=(1<<f)+1,B=f+1,j=y(),K=0;K<b;K+=1)j.add(String.fromCharCode(K));j.add(String.fromCharCode(b)),j.add(String.fromCharCode(I));var Z=J(),de=l(Z);de.write(b,B);var pe=0,ue=String.fromCharCode(u[pe]);for(pe+=1;pe<u.length;){var we=String.fromCharCode(u[pe]);pe+=1,j.contains(ue+we)?ue=ue+we:(de.write(j.indexOf(ue),B),j.size()<4095&&(j.size()==1<<B&&(B+=1),j.add(ue+we)),ue=we)}return de.write(j.indexOf(ue),B),de.write(I,B),de.flush(),Z.toByteArray()},y=function(){var f={},b=0,I={};return I.add=function(B){if(I.contains(B))throw"dup key:"+B;f[B]=b,b+=1},I.size=function(){return b},I.indexOf=function(B){return f[B]},I.contains=function(B){return typeof f[B]<"u"},I};return x},fr=function(A,S,w){for(var k=gr(A,S),u=0;u<S;u+=1)for(var x=0;x<A;x+=1)k.setPixel(x,u,w(x,u));var l=J();k.write(l);for(var o=se(),y=l.toByteArray(),f=0;f<y.length;f+=1)o.writeByte(y[f]);return o.flush(),"data:image/gif;base64,"+o};return e})();(function(){Lt.stringToBytesFuncs["UTF-8"]=function(e){function t(r){for(var a=[],n=0;n<r.length;n++){var i=r.charCodeAt(n);i<128?a.push(i):i<2048?a.push(192|i>>6,128|i&63):i<55296||i>=57344?a.push(224|i>>12,128|i>>6&63,128|i&63):(n++,i=65536+((i&1023)<<10|r.charCodeAt(n)&1023),a.push(240|i>>18,128|i>>12&63,128|i>>6&63,128|i&63))}return a}return t(e)}})();(function(e){typeof define=="function"&&define.amd?define([],e):typeof Tt=="object"&&(Pt.exports=e())})(function(){return Lt})});var re=(e,t=document)=>t.querySelector(e),Et=(e,t=document)=>Array.from(t.querySelectorAll(e));function $e(e){return e.replace(/[&<>"']/g,t=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[t])}function qe(e){let t=document.createElement("style");return t.textContent=e,document.head.appendChild(t),t}var Mt={instant:110,micro:190,comp:340,scene:680,cine:1600,out:"cubic-bezier(.2,.85,.25,1)",inOut:"cubic-bezier(.65,0,.35,1)",sharp:"cubic-bezier(.9,.03,.2,1)",pull:"cubic-bezier(.16,1,.3,1)",spring:"cubic-bezier(.34,1.56,.64,1)"},me=()=>typeof matchMedia=="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches;function Ar(e,t,r){return me()?e.animate({opacity:[.001,1]},{duration:1,fill:"both"}):e.animate(t,{fill:"both",...r})}function At(e){return Ar(e,{transform:["scale(1)","scale(.955)","scale(1)"]},{duration:Mt.instant,easing:Mt.out})}var Sr=`
 :root{
   /* ground & surfaces (warm-cool near-black, layered depth) */
   --bg:#08070C; --bg-1:#0D0A13; --bg-2:#120E1B;
@@ -1932,1392 +171,13 @@ input{font-family:inherit}
 @media (prefers-reduced-motion: reduce){
   *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
-`;
-function injectBase() {
-  const s = document.createElement("style");
-  s.id = "dass-base";
-  s.textContent = baseCss;
-  document.head.appendChild(s);
-}
-
-// packages/dass-ui/src/audio.ts
-var muted = false;
-try {
-  muted = typeof localStorage !== "undefined" && localStorage.getItem("dass_muted") === "1";
-} catch {
-  muted = false;
-}
-
-// packages/dass-ui/src/qr.ts
-var import_qrcode_generator = __toESM(require_qrcode(), 1);
-function qrSvg(text, fg = "#0b0a0f", bg = "#f4eee3", margin = 2) {
-  const qr = (0, import_qrcode_generator.default)(0, "M");
-  qr.addData(text);
-  qr.make();
-  const n = qr.getModuleCount();
-  const size = n + margin * 2;
-  let path = "";
-  for (let r = 0; r < n; r++) {
-    for (let c = 0; c < n; c++) {
-      if (qr.isDark(r, c)) path += `M${c + margin} ${r + margin}h1v1h-1z`;
-    }
-  }
-  return `<svg viewBox="0 0 ${size} ${size}" width="100%" height="100%" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><rect width="${size}" height="${size}" fill="${bg}"/><path d="${path}" fill="${fg}"/></svg>`;
-}
-
-// packages/dass-ui/src/scroll.ts
-function observeReveal(root = document) {
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          e.target.classList.add("in");
-          io.unobserve(e.target);
-        }
-      }
-    },
-    { threshold: 0.16, rootMargin: "0px 0px -8% 0px" }
-  );
-  for (const el2 of Array.from(root.querySelectorAll("[data-reveal]"))) {
-    if (reduced()) el2.classList.add("in");
-    else io.observe(el2);
-  }
-  return io;
-}
-
-// apps/dasssite/src/backfire-audio.ts
-var STORAGE_KEY = "backfire_sound_enabled";
-var BackfireAudio = class {
-  context = null;
-  ambient = null;
-  enabled = false;
-  constructor() {
-    try {
-      this.enabled = localStorage.getItem(STORAGE_KEY) === "1";
-    } catch {
-      this.enabled = false;
-    }
-    document.addEventListener("visibilitychange", () => {
-      if (!this.context || !this.enabled) return;
-      if (document.hidden) void this.context.suspend();
-      else {
-        void this.context.resume();
-        this.ensureAmbient();
-      }
-    });
-  }
-  isEnabled() {
-    return this.enabled;
-  }
-  toggle() {
-    this.setEnabled(!this.enabled);
-    return this.enabled;
-  }
-  setEnabled(value) {
-    this.enabled = value;
-    try {
-      localStorage.setItem(STORAGE_KEY, value ? "1" : "0");
-    } catch {
-    }
-    if (value) {
-      this.getContext();
-      this.ensureAmbient();
-      this.tone(196, 294, 0.11, "triangle", 0.038);
-    } else {
-      this.stopAmbient();
-      if (this.context?.state === "running") void this.context.suspend();
-    }
-  }
-  tick() {
-    this.tone(410, 455, 0.032, "triangle", 0.021);
-  }
-  reveal() {
-    this.tone(147, 392, 0.23, "triangle", 0.048);
-    this.tone(220, 523, 0.16, "sine", 0.027, 0.09);
-  }
-  transfer() {
-    this.tone(523, 165, 0.19, "triangle", 0.035);
-  }
-  impact() {
-    this.tone(147, 49, 0.22, "sawtooth", 0.055);
-  }
-  cta() {
-    this.tone(196, 392, 0.15, "triangle", 0.042);
-  }
-  error() {
-    this.tone(210, 130, 0.13, "sawtooth", 0.055);
-  }
-  getContext() {
-    if (!this.enabled || typeof window === "undefined") return null;
-    if (!this.context) {
-      const Ctor = window.AudioContext ?? window.webkitAudioContext;
-      if (!Ctor) return null;
-      try {
-        this.context = new Ctor();
-      } catch {
-        return null;
-      }
-    }
-    if (this.context.state === "suspended" && !document.hidden) void this.context.resume();
-    return this.context;
-  }
-  tone(from, to, duration, type, peak, delay = 0) {
-    const context = this.getContext();
-    if (!context) return;
-    const start = context.currentTime + delay;
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(from, start);
-    oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, to), start + duration);
-    gain.gain.setValueAtTime(1e-4, start);
-    gain.gain.exponentialRampToValueAtTime(peak, start + 8e-3);
-    gain.gain.exponentialRampToValueAtTime(1e-4, start + duration);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start(start);
-    oscillator.stop(start + duration + 0.03);
-  }
-  ensureAmbient() {
-    const context = this.getContext();
-    if (!context || this.ambient || document.hidden) return;
-    const gain = context.createGain();
-    gain.gain.value = 0.012;
-    const low = context.createOscillator();
-    const air = context.createOscillator();
-    const filter = context.createBiquadFilter();
-    low.type = "sine";
-    low.frequency.value = 44;
-    air.type = "sine";
-    air.frequency.value = 66;
-    filter.type = "lowpass";
-    filter.frequency.value = 150;
-    low.connect(filter);
-    air.connect(filter);
-    filter.connect(gain).connect(context.destination);
-    low.start();
-    air.start();
-    this.ambient = { gain, sources: [low, air] };
-  }
-  stopAmbient() {
-    if (!this.ambient) return;
-    const now = this.context?.currentTime ?? 0;
-    this.ambient.gain.gain.cancelScheduledValues(now);
-    this.ambient.gain.gain.setTargetAtTime(1e-4, now, 0.025);
-    for (const source of this.ambient.sources) source.stop(now + 0.15);
-    this.ambient = null;
-  }
-};
-var backfireAudio = new BackfireAudio();
-
-// apps/dasssite/src/product/config.ts
-var configuredPublicOrigin = (false ? "" : "").replace(/\/$/, "");
-
-// apps/dasssite/src/product/catalog.ts
-var sar = (amountMinor, interval = "one-time") => ({
-  amountMinor,
-  currency: "SAR",
-  interval,
-  taxInclusive: true
-});
-var PRODUCTS = [
-  { id: "theme-original", category: "theme", name: "الرجعة الأصلية", description: "هوية BACKFIRE الأساسية: أسود عميق، قرمزي، وجمر دافئ.", price: sar(0), accent: "#E23A4F", glyph: "BF", includedIn: "free" },
-  { id: "theme-sadu", category: "theme", name: "نسيج الأثر", description: "تأويل بصري هادئ مستلهم من السدو لجلسات اللعب الطويلة.", price: sar(1900), accent: "#B51F36", glyph: "◆", includedIn: "majlis-plus" },
-  { id: "bg-desert", category: "background", name: "آخر الإرسال", description: "خلفية تلفاز داكنة توحي بأثر بعيد من دون تشتيت.", price: sar(1200), accent: "#E85B3F", glyph: "☾" },
-  { id: "avatar-falcon", category: "avatar", name: "الصقر", description: "صورة رمزية حادة وواضحة داخل جلسة اللعب.", price: sar(700), accent: "#FAF6F7", glyph: "♢" },
-  { id: "frame-gold", category: "frame", name: "إطار الارتداد", description: "إطار قرمزي يبرز الملف من غير مبالغة.", price: sar(900), accent: "#B51F36", glyph: "◇", includedIn: "majlis-plus" },
-  { id: "winner-spark", category: "winner", name: "نبضة الفوز", description: "لحظة فوز قصيرة ومضبوطة على الشاشة الكبيرة.", price: sar(1500), accent: "#E85B3F", glyph: "✦" },
-  { id: "reveal-crack", category: "reveal", name: "ارتداد الأثر", description: "مؤثر كشف يبرز عودة العاقبة إلى المشهد العام.", price: sar(1400), accent: "#E23A4F", glyph: "╱" },
-  { id: "season-eid", category: "seasonal", name: "حزمة العيد", description: "حزمة موسمية قيد التجهيز — لا يمكن شراؤها الآن.", price: sar(2900), accent: "#4A0B18", glyph: "✺", comingSoon: true }
-];
-var PLANS = [
-  {
-    id: "free",
-    name: "الأساسية",
-    description: "اللعبة الأساسية كاملة لكل شلة.",
-    features: ["إنشاء الغرف والانضمام بلا حد مدفوع", "اللعبة الكاملة من ٤ إلى ٨ لاعبين", "الإعدادات وميزات الوصول الأساسية"]
-  },
-  {
-    id: "majlis-plus",
-    name: "Backfire Plus",
-    description: "تخصيص أعمق للمضيف والملف الشخصي.",
-    monthly: sar(1900, "month"),
-    yearly: sar(19e3, "year"),
-    recommended: true,
-    features: ["ثيمات وإطارات مختارة", "حفظ إعدادات الجلسة", "سجل مباريات ممتد مستقبلًا", "مؤثرات تقديم إضافية بلا أفضلية لعب"]
-  },
-  {
-    id: "events",
-    name: "باقة مناسبات",
-    description: "تقديم مخصص للفعاليات والجلسات الكبيرة.",
-    monthly: sar(5900, "month"),
-    yearly: sar(59e3, "year"),
-    features: ["هوية غرفة قابلة للتخصيص", "قوالب عرض للمناسبات", "إعدادات مضيف متقدمة مستقبلًا", "لا تتضمن أي عنصر ادفع لتفوز"]
-  }
-];
-function productById(id2) {
-  return PRODUCTS.find((product) => product.id === id2);
-}
-function planById(id2) {
-  return PLANS.find((plan) => plan.id === id2);
-}
-function formatPrice(price) {
-  if (price.amountMinor === 0) return "مجاني";
-  return new Intl.NumberFormat("ar-SA", { style: "currency", currency: price.currency, maximumFractionDigits: 2 }).format(price.amountMinor / 100);
-}
-
-// apps/dasssite/src/product/validation.ts
-function validateDisplayName(raw) {
-  const value = raw.normalize("NFKC").trim().replace(/\s+/g, " ");
-  if (!value) return { ok: false, message: "اكتب الاسم الظاهر." };
-  if ([...value].length > 24) return { ok: false, message: "الاسم الظاهر بحد أقصى ٢٤ حرفًا." };
-  if (/[<>&\u0000-\u001f\u007f-\u009f\u202a-\u202e]/u.test(value)) return { ok: false, message: "الاسم يحتوي رموزًا غير مدعومة." };
-  return { ok: true, value };
-}
-function validateUsername(raw) {
-  const value = raw.trim().toLowerCase();
-  if (!/^[a-z0-9_]{3,20}$/.test(value)) return { ok: false, message: "اسم المستخدم من ٣–٢٠: حروف إنجليزية وأرقام وشرطة سفلية." };
-  return { ok: true, value };
-}
-function validateEmail(raw) {
-  const value = raw.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return { ok: false, message: "اكتب بريدًا إلكترونيًا صحيحًا." };
-  return { ok: true, value };
-}
-function validatePassword(raw) {
-  if (raw.length < 8 || !/[A-Za-z]/.test(raw) || !/\d/.test(raw)) return { ok: false, message: "كلمة المرور ٨ خانات على الأقل وتحتوي حرفًا ورقمًا." };
-  return { ok: true, value: raw };
-}
-
-// apps/dasssite/src/product/demo-platform.ts
-var PREFIX = "dass.product.v1.";
-var DEFAULT_SETTINGS = {
-  language: "ar",
-  appearance: "dass",
-  effectsVolume: 70,
-  musicVolume: 45,
-  muted: false,
-  animations: true,
-  reducedMotion: false,
-  highContrast: false,
-  textScale: "normal",
-  haptics: true,
-  confirmCritical: true,
-  autoReady: false,
-  productUpdates: true,
-  matchInvites: true,
-  friendInvites: false,
-  purchaseReceipts: true,
-  subscriptionReminders: true,
-  marketing: false,
-  profileVisibility: "players",
-  activityVisibility: false,
-  recentPlayerVisibility: false,
-  analytics: false,
-  functionalCookies: true
-};
-var DEFAULT_PROFILE = {
-  displayName: "ضيف المجلس",
-  username: "guest",
-  avatar: "theme-original",
-  frame: "theme-original"
-};
-var DEFAULT_INVENTORY = {
-  ownedProductIds: ["theme-original"],
-  equipped: { theme: "theme-original" }
-};
-var DEMO_IDENTITY = {
-  id: "demo_user_seed",
-  displayName: "لاعب تجريبي",
-  username: "demo_player",
-  email: "demo@backfire.local",
-  createdAt: "2026-01-01T00:00:00.000Z",
-  plan: "free"
-};
-function clone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-function id(prefix) {
-  const random = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  return `${prefix}_${random}`;
-}
-function parse(storage2, key, fallback) {
-  try {
-    const raw = storage2.getItem(PREFIX + key);
-    return raw ? JSON.parse(raw) : clone(fallback);
-  } catch {
-    return clone(fallback);
-  }
-}
-function save(storage2, key, value) {
-  storage2.setItem(PREFIX + key, JSON.stringify(value));
-}
-function requireValue(result) {
-  if (!result.ok) throw new Error(result.message);
-  return result.value;
-}
-function scoped(key, session) {
-  return `${key}.${session?.id ?? "anonymous"}`;
-}
-function createDemoPlatform(storage2) {
-  const listeners = /* @__PURE__ */ new Set();
-  const notify = () => {
-    const session = api.getSession();
-    for (const listener of listeners) listener(session);
-  };
-  const requireSession = () => {
-    const session = api.getSession();
-    if (!session) throw new Error("سجّل الدخول أو تابع كضيف أولًا.");
-    return session;
-  };
-  const api = {
-    mode: "demo",
-    getSession: () => parse(storage2, "session", null),
-    subscribeToSessionChanges(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    async signIn(email, password) {
-      const cleanEmail = requireValue(validateEmail(email));
-      requireValue(validatePassword(password));
-      const identity = parse(storage2, "identities", []).find((candidate) => candidate.email === cleanEmail) ?? (cleanEmail === DEMO_IDENTITY.email ? DEMO_IDENTITY : void 0);
-      if (!identity) throw new Error("بيانات الدخول غير صحيحة في وضع العرض. أنشئ حسابًا محليًا أولًا.");
-      const session = {
-        id: identity.id,
-        mode: "demo",
-        displayName: identity.displayName,
-        username: identity.username,
-        email: cleanEmail,
-        verified: false,
-        plan: identity.plan,
-        createdAt: identity.createdAt
-      };
-      save(storage2, "session", session);
-      const existingProfile = parse(storage2, scoped("profile", session), null);
-      if (!existingProfile) save(storage2, scoped("profile", session), { ...DEFAULT_PROFILE, displayName: session.displayName, username: session.username });
-      notify();
-      return clone(session);
-    },
-    async signUp(input) {
-      if (!input.acceptedTerms) throw new Error("وافق على الشروط وسياسة الخصوصية للمتابعة.");
-      const displayName = requireValue(validateDisplayName(input.displayName));
-      const username = requireValue(validateUsername(input.username));
-      const email = requireValue(validateEmail(input.email));
-      requireValue(validatePassword(input.password));
-      const identities = parse(storage2, "identities", []);
-      if (identities.some((identity) => identity.email === email) || email === DEMO_IDENTITY.email) throw new Error("البريد مستخدم مسبقًا في هذا المتصفح.");
-      if (identities.some((identity) => identity.username === username) || username === DEMO_IDENTITY.username) throw new Error("اسم المستخدم مستخدم مسبقًا في هذا المتصفح.");
-      const createdAt = (/* @__PURE__ */ new Date()).toISOString();
-      const userId = id("demo_user");
-      const session = {
-        id: userId,
-        mode: "demo",
-        displayName,
-        username,
-        email,
-        verified: false,
-        plan: "free",
-        createdAt
-      };
-      identities.push({ id: userId, displayName, username, email, createdAt, plan: "free" });
-      save(storage2, "identities", identities);
-      save(storage2, "session", session);
-      save(storage2, scoped("profile", session), { ...DEFAULT_PROFILE, displayName, username });
-      save(storage2, scoped("settings", session), DEFAULT_SETTINGS);
-      save(storage2, scoped("inventory", session), DEFAULT_INVENTORY);
-      notify();
-      return clone(session);
-    },
-    async continueAsGuest(displayName = DEFAULT_PROFILE.displayName) {
-      const cleanName = requireValue(validateDisplayName(displayName));
-      const suffix = Math.random().toString(36).slice(2, 7);
-      const session = {
-        id: id("guest"),
-        mode: "guest",
-        displayName: cleanName,
-        username: `guest_${suffix}`,
-        verified: false,
-        plan: "free",
-        createdAt: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      save(storage2, "session", session);
-      save(storage2, scoped("profile", session), { ...DEFAULT_PROFILE, displayName: cleanName, username: session.username });
-      notify();
-      return clone(session);
-    },
-    async signOut() {
-      storage2.removeItem(PREFIX + "session");
-      notify();
-    },
-    async requestPasswordReset(email) {
-      requireValue(validateEmail(email));
-      return { delivered: false, demo: true };
-    },
-    getProfile() {
-      const session = api.getSession();
-      return parse(storage2, scoped("profile", session), session ? { ...DEFAULT_PROFILE, displayName: session.displayName, username: session.username } : DEFAULT_PROFILE);
-    },
-    async updateProfile(update) {
-      const session = requireSession();
-      const profile = api.getProfile();
-      const next = { ...profile, ...update };
-      if (update.displayName !== void 0) next.displayName = requireValue(validateDisplayName(update.displayName));
-      if (update.username !== void 0) next.username = requireValue(validateUsername(update.username));
-      const identities = parse(storage2, "identities", []);
-      if (identities.some((candidate) => candidate.id !== session.id && candidate.username === next.username) || session.id !== DEMO_IDENTITY.id && next.username === DEMO_IDENTITY.username) {
-        throw new Error("اسم المستخدم مستخدم مسبقًا في هذا المتصفح.");
-      }
-      save(storage2, scoped("profile", session), next);
-      const nextSession = { ...session, displayName: next.displayName, username: next.username };
-      save(storage2, "session", nextSession);
-      const identity = identities.find((candidate) => candidate.id === session.id);
-      if (identity) {
-        identity.displayName = next.displayName;
-        identity.username = next.username;
-        save(storage2, "identities", identities);
-      }
-      notify();
-      return clone(next);
-    },
-    getSettings: () => {
-      const session = api.getSession();
-      return { ...DEFAULT_SETTINGS, ...parse(storage2, scoped("settings", session), {}) };
-    },
-    updateSettings(update) {
-      requireSession();
-      const next = { ...api.getSettings(), ...update };
-      next.effectsVolume = Math.min(100, Math.max(0, Number(next.effectsVolume)));
-      next.musicVolume = Math.min(100, Math.max(0, Number(next.musicVolume)));
-      save(storage2, scoped("settings", api.getSession()), next);
-      return clone(next);
-    },
-    getInventory: () => parse(storage2, scoped("inventory", api.getSession()), DEFAULT_INVENTORY),
-    async equipProduct(productId) {
-      requireSession();
-      const product = productById(productId);
-      if (!product) throw new Error("العنصر غير موجود.");
-      const inventory = api.getInventory();
-      if (!inventory.ownedProductIds.includes(productId)) throw new Error("العنصر غير مملوك.");
-      inventory.equipped[product.category] = productId;
-      save(storage2, scoped("inventory", api.getSession()), inventory);
-      return clone(inventory);
-    },
-    async unequipProduct(productId) {
-      requireSession();
-      const product = productById(productId);
-      if (!product) throw new Error("العنصر غير موجود.");
-      const inventory = api.getInventory();
-      if (inventory.equipped[product.category] !== productId) return inventory;
-      if (product.category === "theme") inventory.equipped.theme = "theme-original";
-      else delete inventory.equipped[product.category];
-      save(storage2, scoped("inventory", api.getSession()), inventory);
-      return clone(inventory);
-    },
-    async createCheckout(kind, referenceId, interval = "month") {
-      const session = requireSession();
-      const product = kind === "product" ? productById(referenceId) : void 0;
-      const plan = kind === "plan" ? planById(referenceId) : void 0;
-      if (kind === "product" && (!product || product.comingSoon)) throw new Error("هذا العنصر غير متاح للشراء.");
-      if (kind === "plan" && (!plan || plan.id === "free")) throw new Error("هذه الباقة لا تحتاج إلى دفع.");
-      const price = product?.price ?? (interval === "year" ? plan?.yearly : plan?.monthly);
-      if (!price) throw new Error("سعر الاختيار غير متاح.");
-      const checkout = {
-        id: id("demo_checkout"),
-        ownerId: session.id,
-        kind,
-        referenceId,
-        label: product?.name ?? plan.name,
-        price,
-        status: "pending",
-        demo: true,
-        createdAt: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      save(storage2, `checkout.${checkout.id}`, checkout);
-      return clone(checkout);
-    },
-    getCheckout(checkoutId) {
-      return parse(storage2, `checkout.${checkoutId}`, null);
-    },
-    async completeDemoCheckout(checkoutId, outcome) {
-      const currentSession = requireSession();
-      const checkout = api.getCheckout(checkoutId);
-      if (!checkout) throw new Error("جلسة الدفع غير موجودة.");
-      if (checkout.ownerId !== currentSession.id) throw new Error("جلسة الدفع لا تخص هذا الحساب.");
-      if (checkout.status !== "pending") return checkout;
-      checkout.status = outcome;
-      save(storage2, `checkout.${checkout.id}`, checkout);
-      if (outcome === "succeeded") {
-        if (checkout.kind === "product") {
-          const inventory = api.getInventory();
-          if (!inventory.ownedProductIds.includes(checkout.referenceId)) inventory.ownedProductIds.push(checkout.referenceId);
-          save(storage2, scoped("inventory", api.getSession()), inventory);
-        } else {
-          const session = requireSession();
-          save(storage2, "session", { ...session, plan: checkout.referenceId });
-          const identities = parse(storage2, "identities", []);
-          const identity = identities.find((candidate) => candidate.id === session.id);
-          if (identity) {
-            identity.plan = checkout.referenceId;
-            save(storage2, "identities", identities);
-          }
-          notify();
-        }
-        const receipts = api.getPurchaseHistory();
-        const receipt = {
-          id: id("demo_receipt"),
-          checkoutId: checkout.id,
-          label: checkout.label,
-          totalMinor: checkout.price.amountMinor,
-          currency: checkout.price.currency,
-          createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-          demo: true
-        };
-        receipts.unshift(receipt);
-        save(storage2, scoped("receipts", api.getSession()), receipts);
-      }
-      return clone(checkout);
-    },
-    getPurchaseHistory: () => parse(storage2, scoped("receipts", api.getSession()), []),
-    async cancelSubscription() {
-      const session = requireSession();
-      const next = { ...session, plan: "free" };
-      save(storage2, "session", next);
-      const identities = parse(storage2, "identities", []);
-      const identity = identities.find((candidate) => candidate.id === session.id);
-      if (identity) {
-        identity.plan = "free";
-        save(storage2, "identities", identities);
-      }
-      notify();
-      return clone(next);
-    },
-    getMatchHistory: () => parse(storage2, scoped("matches", api.getSession()), []),
-    async saveSupportRequest(request) {
-      const subject = request.subject.trim();
-      const message = request.message.trim();
-      if (subject.length < 3 || subject.length > 100) throw new Error("عنوان الطلب من ٣ إلى ١٠٠ حرف.");
-      if (message.length < 10 || message.length > 2e3) throw new Error("التفاصيل من ١٠ إلى ٢٠٠٠ حرف.");
-      if (request.email) requireValue(validateEmail(request.email));
-      const entry = {
-        ...request,
-        subject,
-        message,
-        id: id("demo_support"),
-        createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-        delivery: "local-only"
-      };
-      const requests = parse(storage2, "support", []);
-      requests.unshift(entry);
-      save(storage2, "support", requests);
-      return clone(entry);
-    },
-    async deleteLocalAccount(confirmation) {
-      if (confirmation.trim() !== "احذف حسابي") throw new Error("اكتب «احذف حسابي» للتأكيد.");
-      const session = requireSession();
-      for (const key of ["profile", "settings", "inventory", "receipts", "matches"]) {
-        storage2.removeItem(PREFIX + scoped(key, session));
-      }
-      const identities = parse(storage2, "identities", []).filter((identity) => identity.id !== session.id);
-      save(storage2, "identities", identities);
-      storage2.removeItem(PREFIX + "support");
-      storage2.removeItem(PREFIX + "session");
-      notify();
-    }
-  };
-  return api;
-}
-function createUnavailablePlatform() {
-  const unavailable = () => {
-    throw new Error("خدمات الحساب والدفع غير موصولة في هذا الإصدار.");
-  };
-  return {
-    mode: "unavailable",
-    getSession: () => null,
-    subscribeToSessionChanges: () => () => void 0,
-    signIn: async () => unavailable(),
-    signUp: async () => unavailable(),
-    continueAsGuest: async () => unavailable(),
-    signOut: async () => void 0,
-    requestPasswordReset: async () => unavailable(),
-    getProfile: unavailable,
-    updateProfile: async () => unavailable(),
-    getSettings: unavailable,
-    updateSettings: unavailable,
-    getInventory: unavailable,
-    equipProduct: async () => unavailable(),
-    unequipProduct: async () => unavailable(),
-    createCheckout: async () => unavailable(),
-    getCheckout: () => null,
-    completeDemoCheckout: async () => unavailable(),
-    getPurchaseHistory: () => [],
-    cancelSubscription: async () => unavailable(),
-    getMatchHistory: () => [],
-    saveSupportRequest: async () => unavailable(),
-    deleteLocalAccount: async () => unavailable()
-  };
-}
-
-// apps/dasssite/src/product/platform.ts
-var memory = /* @__PURE__ */ new Map();
-var fallbackStorage = {
-  getItem: (key) => memory.get(key) ?? null,
-  setItem: (key, value) => {
-    memory.set(key, value);
-  },
-  removeItem: (key) => {
-    memory.delete(key);
-  }
-};
-var storage = typeof localStorage === "undefined" ? fallbackStorage : localStorage;
-var configuredDemoMode = false ? true : true;
-var platform = configuredDemoMode ? createDemoPlatform(storage) : createUnavailablePlatform();
-var demoMode = configuredDemoMode;
-
-// packages/dass/src/join.ts
-var ROOM_CODE_LENGTH = 8;
-var ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-var ARABIC_INDIC = "٠١٢٣٤٥٦٧٨٩";
-var EASTERN_ARABIC = "۰۱۲۳۴۵۶۷۸۹";
-function normalizeRoomCode(value) {
-  return String(value ?? "").trim().replace(/[\s-]+/g, "").replace(/[٠-٩]/g, (digit) => String(ARABIC_INDIC.indexOf(digit))).replace(/[۰-۹]/g, (digit) => String(EASTERN_ARABIC.indexOf(digit))).toUpperCase();
-}
-function isRoomCode(value) {
-  const code = normalizeRoomCode(value);
-  return code.length === ROOM_CODE_LENGTH && [...code].every((char) => ROOM_CODE_ALPHABET.includes(char));
-}
-
-// apps/dasssite/src/product/pages.ts
-var PRODUCT_PATHS = /* @__PURE__ */ new Set([
-  "/store",
-  "/pricing",
-  "/login",
-  "/signup",
-  "/forgot-password",
-  "/reset-password",
-  "/verify-email",
-  "/session-ended",
-  "/store/product",
-  "/checkout/result",
-  "/account",
-  "/account/profile",
-  "/account/settings",
-  "/account/inventory",
-  "/account/history",
-  "/account/history/match",
-  "/account/achievements",
-  "/account/billing",
-  "/checkout",
-  "/support",
-  "/faq",
-  "/contact",
-  "/report-player",
-  "/about",
-  "/credits",
-  "/status",
-  "/changelog",
-  "/invite",
-  "/legal/privacy",
-  "/legal/terms",
-  "/legal/refunds",
-  "/legal/cookies"
-]);
-var h = escapeHtml;
-var $ = (selector) => document.querySelector(selector);
-function shell(kicker, title, copy, content, aside = "") {
-  return `<main id="main-content" class="product-page" tabindex="-1">
-    <header class="product-hero"><div><span class="eyebrow">${kicker}</span><h1>${title}</h1><p>${copy}</p></div>${aside}</header>
-    ${demoMode ? demoBanner() : unavailableBanner()}
-    ${content}
-  </main>`;
-}
-function demoBanner() {
-  return `<aside class="demo-banner" role="note"><span class="demo-dot"></span><div><b>وضع العرض المحلي</b><span>الحسابات والمشتريات محفوظة على هذا المتصفح فقط. لا يوجد دفع أو إرسال بريد حقيقي.</span></div></aside>`;
-}
-function unavailableBanner() {
-  return `<aside class="demo-banner unavailable" role="alert"><span class="demo-dot"></span><div><b>الخدمات التجارية غير متصلة</b><span>التصفح متاح، لكن الحساب والدفع يحتاجان مزود إنتاج.</span></div></aside>`;
-}
-function notice(message, kind = "ok") {
-  const box = $("#product-notice");
-  if (!box) return;
-  box.className = `product-notice ${kind}`;
-  box.textContent = message;
-  box.removeAttribute("hidden");
-  box.scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
-function errorMessage(error) {
-  return error instanceof Error ? error.message : "تعذر إكمال العملية.";
-}
-function setFormBusy(form, busy) {
-  form.setAttribute("aria-busy", String(busy));
-  const button = form.querySelector('button[type="submit"]');
-  if (!button) return;
-  if (busy) {
-    button.dataset.label = button.textContent ?? "";
-    button.textContent = "جاري التنفيذ…";
-  } else if (button.dataset.label) button.textContent = button.dataset.label;
-  button.disabled = busy;
-}
-function requireAccount(session, next = "") {
-  if (session) return null;
-  const login = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
-  return `<section class="empty-state panel"><span class="empty-glyph">◇</span><h2>تحتاج حسابًا محليًا</h2><p>سجّل دخولك في وضع العرض أو تابع كضيف للوصول لهذه الصفحة.</p><a class="btn primary" data-link="${login}">دخول أو متابعة كضيف</a></section>`;
-}
-function loginNext() {
-  const requested = new URLSearchParams(location.search).get("next") ?? "";
-  const path = requested.split("?")[0] ?? "";
-  return path.startsWith("/") && PRODUCT_PATHS.has(path) ? requested : "/account/profile";
-}
-function accountTabs(active) {
-  const tabs = [
-    ["profile", "/account/profile", "الملف"],
-    ["inventory", "/account/inventory", "المقتنيات"],
-    ["history", "/account/history", "المباريات"],
-    ["achievements", "/account/achievements", "الإنجازات"],
-    ["billing", "/account/billing", "الفوترة"],
-    ["settings", "/account/settings", "الإعدادات"]
-  ];
-  return `<nav class="account-tabs" aria-label="صفحات الحساب">${tabs.map(([id2, path, label]) => `<a data-link="${path}" class="${active === id2 ? "on" : ""}">${label}</a>`).join("")}</nav>`;
-}
-function field(name, label, type = "text", value = "", attrs = "") {
-  return `<label class="field"><span>${label}</span><input class="input" name="${name}" type="${type}" value="${h(value)}" ${attrs}></label>`;
-}
-function loginPage() {
-  const session = platform.getSession();
-  const html = session ? shell("الحساب", "أهلًا " + h(session.displayName), "جلستك المحلية جاهزة.", `<section class="auth-card panel"><div id="product-notice" hidden></div><p class="muted">${session.mode === "guest" ? "أنت داخل كضيف." : `الحساب التجريبي: ${h(session.email ?? "")}`}</p><a class="btn primary wide" data-link="/account/profile">افتح حسابي</a><button class="btn wide" id="logout">تسجيل الخروج</button></section>`) : shell("الحساب", "ارجع للعبة", "دخول تجريبي محلي لا يرسل بيانات إلى خادم.", `<section class="auth-layout"><form id="login-form" class="auth-card panel"><div id="product-notice" role="status" aria-live="polite" hidden></div>${field("email", "البريد الإلكتروني", "email", "", 'autocomplete="email" required')}${field("password", "كلمة المرور", "password", "", 'data-secret autocomplete="current-password" minlength="8" required')}<div class="demo-credential"><span>حساب العرض الجاهز</span><code dir="ltr">demo@backfire.local · demoPass8</code></div><div class="form-options"><label class="check-row"><input name="remember" type="checkbox" checked><span>تذكر الجلسة على هذا الجهاز</span></label><button class="secret-toggle" type="button">إظهار كلمة المرور</button></div><button class="btn primary wide" type="submit">دخول تجريبي</button><a data-link="/forgot-password" class="text-link">نسيت كلمة المرور؟</a></form><aside class="auth-side"><span class="auth-seal">BF</span><h2>ما عندك حساب؟</h2><p>أنشئ ملفًا محليًا، أو ادخل كضيف من دون بريد.</p><a class="btn" data-link="/signup">إنشاء حساب تجريبي</a><button id="guest-login" class="btn ghost">المتابعة كضيف</button></aside></section>`);
-  return {
-    active: "account",
-    title: "تسجيل الدخول",
-    description: "الدخول إلى حساب BACKFIRE التجريبي.",
-    html,
-    bind(navigate) {
-      bindSecretToggle();
-      $("#logout")?.addEventListener("click", async () => {
-        await platform.signOut();
-        navigate("/");
-      });
-      $("#guest-login")?.addEventListener("click", async (event) => {
-        event.currentTarget.disabled = true;
-        try {
-          await platform.continueAsGuest();
-          navigate(loginNext());
-        } catch (error) {
-          notice(errorMessage(error), "error");
-          event.currentTarget.disabled = false;
-        }
-      });
-      $("#login-form")?.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const form = event.currentTarget;
-        setFormBusy(form, true);
-        const data = new FormData(form);
-        try {
-          await platform.signIn(String(data.get("email") ?? ""), String(data.get("password") ?? ""));
-          navigate(loginNext());
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        } finally {
-          setFormBusy(form, false);
-        }
-      });
-    }
-  };
-}
-function signupPage() {
-  return {
-    active: "account",
-    title: "إنشاء حساب",
-    description: "إنشاء حساب BACKFIRE تجريبي محلي.",
-    html: shell("حساب جديد", "سمّ نفسك", "البيانات تبقى على هذا الجهاز في وضع العرض.", `<form id="signup-form" class="auth-card panel form-grid"><div id="product-notice" role="status" aria-live="polite" hidden></div>${field("displayName", "الاسم الظاهر", "text", "", 'maxlength="24" autocomplete="name" required aria-describedby="name-help"')}<small id="name-help" class="field-help">حتى ٢٤ حرفًا. لا نسمح بالترميز أو محارف التحكم.</small>${field("username", "اسم المستخدم", "text", "", 'maxlength="20" pattern="[a-zA-Z0-9_]{3,20}" dir="ltr" required aria-describedby="username-help"')}<small id="username-help" class="field-help">٣–٢٠ من الحروف الإنجليزية والأرقام والشرطة السفلية.</small>${field("email", "البريد الإلكتروني", "email", "", 'autocomplete="email" required')}${field("password", "كلمة المرور", "password", "", 'data-secret minlength="8" autocomplete="new-password" required aria-describedby="password-help"')}${field("confirmPassword", "تأكيد كلمة المرور", "password", "", 'data-secret minlength="8" autocomplete="new-password" required')}<small id="password-help" class="field-help">٨ خانات على الأقل، وتتضمن حرفًا ورقمًا.</small><button class="secret-toggle" type="button">إظهار كلمتي المرور</button><label class="check-row"><input name="terms" type="checkbox" required><span>أوافق على <a data-link="/legal/terms">الشروط</a> و<a data-link="/legal/privacy">الخصوصية</a>.</span></label><button class="btn primary wide" type="submit">أنشئ الحساب التجريبي</button><p class="form-foot">عندك حساب؟ <a data-link="/login">سجّل الدخول</a></p></form>`),
-    bind(navigate) {
-      bindSecretToggle();
-      $("#signup-form")?.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const form = event.currentTarget;
-        setFormBusy(form, true);
-        const data = new FormData(form);
-        try {
-          if (String(data.get("password") ?? "") !== String(data.get("confirmPassword") ?? "")) throw new Error("كلمتا المرور غير متطابقتين.");
-          await platform.signUp({
-            displayName: String(data.get("displayName") ?? ""),
-            username: String(data.get("username") ?? ""),
-            email: String(data.get("email") ?? ""),
-            password: String(data.get("password") ?? ""),
-            acceptedTerms: data.get("terms") === "on"
-          });
-          navigate("/account/profile");
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        } finally {
-          setFormBusy(form, false);
-        }
-      });
-    }
-  };
-}
-function bindSecretToggle() {
-  $(".secret-toggle")?.addEventListener("click", (event) => {
-    const secrets = document.querySelectorAll("[data-secret]");
-    const show = [...secrets].some((input) => input.type === "password");
-    secrets.forEach((input) => {
-      input.type = show ? "text" : "password";
-    });
-    event.currentTarget.textContent = show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور";
-  });
-}
-function forgotPage() {
-  return {
-    active: "account",
-    title: "استعادة كلمة المرور",
-    description: "توضيح استعادة كلمة المرور في النسخة التجريبية.",
-    html: shell("استعادة الحساب", "نسيت كلمة المرور؟", "لن نرسل بريدًا وهميًا. مزود البريد غير موصول في وضع العرض.", `<form id="reset-form" class="auth-card panel"><div id="product-notice" hidden></div>${field("email", "البريد الإلكتروني", "email", "", 'required autocomplete="email"')}<button class="btn primary wide" type="submit">تحقق من الطلب</button><a class="text-link" data-link="/login">العودة للدخول</a></form>`),
-    bind() {
-      $("#reset-form")?.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const form = event.currentTarget;
-        setFormBusy(form, true);
-        const data = new FormData(form);
-        try {
-          await platform.requestPasswordReset(String(data.get("email") ?? ""));
-          notice("البريد صحيح، لكن لم يُرسل شيء لأن مزود البريد غير موصول في وضع العرض.");
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        } finally {
-          setFormBusy(form, false);
-        }
-      });
-    }
-  };
-}
-function authStatePage(path) {
-  if (path === "/session-ended") return {
-    active: "account",
-    title: "انتهت الجلسة",
-    description: "انتهت جلسة حساب BACKFIRE.",
-    html: shell("أمان الحساب", "انتهت الجلسة", "لم نحتفظ بعملية معلّقة. ادخل مرة ثانية للمتابعة.", `<section class="empty-state panel"><span class="empty-glyph">⌁</span><h2>سجّل دخولك من جديد</h2><p>في مزود الإنتاج ستنتهي الجلسة عند الإلغاء أو انتهاء صلاحية الرمز. وضع العرض المحلي لا يدّعي دورة رموز خادم.</p><a class="btn primary" data-link="/login">تسجيل الدخول</a></section>`)
-  };
-  if (path === "/verify-email") return {
-    active: "account",
-    title: "تأكيد البريد",
-    description: "حالة تأكيد بريد حساب BACKFIRE.",
-    html: shell("تأكيد البريد", "البريد غير موثّق", "مزود البريد غير موصول، لذلك لن نرسل رسالة وهمية.", `<section class="empty-state panel"><span class="empty-glyph">✉</span><h2>التأكيد غير متاح في وضع العرض</h2><p>الحساب المحلي يبقى بعلامة «غير موثّق». عند توصيل مزود الهوية ستُرسل الروابط وتُتحقق على الخادم.</p><a class="btn" data-link="/account/profile">العودة للملف</a></section>`)
-  };
-  return {
-    active: "account",
-    title: "إعادة تعيين كلمة المرور",
-    description: "إعادة تعيين كلمة مرور BACKFIRE.",
-    html: shell("استعادة الحساب", "رابط إعادة التعيين غير نشط", "هذه الشاشة موجودة لحالة الرابط، لكنها لن تغير كلمة مرور من دون مزود هوية.", `<section class="empty-state panel"><span class="empty-glyph">◇</span><h2>لا يوجد رمز استعادة صالح</h2><p>اطلب رابطًا بعد توصيل خدمة البريد والهوية. لم نقرأ أو نقبل أي رمز من الرابط في وضع العرض.</p><a class="btn primary" data-link="/forgot-password">العودة للاستعادة</a></section>`)
-  };
-}
-function productCard(product, owned) {
-  const primaryAction2 = product.comingSoon ? '<button class="btn sm" disabled>قريبًا</button>' : owned.has(product.id) ? `<a class="btn sm" data-link="/account/inventory">${product.price.amountMinor === 0 ? "ضمن حسابك" : "مملوك"}</a>` : `<a class="btn primary sm" data-link="/checkout?kind=product&id=${product.id}">اقتناء</a>`;
-  return `<article class="product-card" data-category="${product.category}" data-name="${h(product.name.toLowerCase())}" data-price="${product.price.amountMinor}"><a class="product-art" style="--accent:${product.accent}" data-link="/store/product?id=${product.id}" aria-label="معاينة ${h(product.name)}"><span>${h(product.glyph)}</span></a><div class="product-card-copy"><span class="product-type">${categoryLabel(product.category)}</span><h2><a data-link="/store/product?id=${product.id}">${h(product.name)}</a></h2><p>${h(product.description)}</p><div class="product-card-foot"><b>${formatPrice(product.price)}</b><div><a class="btn sm ghost" data-link="/store/product?id=${product.id}">معاينة</a>${primaryAction2}</div></div></div></article>`;
-}
-function categoryLabel(category) {
-  return { theme: "ثيم", background: "خلفية", avatar: "صورة", frame: "إطار", winner: "فوز", reveal: "كشف", seasonal: "موسمي" }[category];
-}
-function storePage() {
-  const owned = new Set(platform.getSession() ? platform.getInventory().ownedProductIds : ["theme-original"]);
-  return {
-    active: "store",
-    title: "المتجر",
-    description: "مظاهر وتجارب بصرية اختيارية للعبة BACKFIRE.",
-    html: shell("متجر BACKFIRE", "خلّ الجلسة تشبهكم", "مظاهر ومؤثرات اختيارية فقط — لا أفضلية لعب ولا صناديق عشوائية.", `<section class="catalog-tools"><div class="filter-pills" role="group" aria-label="تصفية المتجر"><button class="on" data-filter="all">الكل</button><button data-filter="theme">الثيمات</button><button data-filter="avatar">الملف</button><button data-filter="winner">المؤثرات</button></div><div class="catalog-inputs"><label><span class="sr-only">ابحث في المتجر</span><input id="store-search" class="input" type="search" placeholder="ابحث بالاسم"></label><label><span class="sr-only">ترتيب المتجر</span><select id="store-sort" class="input"><option value="featured">الترتيب المقترح</option><option value="low">السعر: الأقل</option><option value="high">السعر: الأعلى</option></select></label></div><p class="catalog-note">الأسعار تشمل الضريبة · الدفع الحقيقي غير مفعّل</p></section><div id="store-empty" class="empty-state panel compact" hidden><h2>ما لقينا هذا العنصر</h2><p>غيّر البحث أو افتح فئة ثانية.</p></div><section class="product-grid" id="product-grid">${PRODUCTS.map((product) => productCard(product, owned)).join("")}</section>`),
-    bind() {
-      let category = "all";
-      const apply = () => {
-        const query = ($("#store-search")?.value ?? "").trim().toLowerCase();
-        let visible = 0;
-        document.querySelectorAll("[data-category]").forEach((card) => {
-          card.hidden = category !== "all" && card.dataset.category !== category || !(card.dataset.name ?? "").includes(query);
-          if (!card.hidden) visible += 1;
-        });
-        const empty = $("#store-empty");
-        if (empty) empty.toggleAttribute("hidden", visible !== 0);
-      };
-      document.querySelectorAll("[data-filter]").forEach((button) => button.addEventListener("click", () => {
-        document.querySelectorAll("[data-filter]").forEach((item) => item.classList.toggle("on", item === button));
-        category = button.dataset.filter ?? "all";
-        apply();
-      }));
-      $("#store-search")?.addEventListener("input", apply);
-      $("#store-sort")?.addEventListener("change", (event) => {
-        const grid = $("#product-grid");
-        if (!grid) return;
-        const cards = [...grid.querySelectorAll("[data-price]")];
-        const mode = event.currentTarget.value;
-        if (mode !== "featured") cards.sort((a, b) => Number(a.dataset.price) - Number(b.dataset.price) || (a.dataset.name ?? "").localeCompare(b.dataset.name ?? "", "ar"));
-        if (mode === "high") cards.reverse();
-        cards.forEach((card) => grid.append(card));
-      });
-    }
-  };
-}
-function productDetailPage(params) {
-  const product = productById(params.get("id") ?? "");
-  if (!product) return notFoundPage("العنصر غير موجود", "ارجع للمتجر واختر عنصرًا من الكتالوج.");
-  const inventory = platform.getSession() ? platform.getInventory() : null;
-  const owned = inventory?.ownedProductIds.includes(product.id) ?? product.price.amountMinor === 0;
-  const equipped = inventory?.equipped[product.category] === product.id;
-  const action = product.comingSoon ? '<button class="btn primary" disabled>قريبًا</button>' : owned ? `<button id="detail-equip" class="btn primary" ${equipped ? "disabled" : ""}>${equipped ? "مفعّل الآن" : "تفعيل العنصر"}</button>` : `<a class="btn primary" data-link="/checkout?kind=product&id=${product.id}">اقتناء تجريبي</a>`;
-  return {
-    active: "store",
-    title: product.name,
-    description: product.description,
-    html: shell("تفاصيل العنصر", h(product.name), h(product.description), `<section class="product-detail"><div class="product-detail-art panel" style="--accent:${product.accent}"><span>${h(product.glyph)}</span><i>معاينة بصرية تمثيلية</i></div><div class="product-detail-copy panel"><span class="product-type">${categoryLabel(product.category)}</span><h2>${formatPrice(product.price)}</h2><dl><div><dt>الحالة</dt><dd>${product.comingSoon ? "قيد التجهيز" : owned ? "مملوك" : "متاح"}</dd></div><div><dt>الفئة</dt><dd>${categoryLabel(product.category)}</dd></div><div><dt>الأثر على اللعب</dt><dd>تجميلي فقط</dd></div></dl>${action}<p>لا يمنح العنصر نقاطًا أو قرارات أو فرصة فوز إضافية.</p><a class="text-link" data-link="/store">العودة للمتجر</a></div></section>`),
-    bind(_navigate, refresh) {
-      $("#detail-equip")?.addEventListener("click", async () => {
-        try {
-          await platform.equipProduct(product.id);
-          refresh();
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        }
-      });
-    }
-  };
-}
-function planCard(plan) {
-  const current = platform.getSession()?.plan === plan.id;
-  const monthly = plan.monthly ? formatPrice(plan.monthly) : "مجاني";
-  const yearly = plan.yearly ? formatPrice(plan.yearly) : "مجاني";
-  const action = current ? '<button class="btn wide" disabled>باقتك الحالية</button>' : plan.id === "free" ? '<a class="btn wide" data-link="/create">ابدأ الآن</a>' : `<a class="btn ${plan.recommended ? "primary" : ""} wide price-action" data-plan="${plan.id}" data-link="/checkout?kind=plan&id=${plan.id}&interval=month">اختر الباقة</a>`;
-  return `<article class="plan-card ${plan.recommended ? "recommended" : ""} ${current ? "current" : ""}">${current ? '<span class="plan-badge current">الحالية</span>' : plan.recommended ? '<span class="plan-badge">الأوضح للمجالس</span>' : ""}<div><span class="product-type">${plan.id === "free" ? "الأساسي" : "اشتراك"}</span><h2>${h(plan.name)}</h2><p>${h(plan.description)}</p></div><div class="plan-price"><b data-month="${monthly}" data-year="${yearly}">${monthly}</b><span class="plan-cycle">${plan.id === "free" ? "دائمًا" : "شهريًا"}</span></div><ul>${plan.features.map((feature) => `<li>${h(feature)}</li>`).join("")}</ul>${action}</article>`;
-}
-function pricingPage() {
-  return {
-    active: "pricing",
-    title: "الأسعار",
-    description: "باقات BACKFIRE الشفافة من دون أفضلية لعب.",
-    html: shell("العضوية", "اللعبة كاملة… والتخصيص اختياري", "النسخة المجانية تشمل اللعب الأساسي كاملًا. العضوية تضيف مظهرًا وتنظيمًا فقط.", `<div class="billing-toggle" role="group" aria-label="دورة الفوترة"><button class="on" data-cycle="month">شهري</button><button data-cycle="year">سنوي <span>وفر شهرين</span></button></div><section class="plans-grid">${PLANS.map(planCard).join("")}</section><section class="pricing-trust"><h2>وعدنا التجاري</h2><div><p><b>لا ادفع لتفوز</b><span>كل القرارات والنتائج متساوية.</span></p><p><b>لا تجديد مخفي</b><span>السعر والدورة ظاهران قبل التأكيد.</span></p><p><b>لا شراء عشوائي</b><span>تعرف بالضبط وش تقتني.</span></p></div></section><section class="plan-compare panel"><h2>مقارنة سريعة</h2><div><span>اللعبة الأساسية</span><b>كل الباقات</b></div><div><span>ميزات الوصول</span><b>كل الباقات</b></div><div><span>الثيمات والإطارات</span><b>بلس والمناسبات</b></div><div><span>هوية مناسبة مخصصة</span><b>المناسبات</b></div></section><section class="faq-list"><h2>أسئلة الفوترة</h2><details><summary>هل يتم الخصم الآن؟</summary><p>لا. المزود الحالي محلي وتجريبي، ولا يطلب بطاقة أو يخصم مبلغًا.</p></details><details><summary>كيف ألغي أو أخفّض الباقة؟</summary><p>تظهر واجهة الإدارة في صفحة الفوترة، لكن الإلغاء والتجديد الحقيقيين يحتاجان بوابة مزود الدفع.</p></details><details><summary>هل السعر شامل الضريبة؟</summary><p>بيانات الكتالوج الحالية معنونة بأنها شاملة الضريبة. يجب تأكيد الفواتير والسياسة مع مزود الدفع قبل البيع.</p></details></section>`),
-    bind() {
-      document.querySelectorAll("[data-cycle]").forEach((button) => button.addEventListener("click", () => {
-        const cycle = button.dataset.cycle;
-        document.querySelectorAll("[data-cycle]").forEach((item) => item.classList.toggle("on", item === button));
-        document.querySelectorAll(".plan-price b").forEach((price) => {
-          price.textContent = price.dataset[cycle] ?? "";
-        });
-        document.querySelectorAll(".plan-cycle").forEach((label) => {
-          if (label.textContent !== "دائمًا") label.textContent = cycle === "year" ? "سنويًا" : "شهريًا";
-        });
-        document.querySelectorAll(".price-action").forEach((link) => {
-          link.dataset.link = `/checkout?kind=plan&id=${link.dataset.plan}&interval=${cycle}`;
-        });
-      }));
-    }
-  };
-}
-function profilePage() {
-  const session = platform.getSession();
-  const gate = requireAccount(session);
-  if (gate) return { active: "account", title: "الملف الشخصي", description: "ملف حساب BACKFIRE.", html: shell("حسابي", "الملف الشخصي", "إدارة هويتك داخل BACKFIRE.", gate) };
-  const profile = platform.getProfile();
-  const joined = new Date(session.createdAt).toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
-  return {
-    active: "account",
-    title: "الملف الشخصي",
-    description: "إدارة ملف حساب BACKFIRE.",
-    html: shell("حسابي", "الملف الشخصي", "اسمك وهويتك أمام لاعبي المجلس.", `${accountTabs("profile")}<section class="account-grid"><aside class="profile-preview panel"><div class="profile-avatar">${h(profile.displayName.slice(0, 1))}</div><h2>${h(profile.displayName)}</h2><span>@${h(profile.username)}</span><div class="profile-badges"><i>${session.mode === "guest" ? "ضيف محلي" : "حساب تجريبي"}</i><i>${session.plan === "free" ? "مجلس" : h(planById(session.plan)?.name ?? "")}</i>${session.verified ? '<i class="verified">موثّق</i>' : '<a data-link="/verify-email">غير موثّق</a>'}</div><small>منضم منذ ${joined}</small></aside><form id="profile-form" class="account-form panel"><div id="product-notice" role="status" aria-live="polite" hidden></div>${field("displayName", "الاسم الظاهر", "text", profile.displayName, 'maxlength="24" required')}${field("username", "اسم المستخدم", "text", profile.username, 'maxlength="20" dir="ltr" required')}<p class="field-help">وضع العرض يفحص التكرار داخل هذا المتصفح. الإنتاج يحتاج فحصًا مركزيًا وطبقة إشراف على الأسماء.</p><button class="btn primary" type="submit">حفظ التغييرات</button><a class="btn" data-link="/account/inventory">اختيار الصورة والإطار والمظهر</a><button class="btn danger-outline" id="logout" type="button">تسجيل الخروج</button></form></section><section class="profile-stats panel"><header><div><h2>الإحصاءات</h2><p>لا توجد مزامنة مباريات لهذا الحساب بعد.</p></div><a data-link="/account/history">سجل المباريات</a></header><div>${[["المباريات", "٠"], ["الفوز", "٠"], ["الخسارة", "٠"], ["نسبة الفوز", "—"], ["السلسلة الحالية", "٠"], ["أفضل سلسلة", "٠"]].map(([label, value]) => `<p><b>${value}</b><span>${label}</span></p>`).join("")}</div><footer>هذه أصفار حقيقية لحساب بلا سجل، وليست بيانات عيّنة.</footer></section>`),
-    bind(navigate, refresh) {
-      $("#profile-form")?.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const form = event.currentTarget;
-        setFormBusy(form, true);
-        const data = new FormData(form);
-        try {
-          await platform.updateProfile({ displayName: String(data.get("displayName") ?? ""), username: String(data.get("username") ?? "") });
-          notice("تم حفظ الملف.");
-          setTimeout(refresh, 350);
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        } finally {
-          setFormBusy(form, false);
-        }
-      });
-      $("#logout")?.addEventListener("click", async () => {
-        await platform.signOut();
-        navigate("/");
-      });
-    }
-  };
-}
-function inventoryPage() {
-  const session = platform.getSession();
-  const gate = requireAccount(session);
-  if (gate) return { active: "account", title: "المقتنيات", description: "مقتنيات حساب BACKFIRE.", html: shell("حسابي", "المقتنيات", "العناصر المملوكة والمفعّلة.", gate) };
-  const inventory = platform.getInventory();
-  const owned = PRODUCTS.filter((product) => inventory.ownedProductIds.includes(product.id));
-  return {
-    active: "account",
-    title: "المقتنيات",
-    description: "إدارة مقتنيات BACKFIRE.",
-    html: shell("حسابي", "المقتنيات", "فعّل مظهرًا واحدًا من كل فئة.", `${accountTabs("inventory")}<div id="product-notice" role="status" aria-live="polite" hidden></div><section class="inventory-grid">${owned.map((product) => {
-      const active = inventory.equipped[product.category] === product.id;
-      return `<article class="inventory-item panel"><div class="inventory-glyph" style="--accent:${product.accent}">${h(product.glyph)}</div><div><span>${categoryLabel(product.category)}</span><h2>${h(product.name)}</h2></div><button class="btn sm ${active ? "unequip" : "equip"}" data-product="${product.id}" ${product.id === "theme-original" && active ? "disabled" : ""}>${active ? product.id === "theme-original" ? "الأساسي" : "إلغاء التفعيل" : "تفعيل"}</button></article>`;
-    }).join("")}</section>${owned.length < PRODUCTS.length ? '<div class="account-nudge"><p>تبغى خيارات أكثر للمجلس؟</p><a class="btn" data-link="/store">تصفح المتجر</a></div>' : ""}`),
-    bind(_navigate, refresh) {
-      document.querySelectorAll(".equip").forEach((button) => button.addEventListener("click", async () => {
-        try {
-          await platform.equipProduct(button.dataset.product);
-          notice("تم تفعيل العنصر.");
-          setTimeout(refresh, 300);
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        }
-      }));
-      document.querySelectorAll(".unequip").forEach((button) => button.addEventListener("click", async () => {
-        try {
-          await platform.unequipProduct(button.dataset.product);
-          notice("تم إلغاء تفعيل العنصر.");
-          setTimeout(refresh, 300);
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        }
-      }));
-    }
-  };
-}
-function settingsPage() {
-  const session = platform.getSession();
-  const gate = requireAccount(session);
-  if (gate) return { active: "account", title: "الإعدادات", description: "إعدادات حساب BACKFIRE.", html: shell("حسابي", "الإعدادات", "التحكم بالتجربة والخصوصية.", gate) };
-  const settings = platform.getSettings();
-  const toggle = (name, label, description) => `<label class="setting-row"><span><b>${label}</b><small>${description}</small></span><input type="checkbox" name="${name}" ${settings[name] === true || name === "textScale" && settings.textScale === "large" ? "checked" : ""}></label>`;
-  return {
-    active: "account",
-    title: "الإعدادات",
-    description: "إعدادات تجربة وخصوصية BACKFIRE.",
-    html: shell("حسابي", "الإعدادات", "كل إعداد واضح ويُحفظ على هذا الجهاز.", `${accountTabs("settings")}<form id="settings-form"><div id="product-notice" role="status" aria-live="polite" hidden></div><section class="settings-section panel"><h2>عام</h2><label class="select-row"><span><b>اللغة</b><small>واجهة عربية كاملة حاليًا.</small></span><select class="input" disabled><option>العربية</option></select></label><label class="select-row"><span><b>المظهر</b><small>هوية دسّ الليلية هي المظهر المصمم بالكامل.</small></span><select class="input" disabled><option>دسّ الأصلي</option></select></label>${toggle("highContrast", "تباين مرتفع", "زيادة وضوح الحدود والنصوص.")}${toggle("textScale", "نص أكبر", "تكبير نصوص صفحات المنتج.")}</section><section class="settings-section panel"><h2>الصوت والحركة</h2>${toggle("muted", "كتم الصوت", "إيقاف مؤثرات الموقع.")}${toggle("animations", "الحركات", "تشغيل انتقالات الواجهة.")}${toggle("reducedMotion", "تقليل الحركة", "تخفيف المؤثرات المستمرة.")}${toggle("haptics", "الاهتزاز", "ردود فعل لمسية على الجوال عند دعمها.")}<label class="range-row"><span>صوت المؤثرات <output>${settings.effectsVolume}%</output></span><input name="effectsVolume" type="range" min="0" max="100" value="${settings.effectsVolume}"></label><label class="range-row"><span>صوت الموسيقى <output>${settings.musicVolume}%</output></span><input name="musicVolume" type="range" min="0" max="100" value="${settings.musicVolume}"></label></section><section class="settings-section panel"><h2>اللعب</h2>${toggle("confirmCritical", "تأكيد القرارات الحرجة", "خطوة تأكيد قبل البيع أو القرار النهائي.")}${toggle("autoReady", "استعداد تلقائي", "غير مفعّل افتراضيًا حتى لا تبدأ بالغلط.")}<p class="field-help">تفضيلات المضيف والغرفة تحتاج ربط الحساب بالمضيف قبل تفعيلها.</p></section><section class="settings-section panel"><h2>التنبيهات</h2>${toggle("productUpdates", "تحديثات المنتج", "إشعارات محلية عن النسخ الجديدة.")}${toggle("matchInvites", "دعوات المباريات", "جاهزة لخدمة الدعوات المستقبلية.")}${toggle("friendInvites", "دعوات اللاعبين السابقين", "لا يوجد إرسال خارجي في وضع العرض.")}${toggle("purchaseReceipts", "إيصالات الشراء", "إيصالات العرض تظهر محليًا.")}${toggle("subscriptionReminders", "تذكير الاشتراك", "يتطلب خدمة اشتراك وتنبيهات.")}${toggle("marketing", "رسائل تسويقية", "غير مفعّلة افتراضيًا.")}</section><section class="settings-section panel"><h2>الخصوصية وملفات الارتباط</h2><label class="select-row"><span><b>ظهور الملف</b><small>اختيار محلي حتى تتوفر خدمة الملفات.</small></span><select class="input" name="profileVisibility"><option value="private" ${settings.profileVisibility === "private" ? "selected" : ""}>خاص</option><option value="players" ${settings.profileVisibility === "players" ? "selected" : ""}>لاعبو المجلس</option><option value="public" ${settings.profileVisibility === "public" ? "selected" : ""}>عام</option></select></label>${toggle("activityVisibility", "إظهار النشاط", "غير مفعّل افتراضيًا.")}${toggle("recentPlayerVisibility", "الظهور للاعبين السابقين", "جاهز لخدمة الدعوات المستقبلية.")}${toggle("analytics", "تحليلات الاستخدام", "غير مفعّلة في وضع العرض.")}${toggle("functionalCookies", "تخزين وظيفي", "يستخدم الموقع التخزين المحلي لتفضيلات العرض.")}</section><button class="btn primary" type="submit">حفظ الإعدادات</button></form><section class="settings-section account-actions panel"><h2>الحساب والبيانات</h2><div><span><b>تغيير البريد أو كلمة المرور</b><small>يتطلب مزود هوية موصولًا.</small></span><button class="btn sm" disabled>غير متاح</button></div><div><span><b>الحسابات المتصلة</b><small>لا توجد موفّرات خارجية.</small></span><button class="btn sm" disabled>لا يوجد</button></div><div><span><b>تصدير البيانات</b><small>البيانات التجريبية موجودة في المتصفح فقط.</small></span><button id="export-local" class="btn sm">تنزيل نسخة محلية</button></div><div><span><b>الخروج من كل الجلسات</b><small>لا توجد جلسات خادم في وضع العرض.</small></span><button class="btn sm" disabled>غير متاح</button></div></section><section class="danger-zone panel"><h2>حذف البيانات المحلية</h2><p>يمسح الحساب والمقتنيات والإعدادات التجريبية من هذا المتصفح فقط.</p>${field("delete-confirm", "اكتب: احذف حسابي")}<div class="danger-actions"><button id="delete-account" class="btn danger-outline">حذف البيانات</button><button id="cancel-delete" class="btn ghost">إلغاء</button></div></section>`),
-    bind(navigate) {
-      document.querySelectorAll('input[type="range"]').forEach((range) => range.addEventListener("input", () => {
-        const output = range.closest("label")?.querySelector("output");
-        if (output) output.textContent = `${range.value}%`;
-      }));
-      $("#settings-form")?.addEventListener("submit", (event) => {
-        event.preventDefault();
-        const form = event.currentTarget;
-        const data = new FormData(form);
-        try {
-          platform.updateSettings({
-            muted: data.get("muted") === "on",
-            animations: data.get("animations") === "on",
-            reducedMotion: data.get("reducedMotion") === "on",
-            haptics: data.get("haptics") === "on",
-            confirmCritical: data.get("confirmCritical") === "on",
-            autoReady: data.get("autoReady") === "on",
-            productUpdates: data.get("productUpdates") === "on",
-            matchInvites: data.get("matchInvites") === "on",
-            friendInvites: data.get("friendInvites") === "on",
-            purchaseReceipts: data.get("purchaseReceipts") === "on",
-            subscriptionReminders: data.get("subscriptionReminders") === "on",
-            marketing: data.get("marketing") === "on",
-            activityVisibility: data.get("activityVisibility") === "on",
-            recentPlayerVisibility: data.get("recentPlayerVisibility") === "on",
-            analytics: data.get("analytics") === "on",
-            functionalCookies: data.get("functionalCookies") === "on",
-            effectsVolume: Number(data.get("effectsVolume")),
-            musicVolume: Number(data.get("musicVolume")),
-            highContrast: data.get("highContrast") === "on",
-            textScale: data.get("textScale") === "on" ? "large" : "normal",
-            profileVisibility: data.get("profileVisibility")
-          });
-          notice("تم حفظ الإعدادات.");
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        }
-      });
-      $("#export-local")?.addEventListener("click", () => {
-        const payload = JSON.stringify({ exportedAt: (/* @__PURE__ */ new Date()).toISOString(), demo: true, session: platform.getSession(), profile: platform.getProfile(), settings: platform.getSettings(), inventory: platform.getInventory(), receipts: platform.getPurchaseHistory() }, null, 2);
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
-        link.download = "backfire-demo-data.json";
-        link.click();
-        URL.revokeObjectURL(link.href);
-      });
-      $("#delete-account")?.addEventListener("click", async () => {
-        try {
-          await platform.deleteLocalAccount($('[name="delete-confirm"]')?.value ?? "");
-          navigate("/");
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        }
-      });
-      $("#cancel-delete")?.addEventListener("click", () => {
-        const input = $('[name="delete-confirm"]');
-        if (input) input.value = "";
-        notice("أُلغي الحذف ولم تتغير البيانات.");
-      });
-    }
-  };
-}
-function historyPage() {
-  const session = platform.getSession();
-  const gate = requireAccount(session);
-  const matches = session ? platform.getMatchHistory() : [];
-  const content = gate ?? `${accountTabs("history")}${matches.length ? `<section class="history-list">${matches.map((match) => `<a class="panel" data-link="/account/history/match?id=${encodeURIComponent(match.id)}"><b>${h(match.roomLabel)}</b><span>${new Date(match.playedAt).toLocaleDateString("ar-SA")}</span></a>`).join("")}</section>` : '<section class="empty-state panel"><span class="empty-glyph">↗</span><h2>ما فيه مباريات محفوظة</h2><p>المباريات الحالية لا تُنسب إلى الحساب بعد. لن نعرض سجلًا مختلقًا.</p><a class="btn primary" data-link="/create">ابدأ مباراة</a></section><section class="history-empty-grid"><article class="panel"><h2>اللاعبون السابقون</h2><p>لا توجد بيانات موثوقة للدعوة أو الحظر. ستظهر هنا بعد ربط هوية اللاعب بالمباراة.</p></article><article class="panel"><h2>الغرف السابقة</h2><p>لا نحفظ أكواد الغرف المنتهية في المتصفح، ولا نعيد فتح غرفة مدمرة.</p></article></section>'}`;
-  return { active: "account", title: "سجل المباريات", description: "سجل مباريات حساب BACKFIRE.", html: shell("حسابي", "سجل المباريات", "نتائجك عندما تتوفر مزامنة الحساب.", content) };
-}
-function matchDetailPage(params) {
-  const session = platform.getSession();
-  const gate = requireAccount(session);
-  if (gate) return { active: "account", title: "تفاصيل المباراة", description: "تفاصيل مباراة BACKFIRE.", html: shell("حسابي", "تفاصيل المباراة", "ملخص آمن بعد نهاية اللعبة.", gate) };
-  const id2 = params.get("id") ?? "";
-  const match = platform.getMatchHistory().find((candidate) => candidate.id === id2);
-  if (!match) return { active: "account", title: "المباراة غير موجودة", description: "لم نجد مباراة محفوظة.", html: shell("سجل المباريات", "المباراة غير موجودة", "لم نجد سجلًا موثوقًا بهذا المعرّف.", `<section class="empty-state panel"><span class="empty-glyph">؟</span><h2>لا نعرض تفاصيل مختلقة</h2><p>قد يكون السجل حُذف أو لم يُزامن أصلًا. الأسرار غير المكشوفة لا تُحفظ هنا.</p><a class="btn" data-link="/account/history">العودة للسجل</a></section>`) };
-  return { active: "account", title: match.roomLabel, description: "ملخص مباراة محفوظة.", html: shell("سجل المباريات", h(match.roomLabel), "أحداث عامة فقط، من دون أسرار غير مكشوفة.", `<section class="prose-page panel"><p>${new Date(match.playedAt).toLocaleString("ar-SA")}</p><p>اللاعبون: ${match.players} · الجولات: ${match.rounds} · المدة: ${match.durationMinutes} دقيقة</p><p>الفائز: ${h(match.winnerName)}</p></section>`) };
-}
-function achievementsPage() {
-  const session = platform.getSession();
-  const gate = requireAccount(session);
-  const content = gate ?? `${accountTabs("achievements")}<section class="empty-state panel"><span class="empty-glyph">✦</span><h2>الإنجازات تحت التجهيز</h2><p>لن نعرض شارات أو تقدمًا وهميًا. هذه الصفحة جاهزة لربطها بخدمة النتائج الموثوقة.</p><a class="btn" data-link="/how-to-play">راجع طريقة اللعب</a></section>`;
-  return { active: "account", title: "الإنجازات", description: "إنجازات BACKFIRE المستقبلية.", html: shell("حسابي", "الإنجازات", "إنجازات مرتبطة باللعب الحقيقي فقط.", content) };
-}
-function billingPage() {
-  const session = platform.getSession();
-  const gate = requireAccount(session);
-  const receipts = session ? platform.getPurchaseHistory() : [];
-  const premium = session?.plan !== "free";
-  const content = gate ?? `${accountTabs("billing")}<div id="product-notice" role="status" aria-live="polite" hidden></div><section class="billing-summary panel"><div><span>الباقة الحالية</span><h2>${h(planById(session.plan)?.name ?? "مجلس")}</h2><small>${premium ? "اشتراك عرض محلي · بلا تجديد أو خصم تلقائي" : "الباقة الأساسية بلا رسوم"}</small></div><div class="billing-actions"><a class="btn" data-link="/pricing">${premium ? "تغيير الباقة" : "عرض الباقات"}</a>${premium ? '<button id="cancel-plan" class="btn danger-outline">إلغاء اشتراك العرض</button>' : ""}</div></section><h2 class="section-label">السجل المحلي</h2>${receipts.length ? `<section class="receipt-list">${receipts.map((receipt) => `<article class="panel"><div><b>${h(receipt.label)}</b><span>إيصال عرض · لم تُخصم أموال · ${new Date(receipt.createdAt).toLocaleDateString("ar-SA")}</span></div><strong>${formatPrice({ amountMinor: receipt.totalMinor, currency: "SAR", interval: "one-time", taxInclusive: true })}</strong></article>`).join("")}</section>` : '<section class="empty-state panel compact"><h2>لا توجد عمليات</h2><p>أي تجربة شراء ناجحة ستظهر هنا بإشارة واضحة أنها محلية.</p></section>'}`;
-  return {
-    active: "account",
-    title: "الفوترة",
-    description: "باقة وفواتير حساب BACKFIRE.",
-    html: shell("حسابي", "الفوترة", "الباقة وسجل تجارب الدفع المحلية.", content),
-    bind(_navigate, refresh) {
-      $("#cancel-plan")?.addEventListener("click", async (event) => {
-        const button = event.currentTarget;
-        if (button.dataset.confirmed !== "true") {
-          button.dataset.confirmed = "true";
-          button.textContent = "أكد إلغاء اشتراك العرض";
-          notice("اضغط مرة ثانية للتأكيد. يمكنك مغادرة الصفحة للإلغاء.");
-          return;
-        }
-        try {
-          await platform.cancelSubscription();
-          notice("أُلغي اشتراك العرض وعاد الحساب إلى الباقة المجانية.");
-          setTimeout(refresh, 450);
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        }
-      });
-    }
-  };
-}
-function checkoutPage(params) {
-  const kind = params.get("kind") === "plan" ? "plan" : "product";
-  const referenceId = params.get("id") ?? "";
-  const interval = params.get("interval") === "year" ? "year" : "month";
-  const product = kind === "product" ? productById(referenceId) : void 0;
-  const plan = kind === "plan" ? planById(referenceId) : void 0;
-  const item = product ?? plan;
-  const price = product?.price ?? (interval === "year" ? plan?.yearly : plan?.monthly);
-  if (!item || !price || product?.comingSoon || plan?.id === "free") return notFoundPage("الاختيار غير متاح", "ارجع للمتجر واختر عنصرًا متاحًا.");
-  const session = platform.getSession();
-  const gate = requireAccount(session, `/checkout?kind=${kind}&id=${encodeURIComponent(referenceId)}&interval=${interval}`);
-  const content = gate ?? `<section class="checkout-layout"><div class="checkout-main panel"><div id="product-notice" role="status" aria-live="polite" hidden></div><div class="checkout-demo-seal">تجربة دفع — لا خصم حقيقي</div><h2>راجع طلبك</h2><div class="checkout-item"><div class="checkout-glyph">${h(product?.glyph ?? "◇")}</div><div><b>${h(item.name)}</b><span>${kind === "plan" ? `اشتراك ${interval === "year" ? "سنوي" : "شهري"}` : categoryLabel(product.category)}</span></div><strong>${formatPrice(price)}</strong></div><dl class="checkout-total"><div><dt>المجموع الفرعي</dt><dd>${formatPrice(price)}</dd></div><div><dt>الخصم</dt><dd>—</dd></div><div><dt>الضريبة</dt><dd>مشمولة</dd></div><div class="grand"><dt>الإجمالي</dt><dd>${formatPrice(price)}</dd></div></dl><label class="field"><span>رمز خصم — غير موصول</span><input class="input" value="" placeholder="لا توجد رموز نشطة" disabled></label><div class="sandbox-method"><span>◇</span><div><b>محاكي الدفع المحلي</b><small>لا بطاقة · لا تحويل · لا حفظ بيانات مالية</small></div></div><label class="check-row"><input id="checkout-consent" type="checkbox"><span>أفهم أن هذه تجربة محلية ولن يتم خصم أي مبلغ.</span></label><button id="start-checkout" class="btn primary wide">إنشاء جلسة العرض</button><div id="checkout-actions" class="checkout-actions" hidden><button class="btn primary" data-outcome="succeeded">محاكاة نجاح</button><button class="btn" data-outcome="failed">محاكاة فشل</button><button class="btn" data-outcome="timed-out">محاكاة انتهاء المهلة</button><button class="btn ghost" data-outcome="cancelled">إلغاء</button></div></div><aside class="checkout-aside panel"><h2>واضح من البداية</h2><ul><li>لا حقول بطاقة في وضع العرض.</li><li>السعر من كتالوج مركزي، لا من الرابط.</li><li>الفشل والإلغاء لا يمنحان العنصر.</li><li>النجاح ينشئ إيصال عرض محليًا.</li></ul><a data-link="/legal/refunds">سياسة الاسترجاع</a><a data-link="/legal/terms">شروط الشراء</a></aside></section>`;
-  let checkoutId = "";
-  return {
-    active: "store",
-    title: "إتمام الطلب",
-    description: "مراجعة طلب BACKFIRE في وضع العرض.",
-    html: shell("الطلب", "إتمام آمن وواضح", "لن نطلب بيانات بطاقة ما دام مزود الدفع غير موصول.", content),
-    bind(navigate) {
-      $("#start-checkout")?.addEventListener("click", async () => {
-        if (!$("#checkout-consent")?.checked) return notice("أكد فهمك أن العملية تجريبية.", "error");
-        try {
-          const checkout = await platform.createCheckout(kind, referenceId, interval);
-          checkoutId = checkout.id;
-          $("#checkout-actions")?.removeAttribute("hidden");
-          const button = $("#start-checkout");
-          if (button) {
-            button.disabled = true;
-            button.textContent = "تم إنشاء الجلسة";
-          }
-          notice("جلسة العرض جاهزة. اختر نتيجة الاختبار.");
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        }
-      });
-      document.querySelectorAll("[data-outcome]").forEach((button) => button.addEventListener("click", async () => {
-        if (!checkoutId) return;
-        try {
-          const checkout = await platform.completeDemoCheckout(checkoutId, button.dataset.outcome);
-          navigate(`/checkout/result?status=${checkout.status}&kind=${kind}`);
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        }
-      }));
-    }
-  };
-}
-function checkoutResultPage(params) {
-  const status = params.get("status");
-  const success = status === "succeeded";
-  const labels = {
-    failed: ["تعذرت تجربة الدفع", "لم يُمنح عنصر أو اشتراك. يمكنك الرجوع والمحاولة مرة ثانية."],
-    cancelled: ["ألغيت العملية", "لم يحدث خصم ولم يُمنح أي شيء."],
-    "timed-out": ["انتهت مهلة الجلسة", "أغلقت جلسة العرض قبل التأكيد. أنشئ جلسة جديدة للمحاولة."]
-  };
-  const [title, copy] = success ? ["نجحت تجربة الدفع", "تم تحديث المقتنيات وإنشاء إيصال عرض محلي. لم يتم خصم أي مبلغ."] : labels[status ?? ""] ?? ["حالة غير معروفة", "لا توجد نتيجة دفع صالحة في الرابط."];
-  return {
-    active: "store",
-    title,
-    description: copy,
-    html: shell("نتيجة العرض", title, copy, `<section class="empty-state panel checkout-result ${success ? "success" : "failure"}"><span class="empty-glyph">${success ? "✓" : "×"}</span><h2>${success ? "عرض ناجح — بلا شحن مالي" : "لم تكتمل العملية"}</h2><p>${copy}</p><div class="empty-actions">${success ? '<a class="btn primary" data-link="/account/billing">عرض إيصال العرض</a><a class="btn" data-link="/account/inventory">المقتنيات</a>' : '<a class="btn primary" data-link="/store">العودة للمتجر</a><a class="btn" data-link="/support">المساعدة</a>'}</div></section>`)
-  };
-}
-function supportPage(path = "/support") {
-  const email = platform.getSession()?.email ?? "";
-  const report = path === "/report-player";
-  const heading = report ? "بلّغ عن لاعب" : path === "/contact" ? "تواصل معنا" : "وش نقدر نحل؟";
-  return {
-    active: "support",
-    title: "الدعم",
-    description: "مركز مساعدة ودعم BACKFIRE.",
-    html: shell("الدعم", heading, "ابدأ بالحلول السريعة، أو احفظ طلبًا محليًا في وضع العرض.", `<section class="support-grid"><aside class="support-links"><a class="panel" data-link="/faq"><b>الأسئلة الشائعة</b><span>الحساب واللعب والدفع التجريبي.</span></a><a class="panel" data-link="/how-to-play"><b>شرح اللعبة</b><span>الجولات والقرارات والكشف.</span></a><article class="panel"><b>مشكلة دخول غرفة؟</b><span>تأكد من الكود، ثم حدّث الصفحة وحاول من نفس الرابط.</span></article><a class="panel" data-link="/status"><b>حالة الخدمة</b><span>ما هو موصول وما يزال تجريبيًا.</span></a></aside><form id="support-form" class="support-form panel"><div id="product-notice" role="status" aria-live="polite" hidden></div><label class="field"><span>نوع الطلب</span><select class="input" name="category"><option value="problem">مشكلة تقنية</option><option value="player-report" ${report ? "selected" : ""}>بلاغ لاعب</option><option value="suggestion">اقتراح</option><option value="billing">فوترة</option></select></label>${field("subject", "العنوان", "text", report ? "بلاغ عن سلوك لاعب" : "", 'maxlength="100" required')}${field("email", "البريد للرجوع إليك — اختياري", "email", email)}${field("roomCode", "كود الغرفة — اختياري", "text", "", 'maxlength="12" dir="ltr"')}<label class="field"><span>التفاصيل</span><textarea class="input" name="message" minlength="10" maxlength="2000" required></textarea></label><label class="check-row"><input name="technical" type="checkbox" checked><span>إرفاق إصدار المتصفح والمسار الحالي.</span></label><button class="btn primary" type="submit">حفظ الطلب محليًا</button><small class="muted">لن يصل الطلب إلى فريق دعم حتى يُوصل مزود التذاكر. لا تضف بيانات حساسة.</small></form></section>`),
-    bind() {
-      $("#support-form")?.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const form = event.currentTarget;
-        setFormBusy(form, true);
-        const data = new FormData(form);
-        try {
-          await platform.saveSupportRequest({
-            category: data.get("category"),
-            subject: String(data.get("subject") ?? ""),
-            message: String(data.get("message") ?? ""),
-            email: String(data.get("email") ?? "") || void 0,
-            roomCode: String(data.get("roomCode") ?? "") || void 0,
-            technicalDetails: data.get("technical") === "on" ? `${navigator.userAgent} · ${location.pathname}` : void 0
-          });
-          form.reset();
-          notice("حُفظ الطلب على هذا المتصفح فقط. لم يُرسل إلى خادم.");
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        } finally {
-          setFormBusy(form, false);
-        }
-      });
-    }
-  };
-}
-async function copyText(value) {
-  try {
-    await navigator.clipboard.writeText(value);
-    return;
-  } catch {
-  }
-  const area = document.createElement("textarea");
-  area.value = value;
-  area.style.position = "fixed";
-  area.style.opacity = "0";
-  document.body.append(area);
-  area.select();
-  const copied = document.execCommand("copy");
-  area.remove();
-  if (!copied) throw new Error("تعذر النسخ. حدّد الرابط يدويًا.");
-}
-function invitePage(params) {
-  const initial = h(normalizeRoomCode(params.get("code") ?? ""));
-  return {
-    active: "support",
-    title: "مشاركة دعوة",
-    description: "مشاركة رابط وكود غرفة BACKFIRE.",
-    html: shell("دعوة المجلس", "أرسل الكود… وخلك جاهز", "الرابط يُبنى من نفس النطاق المفتوح الآن، بلا نطاق تطوير أو أسرار.", `<section class="invite-layout"><form id="invite-form" class="panel invite-form"><div id="product-notice" role="status" aria-live="polite" hidden></div>${field("code", "كود الغرفة", "text", initial, 'maxlength="12" dir="ltr" inputmode="text" autocapitalize="characters" required')}<button class="btn primary" type="submit">جهّز الدعوة</button></form><section id="invite-preview" class="panel invite-preview" hidden><span class="product-type">معاينة الدعوة</span><h2>تعالوا نلعب دسّ</h2><p id="invite-copy"></p><div class="invite-actions"><button id="copy-code" class="btn">نسخ الكود</button><button id="copy-link" class="btn">نسخ الرابط</button><button id="native-share" class="btn primary">مشاركة</button><a id="whatsapp-share" class="btn" target="_blank" rel="noopener noreferrer">واتساب</a></div><small>الرابط لا يحتوي رمز مضيف أو لاعب. الدعوة قد تنتهي إذا أُغلقت الغرفة أو امتلأت.</small></section></section>`),
-    bind() {
-      let code = "";
-      let link = "";
-      let message = "";
-      $("#invite-form")?.addEventListener("submit", (event) => {
-        event.preventDefault();
-        code = normalizeRoomCode(new FormData(event.currentTarget).get("code"));
-        if (!isRoomCode(code)) return notice("اكتب كود غرفة صحيحًا من ٨ خانات.", "error");
-        link = new URL(`/join?code=${encodeURIComponent(code)}`, configuredPublicOrigin || location.origin).href;
-        message = `تعالوا نلعب BACKFIRE 🎮
-كود الغرفة: ${code}
-ادخل من هنا: ${link}`;
-        const copy = $("#invite-copy");
-        if (copy) copy.textContent = message;
-        const preview = $("#invite-preview");
-        if (preview) preview.hidden = false;
-        const whatsapp = $("#whatsapp-share");
-        if (whatsapp) whatsapp.href = `https://wa.me/?text=${encodeURIComponent(message)}`;
-        const share = $("#native-share");
-        if (share) share.hidden = !("share" in navigator);
-        notice("الدعوة جاهزة. تحقق من الكود قبل الإرسال.");
-      });
-      $("#copy-code")?.addEventListener("click", async () => {
-        try {
-          await copyText(code);
-          notice("نُسخ كود الغرفة.");
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        }
-      });
-      $("#copy-link")?.addEventListener("click", async () => {
-        try {
-          await copyText(link);
-          notice("نُسخ رابط الانضمام.");
-        } catch (error) {
-          notice(errorMessage(error), "error");
-        }
-      });
-      $("#native-share")?.addEventListener("click", async () => {
-        try {
-          if (navigator.share) await navigator.share({ title: "دعوة BACKFIRE", text: message, url: link });
-        } catch (error) {
-          if (error.name !== "AbortError") notice(errorMessage(error), "error");
-        }
-      });
-      if (initial) $("#invite-form")?.requestSubmit();
-    }
-  };
-}
-function staticPage(path) {
-  if (path === "/faq") return { active: "support", title: "الأسئلة الشائعة", description: "إجابات واضحة عن لعبة وخدمات دسّ.", html: shell("المساعدة", "الأسئلة الشائعة", "إجابات هذه المرحلة من المنتج بلا وعود غير موصولة.", `<section class="faq-list wide"><details open><summary>كيف أبدأ لعبة؟</summary><p>افتح «إنشاء غرفة» على الشاشة الكبيرة، ثم يدخل اللاعبون بالكود أو QR من جوالاتهم.</p></details><details><summary>هل أحتاج تحميل تطبيق؟</summary><p>لا. تعمل اللعبة من المتصفح على الشاشة والجوال.</p></details><details><summary>هل الحساب مطلوب للعب؟</summary><p>لا. اللعب الأساسي والغرف لا يعتمدان على طبقة الحساب التجريبية.</p></details><details><summary>هل المشتريات حقيقية؟</summary><p>لا حاليًا. المتجر والدفع يعملان كمحاكاة محلية واضحة ولا يطلبان بطاقة.</p></details><details><summary>هل تتزامن بياناتي بين الأجهزة؟</summary><p>لا. الحساب والمقتنيات والإعدادات التجريبية محفوظة على المتصفح الحالي فقط.</p></details><details><summary>كيف أبلّغ عن لاعب؟</summary><p>استخدم نموذج البلاغ المحلي، مع العلم أنه لا يُرسل إلى فريق حتى توصيل خدمة الدعم.</p><a data-link="/report-player">فتح نموذج البلاغ</a></details><details><summary>وش المتصفحات المناسبة؟</summary><p>إصدار حديث من Chrome أو Safari أو Edge مع JavaScript واتصال ثابت. التلفاز يحتاج متصفحًا حديثًا أو جهاز بث يدعمه.</p></details></section>`) };
-  if (path === "/credits") return { title: "الاعتمادات", description: "اعتمادات بناء BACKFIRE.", html: shell("BACKFIRE", "الاعتمادات", "المنتج مبني بهوية عربية أصلية وتقنيات ويب مفتوحة.", `<section class="prose-page panel"><h2>التصميم والمنتج</h2><p>هوية BACKFIRE ونظامها البصري ومحتواها العربي جزء من المنتج نفسه.</p><h2>التقنيات</h2><p>TypeScript وesbuild وواجهات الويب القياسية، مع توليد QR محليًا. الخط المستخدم هو Tajawal عبر Google Fonts.</p><h2>المحتوى البصري</h2><p>الرسوم الأساسية وواجهات اللعبة مبنية بالكود. صورة المشاركة الاجتماعية مولدة خصيصًا لهذا المشروع ومراجعة للاستخدام الحالي.</p></section>`) };
-  if (path === "/about") return { title: "عن BACKFIRE", description: "عن لعبة BACKFIRE ورؤيتها.", html: shell("عن BACKFIRE", "كل حركة لها عواقب", "نبني لحظة جماعية حقيقية حول شاشة واحدة، مو عزلة داخل كل جوال.", `<section class="prose-page panel"><h2>الفكرة</h2><p>BACKFIRE تجربة سيناريوهات جماعية: التلفاز يعرض المشهد العام، وكل جوال يحمل معلومة أو حركة مختلفة. قرارات اللاعبين تغيّر ما يعود إلى الشاشة عبر الجولات.</p><h2>مبادئنا</h2><p>العربية أصل المنتج، والوضوح أهم من الإلحاح التجاري، واللعبة الأساسية لا تُباع على شكل أفضلية.</p><h2>هذه المرحلة</h2><p>إنشاء الغرف والانضمام وإعادة الاتصال تعمل، بينما نظام السيناريو والعواقب الجديد ما زال قيد التطوير. الحساب والمتجر والدفع معروضة الآن من خلال مزود محلي صريح إلى أن تُوصل خدمات الإنتاج.</p></section>`) };
-  if (path === "/status") return { title: "حالة الخدمة", description: "حالة أنظمة BACKFIRE.", html: shell("الحالة", "الأنظمة بوضوح", "تحديث محلي يصف ما هو عامل وما يحتاج مزود إنتاج.", `<section class="status-list panel"><article><i class="ok"></i><div><b>إنشاء الغرف والانضمام</b><span>مسار الإنتاج الحالي — تتم مراقبته باختبارات المستودع.</span></div><strong>متاح</strong></article><article><i class="ok"></i><div><b>موقع BACKFIRE العام</b><span>الصفحات والملفات الثابتة.</span></div><strong>متاح</strong></article><article><i class="demo"></i><div><b>الحسابات والمقتنيات</b><span>مزود عرض محلي، بلا مزامنة أجهزة.</span></div><strong>عرض</strong></article><article><i class="demo"></i><div><b>الدفع والبريد والدعم</b><span>غير موصولة بمزودي إنتاج.</span></div><strong>غير موصول</strong></article></section>`) };
-  if (path === "/changelog") return { title: "سجل التغييرات", description: "أحدث تغييرات منتج BACKFIRE.", html: shell("التحديثات", "وش تغيّر؟", "سجل مختصر لما وصل فعليًا، من غير وعود منجزة وهمية.", `<section class="timeline"><article class="panel"><time>يوليو ٢٠٢٦</time><h2>هوية BACKFIRE العامة</h2><ul><li>موقع تسويقي جديد مبني حول التلفاز والجوالات والعواقب المتغيرة.</li><li>هوية سينمائية قرمزية مستقلة عن واجهات اللعب الحالية.</li><li>شرح صريح لما يعمل وما يزال قيد التطوير.</li></ul></article><article class="panel"><time>الإصدار الأساسي</time><h2>تثبيت تدفق الغرف</h2><ul><li>إنشاء الغرفة والانضمام اليدوي والـQR.</li><li>استرجاع المضيف ومنع الانضمام المكرر.</li><li>إعادة اتصال اللاعب.</li></ul></article></section>`) };
-  if (path === "/legal/privacy") return { title: "سياسة الخصوصية", description: "سياسة خصوصية دسّ الحالية.", html: legal("سياسة الخصوصية", `<h2>ملخص هذه النسخة</h2><p>صفحات الحساب والمتجر تستخدم تخزين المتصفح المحلي في وضع العرض. لا ترسل هذه الطبقة بيانات حساب أو دفع أو دعم إلى خادم.</p><h2>بيانات اللعب</h2><p>خدمة الغرف تعالج كود الغرفة واسم اللاعب والرموز اللازمة للاتصال وتشغيل المباراة. لا تعرض رمز المضيف داخل QR.</p><h2>التحكم</h2><p>يمكنك تنزيل نسخة من بيانات العرض أو حذفها من صفحة الإعدادات. مسح بيانات الموقع من المتصفح يزيلها أيضًا.</p><h2>قبل الإطلاق التجاري</h2><p>يلزم تحديد جهة التحكم بالبيانات، مدد الاحتفاظ، مزودي الاستضافة والدفع والبريد، وقناة طلبات الخصوصية قبل تفعيل خدمات الحساب الحقيقية.</p>`) };
-  if (path === "/legal/refunds") return { title: "سياسة الاسترجاع", description: "حالة سياسة استرجاع دسّ.", html: legal("سياسة الاسترجاع", `<h2>لا توجد مبيعات فعلية الآن</h2><p>مسار الدفع الحالي عرض محلي ولا يخصم أموالًا، لذلك لا توجد عملية قابلة للاسترجاع.</p><h2>قبل تفعيل الدفع</h2><p>يجب نشر مدة طلب الاسترجاع، العناصر غير القابلة للاسترجاع، معالجة الاشتراكات، قناة التواصل، ومدة إعادة المبلغ وفق نظام الدفع والأنظمة المطبقة.</p><h2>إيصالات العرض</h2><p>الإيصال التجريبي يحمل علامة واضحة ولا يمثل مستندًا ضريبيًا أو إثبات دفع.</p>`) };
-  if (path === "/legal/cookies") return { title: "سياسة ملفات الارتباط", description: "التخزين المحلي في دسّ.", html: legal("ملفات الارتباط والتخزين", `<h2>ما نستخدمه الآن</h2><p>طبقة المنتج التجريبية تستخدم localStorage لحفظ الجلسة المحلية والإعدادات والمقتنيات، وsessionStorage لتذكر زيارة الواجهة في الجلسة الحالية.</p><h2>التحليلات</h2><p>لا توجد خدمة تحليلات خارجية موصولة في هذه الطبقة، والموافقة غير مفعلة افتراضيًا.</p><h2>التحكم</h2><p>يمكنك تغيير تفضيلات التخزين الوظيفي والتحليلات من الإعدادات وحذف بيانات العرض بالكامل.</p>`) };
-  return { title: "الشروط", description: "شروط استخدام دسّ الحالية.", html: legal("شروط الاستخدام والشراء", `<h2>اللعبة</h2><p>استخدم دسّ باحترام ومن دون إساءة أو تحايل أو محاولة الوصول إلى صلاحيات المضيف.</p><h2>وضع العرض</h2><p>الحسابات والإيصالات والمشتريات الظاهرة في وضع العرض محلية وتجريبية. لا تمثل عقد بيع ولا خصمًا ماليًا ولا اشتراكًا حقيقيًا.</p><h2>الأسعار</h2><p>الأسعار المعروضة بالريال السعودي وتشمل الضريبة على سبيل تصميم الكتالوج. لا تُقبل مدفوعات حتى يوصل مزود دفع إنتاجي وتُنشر سياسة استرداد نهائية.</p><h2>المحتوى والسلوك</h2><p>يمكن تقييد الوصول عند إساءة استخدام الخدمة أو محاولة تعطيلها. البلاغات في وضع العرض لا تُرسل إلى فريق دعم.</p>`) };
-}
-function legal(title, content) {
-  return shell("قانوني", title, "نسخة تشغيلية واضحة لهذه المرحلة، وتحتاج مراجعة قانونية قبل البيع الفعلي.", `<article class="prose-page panel"><div class="legal-meta">آخر تحديث: ١٨ يوليو ٢٠٢٦ · نسخة قبل البيع الحقيقي</div>${content}<p class="legal-note">هذه الصياغة منتجية وليست بديلًا عن مراجعة مستشار قانوني في مناطق التشغيل.</p></article>`);
-}
-function accountLanding() {
-  return profilePage();
-}
-function notFoundPage(title = "الصفحة غير موجودة", copy = "يمكن أن الرابط تغيّر أو أن الصفحة غير متاحة.") {
-  return { title: "غير موجود", description: copy, html: shell("٤٠٤", title, copy, `<section class="empty-state panel"><span class="empty-glyph">؟</span><h2>نرجعك للمجلس</h2><div class="empty-actions"><a class="btn primary" data-link="/">الرئيسية</a><a class="btn" data-link="/support">الدعم</a></div></section>`) };
-}
-function renderProductPage(path, search = "") {
-  if (path === "/store") return storePage();
-  if (path === "/store/product") return productDetailPage(new URLSearchParams(search));
-  if (path === "/pricing") return pricingPage();
-  if (path === "/login") return loginPage();
-  if (path === "/signup") return signupPage();
-  if (path === "/forgot-password") return forgotPage();
-  if (["/reset-password", "/verify-email", "/session-ended"].includes(path)) return authStatePage(path);
-  if (path === "/account") return accountLanding();
-  if (path === "/account/profile") return profilePage();
-  if (path === "/account/settings") return settingsPage();
-  if (path === "/account/inventory") return inventoryPage();
-  if (path === "/account/history") return historyPage();
-  if (path === "/account/history/match") return matchDetailPage(new URLSearchParams(search));
-  if (path === "/account/achievements") return achievementsPage();
-  if (path === "/account/billing") return billingPage();
-  if (path === "/checkout") return checkoutPage(new URLSearchParams(search));
-  if (path === "/checkout/result") return checkoutResultPage(new URLSearchParams(search));
-  if (["/support", "/contact", "/report-player"].includes(path)) return supportPage(path);
-  if (path === "/invite") return invitePage(new URLSearchParams(search));
-  if (["/faq", "/about", "/credits", "/status", "/changelog", "/legal/privacy", "/legal/terms", "/legal/refunds", "/legal/cookies"].includes(path)) return staticPage(path);
-  return notFoundPage();
-}
-
-// apps/dasssite/src/product/product-css.ts
-function productCss() {
-  return `
+`;function St(){let e=document.createElement("style");e.id="dass-base",e.textContent=Sr,document.head.appendChild(e)}var Ct=!1;try{Ct=typeof localStorage<"u"&&localStorage.getItem("dass_muted")==="1"}catch{Ct=!1}var It=Mr(Rt(),1);function Bt(e,t="#0b0a0f",r="#f4eee3",a=2){let n=(0,It.default)(0,"M");n.addData(e),n.make();let i=n.getModuleCount(),s=i+a*2,d="";for(let p=0;p<i;p++)for(let E=0;E<i;E++)n.isDark(p,E)&&(d+=`M${E+a} ${p+a}h1v1h-1z`);return`<svg viewBox="0 0 ${s} ${s}" width="100%" height="100%" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><rect width="${s}" height="${s}" fill="${r}"/><path d="${d}" fill="${t}"/></svg>`}function zt(e=document){let t=new IntersectionObserver(r=>{for(let a of r)a.isIntersecting&&(a.target.classList.add("in"),t.unobserve(a.target))},{threshold:.16,rootMargin:"0px 0px -8% 0px"});for(let r of Array.from(e.querySelectorAll("[data-reveal]")))me()?r.classList.add("in"):t.observe(r);return t}var Dt="backfire_sound_enabled",it=class{context=null;ambient=null;enabled=!1;constructor(){try{this.enabled=localStorage.getItem(Dt)==="1"}catch{this.enabled=!1}document.addEventListener("visibilitychange",()=>{!this.context||!this.enabled||(document.hidden?this.context.suspend():(this.context.resume(),this.ensureAmbient()))})}isEnabled(){return this.enabled}toggle(){return this.setEnabled(!this.enabled),this.enabled}setEnabled(t){this.enabled=t;try{localStorage.setItem(Dt,t?"1":"0")}catch{}t?(this.getContext(),this.ensureAmbient(),this.tone(196,294,.11,"triangle",.038)):(this.stopAmbient(),this.context?.state==="running"&&this.context.suspend())}tick(){this.tone(410,455,.032,"triangle",.021)}reveal(){this.tone(147,392,.23,"triangle",.048),this.tone(220,523,.16,"sine",.027,.09)}transfer(){this.tone(523,165,.19,"triangle",.035)}impact(){this.tone(147,49,.22,"sawtooth",.055)}cta(){this.tone(196,392,.15,"triangle",.042)}error(){this.tone(210,130,.13,"sawtooth",.055)}getContext(){if(!this.enabled||typeof window>"u")return null;if(!this.context){let t=window.AudioContext??window.webkitAudioContext;if(!t)return null;try{this.context=new t}catch{return null}}return this.context.state==="suspended"&&!document.hidden&&this.context.resume(),this.context}tone(t,r,a,n,i,s=0){let d=this.getContext();if(!d)return;let p=d.currentTime+s,E=d.createOscillator(),N=d.createGain();E.type=n,E.frequency.setValueAtTime(t,p),E.frequency.exponentialRampToValueAtTime(Math.max(1,r),p+a),N.gain.setValueAtTime(1e-4,p),N.gain.exponentialRampToValueAtTime(i,p+.008),N.gain.exponentialRampToValueAtTime(1e-4,p+a),E.connect(N).connect(d.destination),E.start(p),E.stop(p+a+.03)}ensureAmbient(){let t=this.getContext();if(!t||this.ambient||document.hidden)return;let r=t.createGain();r.gain.value=.012;let a=t.createOscillator(),n=t.createOscillator(),i=t.createBiquadFilter();a.type="sine",a.frequency.value=44,n.type="sine",n.frequency.value=66,i.type="lowpass",i.frequency.value=150,a.connect(i),n.connect(i),i.connect(r).connect(t.destination),a.start(),n.start(),this.ambient={gain:r,sources:[a,n]}}stopAmbient(){if(!this.ambient)return;let t=this.context?.currentTime??0;this.ambient.gain.gain.cancelScheduledValues(t),this.ambient.gain.gain.setTargetAtTime(1e-4,t,.025);for(let r of this.ambient.sources)r.stop(t+.15);this.ambient=null}},Ee=new it;var Ne="".replace(/\/$/,"");var oe=(e,t="one-time")=>({amountMinor:e,currency:"SAR",interval:t,taxInclusive:!0}),Fe=[{id:"theme-original",category:"theme",name:"الرجعة الأصلية",description:"هوية BACKFIRE الأساسية: أسود عميق، قرمزي، وجمر دافئ.",price:oe(0),accent:"#E23A4F",glyph:"BF",includedIn:"free"},{id:"theme-sadu",category:"theme",name:"نسيج الأثر",description:"تأويل بصري هادئ مستلهم من السدو لجلسات اللعب الطويلة.",price:oe(1900),accent:"#B51F36",glyph:"◆",includedIn:"majlis-plus"},{id:"bg-desert",category:"background",name:"آخر الإرسال",description:"خلفية تلفاز داكنة توحي بأثر بعيد من دون تشتيت.",price:oe(1200),accent:"#E85B3F",glyph:"☾"},{id:"avatar-falcon",category:"avatar",name:"الصقر",description:"صورة رمزية حادة وواضحة داخل جلسة اللعب.",price:oe(700),accent:"#FAF6F7",glyph:"♢"},{id:"frame-gold",category:"frame",name:"إطار الارتداد",description:"إطار قرمزي يبرز الملف من غير مبالغة.",price:oe(900),accent:"#B51F36",glyph:"◇",includedIn:"majlis-plus"},{id:"winner-spark",category:"winner",name:"نبضة الفوز",description:"لحظة فوز قصيرة ومضبوطة على الشاشة الكبيرة.",price:oe(1500),accent:"#E85B3F",glyph:"✦"},{id:"reveal-crack",category:"reveal",name:"ارتداد الأثر",description:"مؤثر كشف يبرز عودة العاقبة إلى المشهد العام.",price:oe(1400),accent:"#E23A4F",glyph:"╱"},{id:"season-eid",category:"seasonal",name:"حزمة العيد",description:"حزمة موسمية قيد التجهيز — لا يمكن شراؤها الآن.",price:oe(2900),accent:"#4A0B18",glyph:"✺",comingSoon:!0}],nt=[{id:"free",name:"الأساسية",description:"اللعبة الأساسية كاملة لكل شلة.",features:["إنشاء الغرف والانضمام بلا حد مدفوع","اللعبة الكاملة من ٤ إلى ٨ لاعبين","الإعدادات وميزات الوصول الأساسية"]},{id:"majlis-plus",name:"Backfire Plus",description:"تخصيص أعمق للمضيف والملف الشخصي.",monthly:oe(1900,"month"),yearly:oe(19e3,"year"),recommended:!0,features:["ثيمات وإطارات مختارة","حفظ إعدادات الجلسة","سجل مباريات ممتد مستقبلًا","مؤثرات تقديم إضافية بلا أفضلية لعب"]},{id:"events",name:"باقة مناسبات",description:"تقديم مخصص للفعاليات والجلسات الكبيرة.",monthly:oe(5900,"month"),yearly:oe(59e3,"year"),features:["هوية غرفة قابلة للتخصيص","قوالب عرض للمناسبات","إعدادات مضيف متقدمة مستقبلًا","لا تتضمن أي عنصر ادفع لتفوز"]}];function ve(e){return Fe.find(t=>t.id===e)}function Me(e){return nt.find(t=>t.id===e)}function ge(e){return e.amountMinor===0?"مجاني":new Intl.NumberFormat("ar-SA",{style:"currency",currency:e.currency,maximumFractionDigits:2}).format(e.amountMinor/100)}function Xe(e){let t=e.normalize("NFKC").trim().replace(/\s+/g," ");return t?[...t].length>24?{ok:!1,message:"الاسم الظاهر بحد أقصى ٢٤ حرفًا."}:/[<>&\u0000-\u001f\u007f-\u009f\u202a-\u202e]/u.test(t)?{ok:!1,message:"الاسم يحتوي رموزًا غير مدعومة."}:{ok:!0,value:t}:{ok:!1,message:"اكتب الاسم الظاهر."}}function ot(e){let t=e.trim().toLowerCase();return/^[a-z0-9_]{3,20}$/.test(t)?{ok:!0,value:t}:{ok:!1,message:"اسم المستخدم من ٣–٢٠: حروف إنجليزية وأرقام وشرطة سفلية."}}function je(e){let t=e.trim().toLowerCase();return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)?{ok:!0,value:t}:{ok:!1,message:"اكتب بريدًا إلكترونيًا صحيحًا."}}function st(e){return e.length<8||!/[A-Za-z]/.test(e)||!/\d/.test(e)?{ok:!1,message:"كلمة المرور ٨ خانات على الأقل وتحتوي حرفًا ورقمًا."}:{ok:!0,value:e}}var Ce="dass.product.v1.",_t={language:"ar",appearance:"dass",effectsVolume:70,musicVolume:45,muted:!1,animations:!0,reducedMotion:!1,highContrast:!1,textScale:"normal",haptics:!0,confirmCritical:!0,autoReady:!1,productUpdates:!0,matchInvites:!0,friendInvites:!1,purchaseReceipts:!0,subscriptionReminders:!0,marketing:!1,profileVisibility:"players",activityVisibility:!1,recentPlayerVisibility:!1,analytics:!1,functionalCookies:!0},Ae={displayName:"ضيف المجلس",username:"guest",avatar:"theme-original",frame:"theme-original"},qt={ownedProductIds:["theme-original"],equipped:{theme:"theme-original"}},Se={id:"demo_user_seed",displayName:"لاعب تجريبي",username:"demo_player",email:"demo@backfire.local",createdAt:"2026-01-01T00:00:00.000Z",plan:"free"};function ae(e){return JSON.parse(JSON.stringify(e))}function Oe(e){let t=globalThis.crypto?.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).slice(2)}`;return`${e}_${t}`}function Q(e,t,r){try{let a=e.getItem(Ce+t);return a?JSON.parse(a):ae(r)}catch{return ae(r)}}function H(e,t,r){e.setItem(Ce+t,JSON.stringify(r))}function le(e){if(!e.ok)throw new Error(e.message);return e.value}function W(e,t){return`${e}.${t?.id??"anonymous"}`}function Nt(e){let t=new Set,r=()=>{let i=n.getSession();for(let s of t)s(i)},a=()=>{let i=n.getSession();if(!i)throw new Error("سجّل الدخول أو تابع كضيف أولًا.");return i},n={mode:"demo",getSession:()=>Q(e,"session",null),subscribeToSessionChanges(i){return t.add(i),()=>t.delete(i)},async signIn(i,s){let d=le(je(i));le(st(s));let p=Q(e,"identities",[]).find(V=>V.email===d)??(d===Se.email?Se:void 0);if(!p)throw new Error("بيانات الدخول غير صحيحة في وضع العرض. أنشئ حسابًا محليًا أولًا.");let E={id:p.id,mode:"demo",displayName:p.displayName,username:p.username,email:d,verified:!1,plan:p.plan,createdAt:p.createdAt};return H(e,"session",E),Q(e,W("profile",E),null)||H(e,W("profile",E),{...Ae,displayName:E.displayName,username:E.username}),r(),ae(E)},async signUp(i){if(!i.acceptedTerms)throw new Error("وافق على الشروط وسياسة الخصوصية للمتابعة.");let s=le(Xe(i.displayName)),d=le(ot(i.username)),p=le(je(i.email));le(st(i.password));let E=Q(e,"identities",[]);if(E.some(J=>J.email===p)||p===Se.email)throw new Error("البريد مستخدم مسبقًا في هذا المتصفح.");if(E.some(J=>J.username===d)||d===Se.username)throw new Error("اسم المستخدم مستخدم مسبقًا في هذا المتصفح.");let N=new Date().toISOString(),V=Oe("demo_user"),U={id:V,mode:"demo",displayName:s,username:d,email:p,verified:!1,plan:"free",createdAt:N};return E.push({id:V,displayName:s,username:d,email:p,createdAt:N,plan:"free"}),H(e,"identities",E),H(e,"session",U),H(e,W("profile",U),{...Ae,displayName:s,username:d}),H(e,W("settings",U),_t),H(e,W("inventory",U),qt),r(),ae(U)},async continueAsGuest(i=Ae.displayName){let s=le(Xe(i)),d=Math.random().toString(36).slice(2,7),p={id:Oe("guest"),mode:"guest",displayName:s,username:`guest_${d}`,verified:!1,plan:"free",createdAt:new Date().toISOString()};return H(e,"session",p),H(e,W("profile",p),{...Ae,displayName:s,username:p.username}),r(),ae(p)},async signOut(){e.removeItem(Ce+"session"),r()},async requestPasswordReset(i){return le(je(i)),{delivered:!1,demo:!0}},getProfile(){let i=n.getSession();return Q(e,W("profile",i),i?{...Ae,displayName:i.displayName,username:i.username}:Ae)},async updateProfile(i){let s=a(),p={...n.getProfile(),...i};i.displayName!==void 0&&(p.displayName=le(Xe(i.displayName))),i.username!==void 0&&(p.username=le(ot(i.username)));let E=Q(e,"identities",[]);if(E.some(U=>U.id!==s.id&&U.username===p.username)||s.id!==Se.id&&p.username===Se.username)throw new Error("اسم المستخدم مستخدم مسبقًا في هذا المتصفح.");H(e,W("profile",s),p);let N={...s,displayName:p.displayName,username:p.username};H(e,"session",N);let V=E.find(U=>U.id===s.id);return V&&(V.displayName=p.displayName,V.username=p.username,H(e,"identities",E)),r(),ae(p)},getSettings:()=>{let i=n.getSession();return{..._t,...Q(e,W("settings",i),{})}},updateSettings(i){a();let s={...n.getSettings(),...i};return s.effectsVolume=Math.min(100,Math.max(0,Number(s.effectsVolume))),s.musicVolume=Math.min(100,Math.max(0,Number(s.musicVolume))),H(e,W("settings",n.getSession()),s),ae(s)},getInventory:()=>Q(e,W("inventory",n.getSession()),qt),async equipProduct(i){a();let s=ve(i);if(!s)throw new Error("العنصر غير موجود.");let d=n.getInventory();if(!d.ownedProductIds.includes(i))throw new Error("العنصر غير مملوك.");return d.equipped[s.category]=i,H(e,W("inventory",n.getSession()),d),ae(d)},async unequipProduct(i){a();let s=ve(i);if(!s)throw new Error("العنصر غير موجود.");let d=n.getInventory();return d.equipped[s.category]!==i?d:(s.category==="theme"?d.equipped.theme="theme-original":delete d.equipped[s.category],H(e,W("inventory",n.getSession()),d),ae(d))},async createCheckout(i,s,d="month"){let p=a(),E=i==="product"?ve(s):void 0,N=i==="plan"?Me(s):void 0;if(i==="product"&&(!E||E.comingSoon))throw new Error("هذا العنصر غير متاح للشراء.");if(i==="plan"&&(!N||N.id==="free"))throw new Error("هذه الباقة لا تحتاج إلى دفع.");let V=E?.price??(d==="year"?N?.yearly:N?.monthly);if(!V)throw new Error("سعر الاختيار غير متاح.");let U={id:Oe("demo_checkout"),ownerId:p.id,kind:i,referenceId:s,label:E?.name??N.name,price:V,status:"pending",demo:!0,createdAt:new Date().toISOString()};return H(e,`checkout.${U.id}`,U),ae(U)},getCheckout(i){return Q(e,`checkout.${i}`,null)},async completeDemoCheckout(i,s){let d=a(),p=n.getCheckout(i);if(!p)throw new Error("جلسة الدفع غير موجودة.");if(p.ownerId!==d.id)throw new Error("جلسة الدفع لا تخص هذا الحساب.");if(p.status!=="pending")return p;if(p.status=s,H(e,`checkout.${p.id}`,p),s==="succeeded"){if(p.kind==="product"){let V=n.getInventory();V.ownedProductIds.includes(p.referenceId)||V.ownedProductIds.push(p.referenceId),H(e,W("inventory",n.getSession()),V)}else{let V=a();H(e,"session",{...V,plan:p.referenceId});let U=Q(e,"identities",[]),J=U.find(se=>se.id===V.id);J&&(J.plan=p.referenceId,H(e,"identities",U)),r()}let E=n.getPurchaseHistory(),N={id:Oe("demo_receipt"),checkoutId:p.id,label:p.label,totalMinor:p.price.amountMinor,currency:p.price.currency,createdAt:new Date().toISOString(),demo:!0};E.unshift(N),H(e,W("receipts",n.getSession()),E)}return ae(p)},getPurchaseHistory:()=>Q(e,W("receipts",n.getSession()),[]),async cancelSubscription(){let i=a(),s={...i,plan:"free"};H(e,"session",s);let d=Q(e,"identities",[]),p=d.find(E=>E.id===i.id);return p&&(p.plan="free",H(e,"identities",d)),r(),ae(s)},getMatchHistory:()=>Q(e,W("matches",n.getSession()),[]),async saveSupportRequest(i){let s=i.subject.trim(),d=i.message.trim();if(s.length<3||s.length>100)throw new Error("عنوان الطلب من ٣ إلى ١٠٠ حرف.");if(d.length<10||d.length>2e3)throw new Error("التفاصيل من ١٠ إلى ٢٠٠٠ حرف.");i.email&&le(je(i.email));let p={...i,subject:s,message:d,id:Oe("demo_support"),createdAt:new Date().toISOString(),delivery:"local-only"},E=Q(e,"support",[]);return E.unshift(p),H(e,"support",E),ae(p)},async deleteLocalAccount(i){if(i.trim()!=="احذف حسابي")throw new Error("اكتب «احذف حسابي» للتأكيد.");let s=a();for(let p of["profile","settings","inventory","receipts","matches"])e.removeItem(Ce+W(p,s));let d=Q(e,"identities",[]).filter(p=>p.id!==s.id);H(e,"identities",d),e.removeItem(Ce+"support"),e.removeItem(Ce+"session"),r()}};return n}function Ft(){let e=()=>{throw new Error("خدمات الحساب والدفع غير موصولة في هذا الإصدار.")};return{mode:"unavailable",getSession:()=>null,subscribeToSessionChanges:()=>()=>{},signIn:async()=>e(),signUp:async()=>e(),continueAsGuest:async()=>e(),signOut:async()=>{},requestPasswordReset:async()=>e(),getProfile:e,updateProfile:async()=>e(),getSettings:e,updateSettings:e,getInventory:e,equipProduct:async()=>e(),unequipProduct:async()=>e(),createCheckout:async()=>e(),getCheckout:()=>null,completeDemoCheckout:async()=>e(),getPurchaseHistory:()=>[],cancelSubscription:async()=>e(),getMatchHistory:()=>[],saveSupportRequest:async()=>e(),deleteLocalAccount:async()=>e()}}var lt=new Map,Cr={getItem:e=>lt.get(e)??null,setItem:(e,t)=>{lt.set(e,t)},removeItem:e=>{lt.delete(e)}},Lr=typeof localStorage>"u"?Cr:localStorage,jt=!0,P=jt?Nt(Lr):Ft(),Ot=jt;var Tr="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",Pr="٠١٢٣٤٥٦٧٨٩",Rr="۰۱۲۳۴۵۶۷۸۹";function Ze(e){return String(e??"").trim().replace(/[\s-]+/g,"").replace(/[٠-٩]/g,t=>String(Pr.indexOf(t))).replace(/[۰-۹]/g,t=>String(Rr.indexOf(t))).toUpperCase()}function Ht(e){let t=Ze(e);return t.length===8&&[...t].every(r=>Tr.includes(r))}var dt=new Set(["/store","/pricing","/login","/signup","/forgot-password","/reset-password","/verify-email","/session-ended","/store/product","/checkout/result","/account","/account/profile","/account/settings","/account/inventory","/account/history","/account/history/match","/account/achievements","/account/billing","/checkout","/support","/faq","/contact","/report-player","/about","/credits","/status","/changelog","/invite","/legal/privacy","/legal/terms","/legal/refunds","/legal/cookies"]),F=$e,z=e=>document.querySelector(e);function D(e,t,r,a,n=""){return`<main id="main-content" class="product-page" tabindex="-1">
+    <header class="product-hero"><div><span class="eyebrow">${e}</span><h1>${t}</h1><p>${r}</p></div>${n}</header>
+    ${Ot?Ir():Br()}
+    ${a}
+  </main>`}function Ir(){return'<aside class="demo-banner" role="note"><span class="demo-dot"></span><div><b>وضع العرض المحلي</b><span>الحسابات والمشتريات محفوظة على هذا المتصفح فقط. لا يوجد دفع أو إرسال بريد حقيقي.</span></div></aside>'}function Br(){return'<aside class="demo-banner unavailable" role="alert"><span class="demo-dot"></span><div><b>الخدمات التجارية غير متصلة</b><span>التصفح متاح، لكن الحساب والدفع يحتاجان مزود إنتاج.</span></div></aside>'}function _(e,t="ok"){let r=z("#product-notice");r&&(r.className=`product-notice ${t}`,r.textContent=e,r.removeAttribute("hidden"),r.scrollIntoView({behavior:"smooth",block:"nearest"}))}function X(e){return e instanceof Error?e.message:"تعذر إكمال العملية."}function ce(e,t){e.setAttribute("aria-busy",String(t));let r=e.querySelector('button[type="submit"]');r&&(t?(r.dataset.label=r.textContent??"",r.textContent="جاري التنفيذ…"):r.dataset.label&&(r.textContent=r.dataset.label),r.disabled=t)}function he(e,t=""){return e?null:`<section class="empty-state panel"><span class="empty-glyph">◇</span><h2>تحتاج حسابًا محليًا</h2><p>سجّل دخولك في وضع العرض أو تابع كضيف للوصول لهذه الصفحة.</p><a class="btn primary" data-link="${t?`/login?next=${encodeURIComponent(t)}`:"/login"}">دخول أو متابعة كضيف</a></section>`}function Vt(){let e=new URLSearchParams(location.search).get("next")??"",t=e.split("?")[0]??"";return t.startsWith("/")&&dt.has(t)?e:"/account/profile"}function Le(e){return`<nav class="account-tabs" aria-label="صفحات الحساب">${[["profile","/account/profile","الملف"],["inventory","/account/inventory","المقتنيات"],["history","/account/history","المباريات"],["achievements","/account/achievements","الإنجازات"],["billing","/account/billing","الفوترة"],["settings","/account/settings","الإعدادات"]].map(([r,a,n])=>`<a data-link="${a}" class="${e===r?"on":""}">${n}</a>`).join("")}</nav>`}function ee(e,t,r="text",a="",n=""){return`<label class="field"><span>${t}</span><input class="input" name="${e}" type="${r}" value="${F(a)}" ${n}></label>`}function zr(){let e=P.getSession();return{active:"account",title:"تسجيل الدخول",description:"الدخول إلى حساب BACKFIRE التجريبي.",html:e?D("الحساب","أهلًا "+F(e.displayName),"جلستك المحلية جاهزة.",`<section class="auth-card panel"><div id="product-notice" hidden></div><p class="muted">${e.mode==="guest"?"أنت داخل كضيف.":`الحساب التجريبي: ${F(e.email??"")}`}</p><a class="btn primary wide" data-link="/account/profile">افتح حسابي</a><button class="btn wide" id="logout">تسجيل الخروج</button></section>`):D("الحساب","ارجع للعبة","دخول تجريبي محلي لا يرسل بيانات إلى خادم.",`<section class="auth-layout"><form id="login-form" class="auth-card panel"><div id="product-notice" role="status" aria-live="polite" hidden></div>${ee("email","البريد الإلكتروني","email","",'autocomplete="email" required')}${ee("password","كلمة المرور","password","",'data-secret autocomplete="current-password" minlength="8" required')}<div class="demo-credential"><span>حساب العرض الجاهز</span><code dir="ltr">demo@backfire.local · demoPass8</code></div><div class="form-options"><label class="check-row"><input name="remember" type="checkbox" checked><span>تذكر الجلسة على هذا الجهاز</span></label><button class="secret-toggle" type="button">إظهار كلمة المرور</button></div><button class="btn primary wide" type="submit">دخول تجريبي</button><a data-link="/forgot-password" class="text-link">نسيت كلمة المرور؟</a></form><aside class="auth-side"><span class="auth-seal">BF</span><h2>ما عندك حساب؟</h2><p>أنشئ ملفًا محليًا، أو ادخل كضيف من دون بريد.</p><a class="btn" data-link="/signup">إنشاء حساب تجريبي</a><button id="guest-login" class="btn ghost">المتابعة كضيف</button></aside></section>`),bind(r){Kt(),z("#logout")?.addEventListener("click",async()=>{await P.signOut(),r("/")}),z("#guest-login")?.addEventListener("click",async a=>{a.currentTarget.disabled=!0;try{await P.continueAsGuest(),r(Vt())}catch(n){_(X(n),"error"),a.currentTarget.disabled=!1}}),z("#login-form")?.addEventListener("submit",async a=>{a.preventDefault();let n=a.currentTarget;ce(n,!0);let i=new FormData(n);try{await P.signIn(String(i.get("email")??""),String(i.get("password")??"")),r(Vt())}catch(s){_(X(s),"error")}finally{ce(n,!1)}})}}}function Dr(){return{active:"account",title:"إنشاء حساب",description:"إنشاء حساب BACKFIRE تجريبي محلي.",html:D("حساب جديد","سمّ نفسك","البيانات تبقى على هذا الجهاز في وضع العرض.",`<form id="signup-form" class="auth-card panel form-grid"><div id="product-notice" role="status" aria-live="polite" hidden></div>${ee("displayName","الاسم الظاهر","text","",'maxlength="24" autocomplete="name" required aria-describedby="name-help"')}<small id="name-help" class="field-help">حتى ٢٤ حرفًا. لا نسمح بالترميز أو محارف التحكم.</small>${ee("username","اسم المستخدم","text","",'maxlength="20" pattern="[a-zA-Z0-9_]{3,20}" dir="ltr" required aria-describedby="username-help"')}<small id="username-help" class="field-help">٣–٢٠ من الحروف الإنجليزية والأرقام والشرطة السفلية.</small>${ee("email","البريد الإلكتروني","email","",'autocomplete="email" required')}${ee("password","كلمة المرور","password","",'data-secret minlength="8" autocomplete="new-password" required aria-describedby="password-help"')}${ee("confirmPassword","تأكيد كلمة المرور","password","",'data-secret minlength="8" autocomplete="new-password" required')}<small id="password-help" class="field-help">٨ خانات على الأقل، وتتضمن حرفًا ورقمًا.</small><button class="secret-toggle" type="button">إظهار كلمتي المرور</button><label class="check-row"><input name="terms" type="checkbox" required><span>أوافق على <a data-link="/legal/terms">الشروط</a> و<a data-link="/legal/privacy">الخصوصية</a>.</span></label><button class="btn primary wide" type="submit">أنشئ الحساب التجريبي</button><p class="form-foot">عندك حساب؟ <a data-link="/login">سجّل الدخول</a></p></form>`),bind(e){Kt(),z("#signup-form")?.addEventListener("submit",async t=>{t.preventDefault();let r=t.currentTarget;ce(r,!0);let a=new FormData(r);try{if(String(a.get("password")??"")!==String(a.get("confirmPassword")??""))throw new Error("كلمتا المرور غير متطابقتين.");await P.signUp({displayName:String(a.get("displayName")??""),username:String(a.get("username")??""),email:String(a.get("email")??""),password:String(a.get("password")??""),acceptedTerms:a.get("terms")==="on"}),e("/account/profile")}catch(n){_(X(n),"error")}finally{ce(r,!1)}})}}}function Kt(){z(".secret-toggle")?.addEventListener("click",e=>{let t=document.querySelectorAll("[data-secret]"),r=[...t].some(a=>a.type==="password");t.forEach(a=>{a.type=r?"text":"password"}),e.currentTarget.textContent=r?"إخفاء كلمة المرور":"إظهار كلمة المرور"})}function _r(){return{active:"account",title:"استعادة كلمة المرور",description:"توضيح استعادة كلمة المرور في النسخة التجريبية.",html:D("استعادة الحساب","نسيت كلمة المرور؟","لن نرسل بريدًا وهميًا. مزود البريد غير موصول في وضع العرض.",`<form id="reset-form" class="auth-card panel"><div id="product-notice" hidden></div>${ee("email","البريد الإلكتروني","email","",'required autocomplete="email"')}<button class="btn primary wide" type="submit">تحقق من الطلب</button><a class="text-link" data-link="/login">العودة للدخول</a></form>`),bind(){z("#reset-form")?.addEventListener("submit",async e=>{e.preventDefault();let t=e.currentTarget;ce(t,!0);let r=new FormData(t);try{await P.requestPasswordReset(String(r.get("email")??"")),_("البريد صحيح، لكن لم يُرسل شيء لأن مزود البريد غير موصول في وضع العرض.")}catch(a){_(X(a),"error")}finally{ce(t,!1)}})}}}function qr(e){return e==="/session-ended"?{active:"account",title:"انتهت الجلسة",description:"انتهت جلسة حساب BACKFIRE.",html:D("أمان الحساب","انتهت الجلسة","لم نحتفظ بعملية معلّقة. ادخل مرة ثانية للمتابعة.",'<section class="empty-state panel"><span class="empty-glyph">⌁</span><h2>سجّل دخولك من جديد</h2><p>في مزود الإنتاج ستنتهي الجلسة عند الإلغاء أو انتهاء صلاحية الرمز. وضع العرض المحلي لا يدّعي دورة رموز خادم.</p><a class="btn primary" data-link="/login">تسجيل الدخول</a></section>')}:e==="/verify-email"?{active:"account",title:"تأكيد البريد",description:"حالة تأكيد بريد حساب BACKFIRE.",html:D("تأكيد البريد","البريد غير موثّق","مزود البريد غير موصول، لذلك لن نرسل رسالة وهمية.",'<section class="empty-state panel"><span class="empty-glyph">✉</span><h2>التأكيد غير متاح في وضع العرض</h2><p>الحساب المحلي يبقى بعلامة «غير موثّق». عند توصيل مزود الهوية ستُرسل الروابط وتُتحقق على الخادم.</p><a class="btn" data-link="/account/profile">العودة للملف</a></section>')}:{active:"account",title:"إعادة تعيين كلمة المرور",description:"إعادة تعيين كلمة مرور BACKFIRE.",html:D("استعادة الحساب","رابط إعادة التعيين غير نشط","هذه الشاشة موجودة لحالة الرابط، لكنها لن تغير كلمة مرور من دون مزود هوية.",'<section class="empty-state panel"><span class="empty-glyph">◇</span><h2>لا يوجد رمز استعادة صالح</h2><p>اطلب رابطًا بعد توصيل خدمة البريد والهوية. لم نقرأ أو نقبل أي رمز من الرابط في وضع العرض.</p><a class="btn primary" data-link="/forgot-password">العودة للاستعادة</a></section>')}}function Nr(e,t){let r=e.comingSoon?'<button class="btn sm" disabled>قريبًا</button>':t.has(e.id)?`<a class="btn sm" data-link="/account/inventory">${e.price.amountMinor===0?"ضمن حسابك":"مملوك"}</a>`:`<a class="btn primary sm" data-link="/checkout?kind=product&id=${e.id}">اقتناء</a>`;return`<article class="product-card" data-category="${e.category}" data-name="${F(e.name.toLowerCase())}" data-price="${e.price.amountMinor}"><a class="product-art" style="--accent:${e.accent}" data-link="/store/product?id=${e.id}" aria-label="معاينة ${F(e.name)}"><span>${F(e.glyph)}</span></a><div class="product-card-copy"><span class="product-type">${He(e.category)}</span><h2><a data-link="/store/product?id=${e.id}">${F(e.name)}</a></h2><p>${F(e.description)}</p><div class="product-card-foot"><b>${ge(e.price)}</b><div><a class="btn sm ghost" data-link="/store/product?id=${e.id}">معاينة</a>${r}</div></div></div></article>`}function He(e){return{theme:"ثيم",background:"خلفية",avatar:"صورة",frame:"إطار",winner:"فوز",reveal:"كشف",seasonal:"موسمي"}[e]}function Fr(){let e=new Set(P.getSession()?P.getInventory().ownedProductIds:["theme-original"]);return{active:"store",title:"المتجر",description:"مظاهر وتجارب بصرية اختيارية للعبة BACKFIRE.",html:D("متجر BACKFIRE","خلّ الجلسة تشبهكم","مظاهر ومؤثرات اختيارية فقط — لا أفضلية لعب ولا صناديق عشوائية.",`<section class="catalog-tools"><div class="filter-pills" role="group" aria-label="تصفية المتجر"><button class="on" data-filter="all">الكل</button><button data-filter="theme">الثيمات</button><button data-filter="avatar">الملف</button><button data-filter="winner">المؤثرات</button></div><div class="catalog-inputs"><label><span class="sr-only">ابحث في المتجر</span><input id="store-search" class="input" type="search" placeholder="ابحث بالاسم"></label><label><span class="sr-only">ترتيب المتجر</span><select id="store-sort" class="input"><option value="featured">الترتيب المقترح</option><option value="low">السعر: الأقل</option><option value="high">السعر: الأعلى</option></select></label></div><p class="catalog-note">الأسعار تشمل الضريبة · الدفع الحقيقي غير مفعّل</p></section><div id="store-empty" class="empty-state panel compact" hidden><h2>ما لقينا هذا العنصر</h2><p>غيّر البحث أو افتح فئة ثانية.</p></div><section class="product-grid" id="product-grid">${Fe.map(t=>Nr(t,e)).join("")}</section>`),bind(){let t="all",r=()=>{let a=(z("#store-search")?.value??"").trim().toLowerCase(),n=0;document.querySelectorAll("[data-category]").forEach(s=>{s.hidden=t!=="all"&&s.dataset.category!==t||!(s.dataset.name??"").includes(a),s.hidden||(n+=1)});let i=z("#store-empty");i&&i.toggleAttribute("hidden",n!==0)};document.querySelectorAll("[data-filter]").forEach(a=>a.addEventListener("click",()=>{document.querySelectorAll("[data-filter]").forEach(n=>n.classList.toggle("on",n===a)),t=a.dataset.filter??"all",r()})),z("#store-search")?.addEventListener("input",r),z("#store-sort")?.addEventListener("change",a=>{let n=z("#product-grid");if(!n)return;let i=[...n.querySelectorAll("[data-price]")],s=a.currentTarget.value;s!=="featured"&&i.sort((d,p)=>Number(d.dataset.price)-Number(p.dataset.price)||(d.dataset.name??"").localeCompare(p.dataset.name??"","ar")),s==="high"&&i.reverse(),i.forEach(d=>n.append(d))})}}}function jr(e){let t=ve(e.get("id")??"");if(!t)return ct("العنصر غير موجود","ارجع للمتجر واختر عنصرًا من الكتالوج.");let r=P.getSession()?P.getInventory():null,a=r?.ownedProductIds.includes(t.id)??t.price.amountMinor===0,n=r?.equipped[t.category]===t.id,i=t.comingSoon?'<button class="btn primary" disabled>قريبًا</button>':a?`<button id="detail-equip" class="btn primary" ${n?"disabled":""}>${n?"مفعّل الآن":"تفعيل العنصر"}</button>`:`<a class="btn primary" data-link="/checkout?kind=product&id=${t.id}">اقتناء تجريبي</a>`;return{active:"store",title:t.name,description:t.description,html:D("تفاصيل العنصر",F(t.name),F(t.description),`<section class="product-detail"><div class="product-detail-art panel" style="--accent:${t.accent}"><span>${F(t.glyph)}</span><i>معاينة بصرية تمثيلية</i></div><div class="product-detail-copy panel"><span class="product-type">${He(t.category)}</span><h2>${ge(t.price)}</h2><dl><div><dt>الحالة</dt><dd>${t.comingSoon?"قيد التجهيز":a?"مملوك":"متاح"}</dd></div><div><dt>الفئة</dt><dd>${He(t.category)}</dd></div><div><dt>الأثر على اللعب</dt><dd>تجميلي فقط</dd></div></dl>${i}<p>لا يمنح العنصر نقاطًا أو قرارات أو فرصة فوز إضافية.</p><a class="text-link" data-link="/store">العودة للمتجر</a></div></section>`),bind(s,d){z("#detail-equip")?.addEventListener("click",async()=>{try{await P.equipProduct(t.id),d()}catch(p){_(X(p),"error")}})}}}function Or(e){let t=P.getSession()?.plan===e.id,r=e.monthly?ge(e.monthly):"مجاني",a=e.yearly?ge(e.yearly):"مجاني",n=t?'<button class="btn wide" disabled>باقتك الحالية</button>':e.id==="free"?'<a class="btn wide" data-link="/create">ابدأ الآن</a>':`<a class="btn ${e.recommended?"primary":""} wide price-action" data-plan="${e.id}" data-link="/checkout?kind=plan&id=${e.id}&interval=month">اختر الباقة</a>`;return`<article class="plan-card ${e.recommended?"recommended":""} ${t?"current":""}">${t?'<span class="plan-badge current">الحالية</span>':e.recommended?'<span class="plan-badge">الأوضح للمجالس</span>':""}<div><span class="product-type">${e.id==="free"?"الأساسي":"اشتراك"}</span><h2>${F(e.name)}</h2><p>${F(e.description)}</p></div><div class="plan-price"><b data-month="${r}" data-year="${a}">${r}</b><span class="plan-cycle">${e.id==="free"?"دائمًا":"شهريًا"}</span></div><ul>${e.features.map(i=>`<li>${F(i)}</li>`).join("")}</ul>${n}</article>`}function Hr(){return{active:"pricing",title:"الأسعار",description:"باقات BACKFIRE الشفافة من دون أفضلية لعب.",html:D("العضوية","اللعبة كاملة… والتخصيص اختياري","النسخة المجانية تشمل اللعب الأساسي كاملًا. العضوية تضيف مظهرًا وتنظيمًا فقط.",`<div class="billing-toggle" role="group" aria-label="دورة الفوترة"><button class="on" data-cycle="month">شهري</button><button data-cycle="year">سنوي <span>وفر شهرين</span></button></div><section class="plans-grid">${nt.map(Or).join("")}</section><section class="pricing-trust"><h2>وعدنا التجاري</h2><div><p><b>لا ادفع لتفوز</b><span>كل القرارات والنتائج متساوية.</span></p><p><b>لا تجديد مخفي</b><span>السعر والدورة ظاهران قبل التأكيد.</span></p><p><b>لا شراء عشوائي</b><span>تعرف بالضبط وش تقتني.</span></p></div></section><section class="plan-compare panel"><h2>مقارنة سريعة</h2><div><span>اللعبة الأساسية</span><b>كل الباقات</b></div><div><span>ميزات الوصول</span><b>كل الباقات</b></div><div><span>الثيمات والإطارات</span><b>بلس والمناسبات</b></div><div><span>هوية مناسبة مخصصة</span><b>المناسبات</b></div></section><section class="faq-list"><h2>أسئلة الفوترة</h2><details><summary>هل يتم الخصم الآن؟</summary><p>لا. المزود الحالي محلي وتجريبي، ولا يطلب بطاقة أو يخصم مبلغًا.</p></details><details><summary>كيف ألغي أو أخفّض الباقة؟</summary><p>تظهر واجهة الإدارة في صفحة الفوترة، لكن الإلغاء والتجديد الحقيقيين يحتاجان بوابة مزود الدفع.</p></details><details><summary>هل السعر شامل الضريبة؟</summary><p>بيانات الكتالوج الحالية معنونة بأنها شاملة الضريبة. يجب تأكيد الفواتير والسياسة مع مزود الدفع قبل البيع.</p></details></section>`),bind(){document.querySelectorAll("[data-cycle]").forEach(e=>e.addEventListener("click",()=>{let t=e.dataset.cycle;document.querySelectorAll("[data-cycle]").forEach(r=>r.classList.toggle("on",r===e)),document.querySelectorAll(".plan-price b").forEach(r=>{r.textContent=r.dataset[t]??""}),document.querySelectorAll(".plan-cycle").forEach(r=>{r.textContent!=="دائمًا"&&(r.textContent=t==="year"?"سنويًا":"شهريًا")}),document.querySelectorAll(".price-action").forEach(r=>{r.dataset.link=`/checkout?kind=plan&id=${r.dataset.plan}&interval=${t}`})}))}}}function Gt(){let e=P.getSession(),t=he(e);if(t)return{active:"account",title:"الملف الشخصي",description:"ملف حساب BACKFIRE.",html:D("حسابي","الملف الشخصي","إدارة هويتك داخل BACKFIRE.",t)};let r=P.getProfile(),a=new Date(e.createdAt).toLocaleDateString("ar-SA",{year:"numeric",month:"long",day:"numeric"});return{active:"account",title:"الملف الشخصي",description:"إدارة ملف حساب BACKFIRE.",html:D("حسابي","الملف الشخصي","اسمك وهويتك أمام لاعبي المجلس.",`${Le("profile")}<section class="account-grid"><aside class="profile-preview panel"><div class="profile-avatar">${F(r.displayName.slice(0,1))}</div><h2>${F(r.displayName)}</h2><span>@${F(r.username)}</span><div class="profile-badges"><i>${e.mode==="guest"?"ضيف محلي":"حساب تجريبي"}</i><i>${e.plan==="free"?"مجلس":F(Me(e.plan)?.name??"")}</i>${e.verified?'<i class="verified">موثّق</i>':'<a data-link="/verify-email">غير موثّق</a>'}</div><small>منضم منذ ${a}</small></aside><form id="profile-form" class="account-form panel"><div id="product-notice" role="status" aria-live="polite" hidden></div>${ee("displayName","الاسم الظاهر","text",r.displayName,'maxlength="24" required')}${ee("username","اسم المستخدم","text",r.username,'maxlength="20" dir="ltr" required')}<p class="field-help">وضع العرض يفحص التكرار داخل هذا المتصفح. الإنتاج يحتاج فحصًا مركزيًا وطبقة إشراف على الأسماء.</p><button class="btn primary" type="submit">حفظ التغييرات</button><a class="btn" data-link="/account/inventory">اختيار الصورة والإطار والمظهر</a><button class="btn danger-outline" id="logout" type="button">تسجيل الخروج</button></form></section><section class="profile-stats panel"><header><div><h2>الإحصاءات</h2><p>لا توجد مزامنة مباريات لهذا الحساب بعد.</p></div><a data-link="/account/history">سجل المباريات</a></header><div>${[["المباريات","٠"],["الفوز","٠"],["الخسارة","٠"],["نسبة الفوز","—"],["السلسلة الحالية","٠"],["أفضل سلسلة","٠"]].map(([n,i])=>`<p><b>${i}</b><span>${n}</span></p>`).join("")}</div><footer>هذه أصفار حقيقية لحساب بلا سجل، وليست بيانات عيّنة.</footer></section>`),bind(n,i){z("#profile-form")?.addEventListener("submit",async s=>{s.preventDefault();let d=s.currentTarget;ce(d,!0);let p=new FormData(d);try{await P.updateProfile({displayName:String(p.get("displayName")??""),username:String(p.get("username")??"")}),_("تم حفظ الملف."),setTimeout(i,350)}catch(E){_(X(E),"error")}finally{ce(d,!1)}}),z("#logout")?.addEventListener("click",async()=>{await P.signOut(),n("/")})}}}function Vr(){let e=P.getSession(),t=he(e);if(t)return{active:"account",title:"المقتنيات",description:"مقتنيات حساب BACKFIRE.",html:D("حسابي","المقتنيات","العناصر المملوكة والمفعّلة.",t)};let r=P.getInventory(),a=Fe.filter(n=>r.ownedProductIds.includes(n.id));return{active:"account",title:"المقتنيات",description:"إدارة مقتنيات BACKFIRE.",html:D("حسابي","المقتنيات","فعّل مظهرًا واحدًا من كل فئة.",`${Le("inventory")}<div id="product-notice" role="status" aria-live="polite" hidden></div><section class="inventory-grid">${a.map(n=>{let i=r.equipped[n.category]===n.id;return`<article class="inventory-item panel"><div class="inventory-glyph" style="--accent:${n.accent}">${F(n.glyph)}</div><div><span>${He(n.category)}</span><h2>${F(n.name)}</h2></div><button class="btn sm ${i?"unequip":"equip"}" data-product="${n.id}" ${n.id==="theme-original"&&i?"disabled":""}>${i?n.id==="theme-original"?"الأساسي":"إلغاء التفعيل":"تفعيل"}</button></article>`}).join("")}</section>${a.length<Fe.length?'<div class="account-nudge"><p>تبغى خيارات أكثر للمجلس؟</p><a class="btn" data-link="/store">تصفح المتجر</a></div>':""}`),bind(n,i){document.querySelectorAll(".equip").forEach(s=>s.addEventListener("click",async()=>{try{await P.equipProduct(s.dataset.product),_("تم تفعيل العنصر."),setTimeout(i,300)}catch(d){_(X(d),"error")}})),document.querySelectorAll(".unequip").forEach(s=>s.addEventListener("click",async()=>{try{await P.unequipProduct(s.dataset.product),_("تم إلغاء تفعيل العنصر."),setTimeout(i,300)}catch(d){_(X(d),"error")}}))}}}function Ur(){let e=P.getSession(),t=he(e);if(t)return{active:"account",title:"الإعدادات",description:"إعدادات حساب BACKFIRE.",html:D("حسابي","الإعدادات","التحكم بالتجربة والخصوصية.",t)};let r=P.getSettings(),a=(n,i,s)=>`<label class="setting-row"><span><b>${i}</b><small>${s}</small></span><input type="checkbox" name="${n}" ${r[n]===!0||n==="textScale"&&r.textScale==="large"?"checked":""}></label>`;return{active:"account",title:"الإعدادات",description:"إعدادات تجربة وخصوصية BACKFIRE.",html:D("حسابي","الإعدادات","كل إعداد واضح ويُحفظ على هذا الجهاز.",`${Le("settings")}<form id="settings-form"><div id="product-notice" role="status" aria-live="polite" hidden></div><section class="settings-section panel"><h2>عام</h2><label class="select-row"><span><b>اللغة</b><small>واجهة عربية كاملة حاليًا.</small></span><select class="input" disabled><option>العربية</option></select></label><label class="select-row"><span><b>المظهر</b><small>هوية دسّ الليلية هي المظهر المصمم بالكامل.</small></span><select class="input" disabled><option>دسّ الأصلي</option></select></label>${a("highContrast","تباين مرتفع","زيادة وضوح الحدود والنصوص.")}${a("textScale","نص أكبر","تكبير نصوص صفحات المنتج.")}</section><section class="settings-section panel"><h2>الصوت والحركة</h2>${a("muted","كتم الصوت","إيقاف مؤثرات الموقع.")}${a("animations","الحركات","تشغيل انتقالات الواجهة.")}${a("reducedMotion","تقليل الحركة","تخفيف المؤثرات المستمرة.")}${a("haptics","الاهتزاز","ردود فعل لمسية على الجوال عند دعمها.")}<label class="range-row"><span>صوت المؤثرات <output>${r.effectsVolume}%</output></span><input name="effectsVolume" type="range" min="0" max="100" value="${r.effectsVolume}"></label><label class="range-row"><span>صوت الموسيقى <output>${r.musicVolume}%</output></span><input name="musicVolume" type="range" min="0" max="100" value="${r.musicVolume}"></label></section><section class="settings-section panel"><h2>اللعب</h2>${a("confirmCritical","تأكيد القرارات الحرجة","خطوة تأكيد قبل البيع أو القرار النهائي.")}${a("autoReady","استعداد تلقائي","غير مفعّل افتراضيًا حتى لا تبدأ بالغلط.")}<p class="field-help">تفضيلات المضيف والغرفة تحتاج ربط الحساب بالمضيف قبل تفعيلها.</p></section><section class="settings-section panel"><h2>التنبيهات</h2>${a("productUpdates","تحديثات المنتج","إشعارات محلية عن النسخ الجديدة.")}${a("matchInvites","دعوات المباريات","جاهزة لخدمة الدعوات المستقبلية.")}${a("friendInvites","دعوات اللاعبين السابقين","لا يوجد إرسال خارجي في وضع العرض.")}${a("purchaseReceipts","إيصالات الشراء","إيصالات العرض تظهر محليًا.")}${a("subscriptionReminders","تذكير الاشتراك","يتطلب خدمة اشتراك وتنبيهات.")}${a("marketing","رسائل تسويقية","غير مفعّلة افتراضيًا.")}</section><section class="settings-section panel"><h2>الخصوصية وملفات الارتباط</h2><label class="select-row"><span><b>ظهور الملف</b><small>اختيار محلي حتى تتوفر خدمة الملفات.</small></span><select class="input" name="profileVisibility"><option value="private" ${r.profileVisibility==="private"?"selected":""}>خاص</option><option value="players" ${r.profileVisibility==="players"?"selected":""}>لاعبو المجلس</option><option value="public" ${r.profileVisibility==="public"?"selected":""}>عام</option></select></label>${a("activityVisibility","إظهار النشاط","غير مفعّل افتراضيًا.")}${a("recentPlayerVisibility","الظهور للاعبين السابقين","جاهز لخدمة الدعوات المستقبلية.")}${a("analytics","تحليلات الاستخدام","غير مفعّلة في وضع العرض.")}${a("functionalCookies","تخزين وظيفي","يستخدم الموقع التخزين المحلي لتفضيلات العرض.")}</section><button class="btn primary" type="submit">حفظ الإعدادات</button></form><section class="settings-section account-actions panel"><h2>الحساب والبيانات</h2><div><span><b>تغيير البريد أو كلمة المرور</b><small>يتطلب مزود هوية موصولًا.</small></span><button class="btn sm" disabled>غير متاح</button></div><div><span><b>الحسابات المتصلة</b><small>لا توجد موفّرات خارجية.</small></span><button class="btn sm" disabled>لا يوجد</button></div><div><span><b>تصدير البيانات</b><small>البيانات التجريبية موجودة في المتصفح فقط.</small></span><button id="export-local" class="btn sm">تنزيل نسخة محلية</button></div><div><span><b>الخروج من كل الجلسات</b><small>لا توجد جلسات خادم في وضع العرض.</small></span><button class="btn sm" disabled>غير متاح</button></div></section><section class="danger-zone panel"><h2>حذف البيانات المحلية</h2><p>يمسح الحساب والمقتنيات والإعدادات التجريبية من هذا المتصفح فقط.</p>${ee("delete-confirm","اكتب: احذف حسابي")}<div class="danger-actions"><button id="delete-account" class="btn danger-outline">حذف البيانات</button><button id="cancel-delete" class="btn ghost">إلغاء</button></div></section>`),bind(n){document.querySelectorAll('input[type="range"]').forEach(i=>i.addEventListener("input",()=>{let s=i.closest("label")?.querySelector("output");s&&(s.textContent=`${i.value}%`)})),z("#settings-form")?.addEventListener("submit",i=>{i.preventDefault();let s=i.currentTarget,d=new FormData(s);try{P.updateSettings({muted:d.get("muted")==="on",animations:d.get("animations")==="on",reducedMotion:d.get("reducedMotion")==="on",haptics:d.get("haptics")==="on",confirmCritical:d.get("confirmCritical")==="on",autoReady:d.get("autoReady")==="on",productUpdates:d.get("productUpdates")==="on",matchInvites:d.get("matchInvites")==="on",friendInvites:d.get("friendInvites")==="on",purchaseReceipts:d.get("purchaseReceipts")==="on",subscriptionReminders:d.get("subscriptionReminders")==="on",marketing:d.get("marketing")==="on",activityVisibility:d.get("activityVisibility")==="on",recentPlayerVisibility:d.get("recentPlayerVisibility")==="on",analytics:d.get("analytics")==="on",functionalCookies:d.get("functionalCookies")==="on",effectsVolume:Number(d.get("effectsVolume")),musicVolume:Number(d.get("musicVolume")),highContrast:d.get("highContrast")==="on",textScale:d.get("textScale")==="on"?"large":"normal",profileVisibility:d.get("profileVisibility")}),_("تم حفظ الإعدادات.")}catch(p){_(X(p),"error")}}),z("#export-local")?.addEventListener("click",()=>{let i=JSON.stringify({exportedAt:new Date().toISOString(),demo:!0,session:P.getSession(),profile:P.getProfile(),settings:P.getSettings(),inventory:P.getInventory(),receipts:P.getPurchaseHistory()},null,2),s=document.createElement("a");s.href=URL.createObjectURL(new Blob([i],{type:"application/json"})),s.download="backfire-demo-data.json",s.click(),URL.revokeObjectURL(s.href)}),z("#delete-account")?.addEventListener("click",async()=>{try{await P.deleteLocalAccount(z('[name="delete-confirm"]')?.value??""),n("/")}catch(i){_(X(i),"error")}}),z("#cancel-delete")?.addEventListener("click",()=>{let i=z('[name="delete-confirm"]');i&&(i.value=""),_("أُلغي الحذف ولم تتغير البيانات.")})}}}function Kr(){let e=P.getSession(),t=he(e),r=e?P.getMatchHistory():[],a=t??`${Le("history")}${r.length?`<section class="history-list">${r.map(n=>`<a class="panel" data-link="/account/history/match?id=${encodeURIComponent(n.id)}"><b>${F(n.roomLabel)}</b><span>${new Date(n.playedAt).toLocaleDateString("ar-SA")}</span></a>`).join("")}</section>`:'<section class="empty-state panel"><span class="empty-glyph">↗</span><h2>ما فيه مباريات محفوظة</h2><p>المباريات الحالية لا تُنسب إلى الحساب بعد. لن نعرض سجلًا مختلقًا.</p><a class="btn primary" data-link="/create">ابدأ مباراة</a></section><section class="history-empty-grid"><article class="panel"><h2>اللاعبون السابقون</h2><p>لا توجد بيانات موثوقة للدعوة أو الحظر. ستظهر هنا بعد ربط هوية اللاعب بالمباراة.</p></article><article class="panel"><h2>الغرف السابقة</h2><p>لا نحفظ أكواد الغرف المنتهية في المتصفح، ولا نعيد فتح غرفة مدمرة.</p></article></section>'}`;return{active:"account",title:"سجل المباريات",description:"سجل مباريات حساب BACKFIRE.",html:D("حسابي","سجل المباريات","نتائجك عندما تتوفر مزامنة الحساب.",a)}}function Gr(e){let t=P.getSession(),r=he(t);if(r)return{active:"account",title:"تفاصيل المباراة",description:"تفاصيل مباراة BACKFIRE.",html:D("حسابي","تفاصيل المباراة","ملخص آمن بعد نهاية اللعبة.",r)};let a=e.get("id")??"",n=P.getMatchHistory().find(i=>i.id===a);return n?{active:"account",title:n.roomLabel,description:"ملخص مباراة محفوظة.",html:D("سجل المباريات",F(n.roomLabel),"أحداث عامة فقط، من دون أسرار غير مكشوفة.",`<section class="prose-page panel"><p>${new Date(n.playedAt).toLocaleString("ar-SA")}</p><p>اللاعبون: ${n.players} · الجولات: ${n.rounds} · المدة: ${n.durationMinutes} دقيقة</p><p>الفائز: ${F(n.winnerName)}</p></section>`)}:{active:"account",title:"المباراة غير موجودة",description:"لم نجد مباراة محفوظة.",html:D("سجل المباريات","المباراة غير موجودة","لم نجد سجلًا موثوقًا بهذا المعرّف.",'<section class="empty-state panel"><span class="empty-glyph">؟</span><h2>لا نعرض تفاصيل مختلقة</h2><p>قد يكون السجل حُذف أو لم يُزامن أصلًا. الأسرار غير المكشوفة لا تُحفظ هنا.</p><a class="btn" data-link="/account/history">العودة للسجل</a></section>')}}function Yr(){let e=P.getSession(),r=he(e)??`${Le("achievements")}<section class="empty-state panel"><span class="empty-glyph">✦</span><h2>الإنجازات تحت التجهيز</h2><p>لن نعرض شارات أو تقدمًا وهميًا. هذه الصفحة جاهزة لربطها بخدمة النتائج الموثوقة.</p><a class="btn" data-link="/how-to-play">راجع طريقة اللعب</a></section>`;return{active:"account",title:"الإنجازات",description:"إنجازات BACKFIRE المستقبلية.",html:D("حسابي","الإنجازات","إنجازات مرتبطة باللعب الحقيقي فقط.",r)}}function Wr(){let e=P.getSession(),t=he(e),r=e?P.getPurchaseHistory():[],a=e?.plan!=="free",n=t??`${Le("billing")}<div id="product-notice" role="status" aria-live="polite" hidden></div><section class="billing-summary panel"><div><span>الباقة الحالية</span><h2>${F(Me(e.plan)?.name??"مجلس")}</h2><small>${a?"اشتراك عرض محلي · بلا تجديد أو خصم تلقائي":"الباقة الأساسية بلا رسوم"}</small></div><div class="billing-actions"><a class="btn" data-link="/pricing">${a?"تغيير الباقة":"عرض الباقات"}</a>${a?'<button id="cancel-plan" class="btn danger-outline">إلغاء اشتراك العرض</button>':""}</div></section><h2 class="section-label">السجل المحلي</h2>${r.length?`<section class="receipt-list">${r.map(i=>`<article class="panel"><div><b>${F(i.label)}</b><span>إيصال عرض · لم تُخصم أموال · ${new Date(i.createdAt).toLocaleDateString("ar-SA")}</span></div><strong>${ge({amountMinor:i.totalMinor,currency:"SAR",interval:"one-time",taxInclusive:!0})}</strong></article>`).join("")}</section>`:'<section class="empty-state panel compact"><h2>لا توجد عمليات</h2><p>أي تجربة شراء ناجحة ستظهر هنا بإشارة واضحة أنها محلية.</p></section>'}`;return{active:"account",title:"الفوترة",description:"باقة وفواتير حساب BACKFIRE.",html:D("حسابي","الفوترة","الباقة وسجل تجارب الدفع المحلية.",n),bind(i,s){z("#cancel-plan")?.addEventListener("click",async d=>{let p=d.currentTarget;if(p.dataset.confirmed!=="true"){p.dataset.confirmed="true",p.textContent="أكد إلغاء اشتراك العرض",_("اضغط مرة ثانية للتأكيد. يمكنك مغادرة الصفحة للإلغاء.");return}try{await P.cancelSubscription(),_("أُلغي اشتراك العرض وعاد الحساب إلى الباقة المجانية."),setTimeout(s,450)}catch(E){_(X(E),"error")}})}}}function Xr(e){let t=e.get("kind")==="plan"?"plan":"product",r=e.get("id")??"",a=e.get("interval")==="year"?"year":"month",n=t==="product"?ve(r):void 0,i=t==="plan"?Me(r):void 0,s=n??i,d=n?.price??(a==="year"?i?.yearly:i?.monthly);if(!s||!d||n?.comingSoon||i?.id==="free")return ct("الاختيار غير متاح","ارجع للمتجر واختر عنصرًا متاحًا.");let p=P.getSession(),N=he(p,`/checkout?kind=${t}&id=${encodeURIComponent(r)}&interval=${a}`)??`<section class="checkout-layout"><div class="checkout-main panel"><div id="product-notice" role="status" aria-live="polite" hidden></div><div class="checkout-demo-seal">تجربة دفع — لا خصم حقيقي</div><h2>راجع طلبك</h2><div class="checkout-item"><div class="checkout-glyph">${F(n?.glyph??"◇")}</div><div><b>${F(s.name)}</b><span>${t==="plan"?`اشتراك ${a==="year"?"سنوي":"شهري"}`:He(n.category)}</span></div><strong>${ge(d)}</strong></div><dl class="checkout-total"><div><dt>المجموع الفرعي</dt><dd>${ge(d)}</dd></div><div><dt>الخصم</dt><dd>—</dd></div><div><dt>الضريبة</dt><dd>مشمولة</dd></div><div class="grand"><dt>الإجمالي</dt><dd>${ge(d)}</dd></div></dl><label class="field"><span>رمز خصم — غير موصول</span><input class="input" value="" placeholder="لا توجد رموز نشطة" disabled></label><div class="sandbox-method"><span>◇</span><div><b>محاكي الدفع المحلي</b><small>لا بطاقة · لا تحويل · لا حفظ بيانات مالية</small></div></div><label class="check-row"><input id="checkout-consent" type="checkbox"><span>أفهم أن هذه تجربة محلية ولن يتم خصم أي مبلغ.</span></label><button id="start-checkout" class="btn primary wide">إنشاء جلسة العرض</button><div id="checkout-actions" class="checkout-actions" hidden><button class="btn primary" data-outcome="succeeded">محاكاة نجاح</button><button class="btn" data-outcome="failed">محاكاة فشل</button><button class="btn" data-outcome="timed-out">محاكاة انتهاء المهلة</button><button class="btn ghost" data-outcome="cancelled">إلغاء</button></div></div><aside class="checkout-aside panel"><h2>واضح من البداية</h2><ul><li>لا حقول بطاقة في وضع العرض.</li><li>السعر من كتالوج مركزي، لا من الرابط.</li><li>الفشل والإلغاء لا يمنحان العنصر.</li><li>النجاح ينشئ إيصال عرض محليًا.</li></ul><a data-link="/legal/refunds">سياسة الاسترجاع</a><a data-link="/legal/terms">شروط الشراء</a></aside></section>`,V="";return{active:"store",title:"إتمام الطلب",description:"مراجعة طلب BACKFIRE في وضع العرض.",html:D("الطلب","إتمام آمن وواضح","لن نطلب بيانات بطاقة ما دام مزود الدفع غير موصول.",N),bind(U){z("#start-checkout")?.addEventListener("click",async()=>{if(!z("#checkout-consent")?.checked)return _("أكد فهمك أن العملية تجريبية.","error");try{V=(await P.createCheckout(t,r,a)).id,z("#checkout-actions")?.removeAttribute("hidden");let se=z("#start-checkout");se&&(se.disabled=!0,se.textContent="تم إنشاء الجلسة"),_("جلسة العرض جاهزة. اختر نتيجة الاختبار.")}catch(J){_(X(J),"error")}}),document.querySelectorAll("[data-outcome]").forEach(J=>J.addEventListener("click",async()=>{if(V)try{let se=await P.completeDemoCheckout(V,J.dataset.outcome);U(`/checkout/result?status=${se.status}&kind=${t}`)}catch(se){_(X(se),"error")}}))}}}function Zr(e){let t=e.get("status"),r=t==="succeeded",a={failed:["تعذرت تجربة الدفع","لم يُمنح عنصر أو اشتراك. يمكنك الرجوع والمحاولة مرة ثانية."],cancelled:["ألغيت العملية","لم يحدث خصم ولم يُمنح أي شيء."],"timed-out":["انتهت مهلة الجلسة","أغلقت جلسة العرض قبل التأكيد. أنشئ جلسة جديدة للمحاولة."]},[n,i]=r?["نجحت تجربة الدفع","تم تحديث المقتنيات وإنشاء إيصال عرض محلي. لم يتم خصم أي مبلغ."]:a[t??""]??["حالة غير معروفة","لا توجد نتيجة دفع صالحة في الرابط."];return{active:"store",title:n,description:i,html:D("نتيجة العرض",n,i,`<section class="empty-state panel checkout-result ${r?"success":"failure"}"><span class="empty-glyph">${r?"✓":"×"}</span><h2>${r?"عرض ناجح — بلا شحن مالي":"لم تكتمل العملية"}</h2><p>${i}</p><div class="empty-actions">${r?'<a class="btn primary" data-link="/account/billing">عرض إيصال العرض</a><a class="btn" data-link="/account/inventory">المقتنيات</a>':'<a class="btn primary" data-link="/store">العودة للمتجر</a><a class="btn" data-link="/support">المساعدة</a>'}</div></section>`)}}function Jr(e="/support"){let t=P.getSession()?.email??"",r=e==="/report-player";return{active:"support",title:"الدعم",description:"مركز مساعدة ودعم BACKFIRE.",html:D("الدعم",r?"بلّغ عن لاعب":e==="/contact"?"تواصل معنا":"وش نقدر نحل؟","ابدأ بالحلول السريعة، أو احفظ طلبًا محليًا في وضع العرض.",`<section class="support-grid"><aside class="support-links"><a class="panel" data-link="/faq"><b>الأسئلة الشائعة</b><span>الحساب واللعب والدفع التجريبي.</span></a><a class="panel" data-link="/how-to-play"><b>شرح اللعبة</b><span>الجولات والقرارات والكشف.</span></a><article class="panel"><b>مشكلة دخول غرفة؟</b><span>تأكد من الكود، ثم حدّث الصفحة وحاول من نفس الرابط.</span></article><a class="panel" data-link="/status"><b>حالة الخدمة</b><span>ما هو موصول وما يزال تجريبيًا.</span></a></aside><form id="support-form" class="support-form panel"><div id="product-notice" role="status" aria-live="polite" hidden></div><label class="field"><span>نوع الطلب</span><select class="input" name="category"><option value="problem">مشكلة تقنية</option><option value="player-report" ${r?"selected":""}>بلاغ لاعب</option><option value="suggestion">اقتراح</option><option value="billing">فوترة</option></select></label>${ee("subject","العنوان","text",r?"بلاغ عن سلوك لاعب":"",'maxlength="100" required')}${ee("email","البريد للرجوع إليك — اختياري","email",t)}${ee("roomCode","كود الغرفة — اختياري","text","",'maxlength="12" dir="ltr"')}<label class="field"><span>التفاصيل</span><textarea class="input" name="message" minlength="10" maxlength="2000" required></textarea></label><label class="check-row"><input name="technical" type="checkbox" checked><span>إرفاق إصدار المتصفح والمسار الحالي.</span></label><button class="btn primary" type="submit">حفظ الطلب محليًا</button><small class="muted">لن يصل الطلب إلى فريق دعم حتى يُوصل مزود التذاكر. لا تضف بيانات حساسة.</small></form></section>`),bind(){z("#support-form")?.addEventListener("submit",async n=>{n.preventDefault();let i=n.currentTarget;ce(i,!0);let s=new FormData(i);try{await P.saveSupportRequest({category:s.get("category"),subject:String(s.get("subject")??""),message:String(s.get("message")??""),email:String(s.get("email")??"")||void 0,roomCode:String(s.get("roomCode")??"")||void 0,technicalDetails:s.get("technical")==="on"?`${navigator.userAgent} · ${location.pathname}`:void 0}),i.reset(),_("حُفظ الطلب على هذا المتصفح فقط. لم يُرسل إلى خادم.")}catch(d){_(X(d),"error")}finally{ce(i,!1)}})}}}async function Ut(e){try{await navigator.clipboard.writeText(e);return}catch{}let t=document.createElement("textarea");t.value=e,t.style.position="fixed",t.style.opacity="0",document.body.append(t),t.select();let r=document.execCommand("copy");if(t.remove(),!r)throw new Error("تعذر النسخ. حدّد الرابط يدويًا.")}function Qr(e){let t=F(Ze(e.get("code")??""));return{active:"support",title:"مشاركة دعوة",description:"مشاركة رابط وكود غرفة BACKFIRE.",html:D("دعوة المجلس","أرسل الكود… وخلك جاهز","الرابط يُبنى من نفس النطاق المفتوح الآن، بلا نطاق تطوير أو أسرار.",`<section class="invite-layout"><form id="invite-form" class="panel invite-form"><div id="product-notice" role="status" aria-live="polite" hidden></div>${ee("code","كود الغرفة","text",t,'maxlength="12" dir="ltr" inputmode="text" autocapitalize="characters" required')}<button class="btn primary" type="submit">جهّز الدعوة</button></form><section id="invite-preview" class="panel invite-preview" hidden><span class="product-type">معاينة الدعوة</span><h2>تعالوا نلعب دسّ</h2><p id="invite-copy"></p><div class="invite-actions"><button id="copy-code" class="btn">نسخ الكود</button><button id="copy-link" class="btn">نسخ الرابط</button><button id="native-share" class="btn primary">مشاركة</button><a id="whatsapp-share" class="btn" target="_blank" rel="noopener noreferrer">واتساب</a></div><small>الرابط لا يحتوي رمز مضيف أو لاعب. الدعوة قد تنتهي إذا أُغلقت الغرفة أو امتلأت.</small></section></section>`),bind(){let r="",a="",n="";z("#invite-form")?.addEventListener("submit",i=>{if(i.preventDefault(),r=Ze(new FormData(i.currentTarget).get("code")),!Ht(r))return _("اكتب كود غرفة صحيحًا من ٨ خانات.","error");a=new URL(`/join?code=${encodeURIComponent(r)}`,Ne||location.origin).href,n=`تعالوا نلعب BACKFIRE 🎮
+كود الغرفة: ${r}
+ادخل من هنا: ${a}`;let s=z("#invite-copy");s&&(s.textContent=n);let d=z("#invite-preview");d&&(d.hidden=!1);let p=z("#whatsapp-share");p&&(p.href=`https://wa.me/?text=${encodeURIComponent(n)}`);let E=z("#native-share");E&&(E.hidden=!("share"in navigator)),_("الدعوة جاهزة. تحقق من الكود قبل الإرسال.")}),z("#copy-code")?.addEventListener("click",async()=>{try{await Ut(r),_("نُسخ كود الغرفة.")}catch(i){_(X(i),"error")}}),z("#copy-link")?.addEventListener("click",async()=>{try{await Ut(a),_("نُسخ رابط الانضمام.")}catch(i){_(X(i),"error")}}),z("#native-share")?.addEventListener("click",async()=>{try{navigator.share&&await navigator.share({title:"دعوة BACKFIRE",text:n,url:a})}catch(i){i.name!=="AbortError"&&_(X(i),"error")}}),t&&z("#invite-form")?.requestSubmit()}}}function ea(e){return e==="/faq"?{active:"support",title:"الأسئلة الشائعة",description:"إجابات واضحة عن لعبة وخدمات دسّ.",html:D("المساعدة","الأسئلة الشائعة","إجابات هذه المرحلة من المنتج بلا وعود غير موصولة.",'<section class="faq-list wide"><details open><summary>كيف أبدأ لعبة؟</summary><p>افتح «إنشاء غرفة» على الشاشة الكبيرة، ثم يدخل اللاعبون بالكود أو QR من جوالاتهم.</p></details><details><summary>هل أحتاج تحميل تطبيق؟</summary><p>لا. تعمل اللعبة من المتصفح على الشاشة والجوال.</p></details><details><summary>هل الحساب مطلوب للعب؟</summary><p>لا. اللعب الأساسي والغرف لا يعتمدان على طبقة الحساب التجريبية.</p></details><details><summary>هل المشتريات حقيقية؟</summary><p>لا حاليًا. المتجر والدفع يعملان كمحاكاة محلية واضحة ولا يطلبان بطاقة.</p></details><details><summary>هل تتزامن بياناتي بين الأجهزة؟</summary><p>لا. الحساب والمقتنيات والإعدادات التجريبية محفوظة على المتصفح الحالي فقط.</p></details><details><summary>كيف أبلّغ عن لاعب؟</summary><p>استخدم نموذج البلاغ المحلي، مع العلم أنه لا يُرسل إلى فريق حتى توصيل خدمة الدعم.</p><a data-link="/report-player">فتح نموذج البلاغ</a></details><details><summary>وش المتصفحات المناسبة؟</summary><p>إصدار حديث من Chrome أو Safari أو Edge مع JavaScript واتصال ثابت. التلفاز يحتاج متصفحًا حديثًا أو جهاز بث يدعمه.</p></details></section>')}:e==="/credits"?{title:"الاعتمادات",description:"اعتمادات بناء BACKFIRE.",html:D("BACKFIRE","الاعتمادات","المنتج مبني بهوية عربية أصلية وتقنيات ويب مفتوحة.",'<section class="prose-page panel"><h2>التصميم والمنتج</h2><p>هوية BACKFIRE ونظامها البصري ومحتواها العربي جزء من المنتج نفسه.</p><h2>التقنيات</h2><p>TypeScript وesbuild وواجهات الويب القياسية، مع توليد QR محليًا. الخط المستخدم هو Tajawal عبر Google Fonts.</p><h2>المحتوى البصري</h2><p>الرسوم الأساسية وواجهات اللعبة مبنية بالكود. صورة المشاركة الاجتماعية مولدة خصيصًا لهذا المشروع ومراجعة للاستخدام الحالي.</p></section>')}:e==="/about"?{title:"عن BACKFIRE",description:"عن لعبة BACKFIRE ورؤيتها.",html:D("عن BACKFIRE","كل حركة لها عواقب","نبني لحظة جماعية حقيقية حول شاشة واحدة، مو عزلة داخل كل جوال.",'<section class="prose-page panel"><h2>الفكرة</h2><p>BACKFIRE تجربة سيناريوهات جماعية: التلفاز يعرض المشهد العام، وكل جوال يحمل معلومة أو حركة مختلفة. قرارات اللاعبين تغيّر ما يعود إلى الشاشة عبر الجولات.</p><h2>مبادئنا</h2><p>العربية أصل المنتج، والوضوح أهم من الإلحاح التجاري، واللعبة الأساسية لا تُباع على شكل أفضلية.</p><h2>هذه المرحلة</h2><p>إنشاء الغرف والانضمام وإعادة الاتصال تعمل، بينما نظام السيناريو والعواقب الجديد ما زال قيد التطوير. الحساب والمتجر والدفع معروضة الآن من خلال مزود محلي صريح إلى أن تُوصل خدمات الإنتاج.</p></section>')}:e==="/status"?{title:"حالة الخدمة",description:"حالة أنظمة BACKFIRE.",html:D("الحالة","الأنظمة بوضوح","تحديث محلي يصف ما هو عامل وما يحتاج مزود إنتاج.",'<section class="status-list panel"><article><i class="ok"></i><div><b>إنشاء الغرف والانضمام</b><span>مسار الإنتاج الحالي — تتم مراقبته باختبارات المستودع.</span></div><strong>متاح</strong></article><article><i class="ok"></i><div><b>موقع BACKFIRE العام</b><span>الصفحات والملفات الثابتة.</span></div><strong>متاح</strong></article><article><i class="demo"></i><div><b>الحسابات والمقتنيات</b><span>مزود عرض محلي، بلا مزامنة أجهزة.</span></div><strong>عرض</strong></article><article><i class="demo"></i><div><b>الدفع والبريد والدعم</b><span>غير موصولة بمزودي إنتاج.</span></div><strong>غير موصول</strong></article></section>')}:e==="/changelog"?{title:"سجل التغييرات",description:"أحدث تغييرات منتج BACKFIRE.",html:D("التحديثات","وش تغيّر؟","سجل مختصر لما وصل فعليًا، من غير وعود منجزة وهمية.",'<section class="timeline"><article class="panel"><time>يوليو ٢٠٢٦</time><h2>هوية BACKFIRE العامة</h2><ul><li>موقع تسويقي جديد مبني حول التلفاز والجوالات والعواقب المتغيرة.</li><li>هوية سينمائية قرمزية مستقلة عن واجهات اللعب الحالية.</li><li>شرح صريح لما يعمل وما يزال قيد التطوير.</li></ul></article><article class="panel"><time>الإصدار الأساسي</time><h2>تثبيت تدفق الغرف</h2><ul><li>إنشاء الغرفة والانضمام اليدوي والـQR.</li><li>استرجاع المضيف ومنع الانضمام المكرر.</li><li>إعادة اتصال اللاعب.</li></ul></article></section>')}:e==="/legal/privacy"?{title:"سياسة الخصوصية",description:"سياسة خصوصية دسّ الحالية.",html:Je("سياسة الخصوصية","<h2>ملخص هذه النسخة</h2><p>صفحات الحساب والمتجر تستخدم تخزين المتصفح المحلي في وضع العرض. لا ترسل هذه الطبقة بيانات حساب أو دفع أو دعم إلى خادم.</p><h2>بيانات اللعب</h2><p>خدمة الغرف تعالج كود الغرفة واسم اللاعب والرموز اللازمة للاتصال وتشغيل المباراة. لا تعرض رمز المضيف داخل QR.</p><h2>التحكم</h2><p>يمكنك تنزيل نسخة من بيانات العرض أو حذفها من صفحة الإعدادات. مسح بيانات الموقع من المتصفح يزيلها أيضًا.</p><h2>قبل الإطلاق التجاري</h2><p>يلزم تحديد جهة التحكم بالبيانات، مدد الاحتفاظ، مزودي الاستضافة والدفع والبريد، وقناة طلبات الخصوصية قبل تفعيل خدمات الحساب الحقيقية.</p>")}:e==="/legal/refunds"?{title:"سياسة الاسترجاع",description:"حالة سياسة استرجاع دسّ.",html:Je("سياسة الاسترجاع","<h2>لا توجد مبيعات فعلية الآن</h2><p>مسار الدفع الحالي عرض محلي ولا يخصم أموالًا، لذلك لا توجد عملية قابلة للاسترجاع.</p><h2>قبل تفعيل الدفع</h2><p>يجب نشر مدة طلب الاسترجاع، العناصر غير القابلة للاسترجاع، معالجة الاشتراكات، قناة التواصل، ومدة إعادة المبلغ وفق نظام الدفع والأنظمة المطبقة.</p><h2>إيصالات العرض</h2><p>الإيصال التجريبي يحمل علامة واضحة ولا يمثل مستندًا ضريبيًا أو إثبات دفع.</p>")}:e==="/legal/cookies"?{title:"سياسة ملفات الارتباط",description:"التخزين المحلي في دسّ.",html:Je("ملفات الارتباط والتخزين","<h2>ما نستخدمه الآن</h2><p>طبقة المنتج التجريبية تستخدم localStorage لحفظ الجلسة المحلية والإعدادات والمقتنيات، وsessionStorage لتذكر زيارة الواجهة في الجلسة الحالية.</p><h2>التحليلات</h2><p>لا توجد خدمة تحليلات خارجية موصولة في هذه الطبقة، والموافقة غير مفعلة افتراضيًا.</p><h2>التحكم</h2><p>يمكنك تغيير تفضيلات التخزين الوظيفي والتحليلات من الإعدادات وحذف بيانات العرض بالكامل.</p>")}:{title:"الشروط",description:"شروط استخدام دسّ الحالية.",html:Je("شروط الاستخدام والشراء","<h2>اللعبة</h2><p>استخدم دسّ باحترام ومن دون إساءة أو تحايل أو محاولة الوصول إلى صلاحيات المضيف.</p><h2>وضع العرض</h2><p>الحسابات والإيصالات والمشتريات الظاهرة في وضع العرض محلية وتجريبية. لا تمثل عقد بيع ولا خصمًا ماليًا ولا اشتراكًا حقيقيًا.</p><h2>الأسعار</h2><p>الأسعار المعروضة بالريال السعودي وتشمل الضريبة على سبيل تصميم الكتالوج. لا تُقبل مدفوعات حتى يوصل مزود دفع إنتاجي وتُنشر سياسة استرداد نهائية.</p><h2>المحتوى والسلوك</h2><p>يمكن تقييد الوصول عند إساءة استخدام الخدمة أو محاولة تعطيلها. البلاغات في وضع العرض لا تُرسل إلى فريق دعم.</p>")}}function Je(e,t){return D("قانوني",e,"نسخة تشغيلية واضحة لهذه المرحلة، وتحتاج مراجعة قانونية قبل البيع الفعلي.",`<article class="prose-page panel"><div class="legal-meta">آخر تحديث: ١٨ يوليو ٢٠٢٦ · نسخة قبل البيع الحقيقي</div>${t}<p class="legal-note">هذه الصياغة منتجية وليست بديلًا عن مراجعة مستشار قانوني في مناطق التشغيل.</p></article>`)}function ta(){return Gt()}function ct(e="الصفحة غير موجودة",t="يمكن أن الرابط تغيّر أو أن الصفحة غير متاحة."){return{title:"غير موجود",description:t,html:D("٤٠٤",e,t,'<section class="empty-state panel"><span class="empty-glyph">؟</span><h2>نرجعك للمجلس</h2><div class="empty-actions"><a class="btn primary" data-link="/">الرئيسية</a><a class="btn" data-link="/support">الدعم</a></div></section>')}}function Yt(e,t=""){return e==="/store"?Fr():e==="/store/product"?jr(new URLSearchParams(t)):e==="/pricing"?Hr():e==="/login"?zr():e==="/signup"?Dr():e==="/forgot-password"?_r():["/reset-password","/verify-email","/session-ended"].includes(e)?qr(e):e==="/account"?ta():e==="/account/profile"?Gt():e==="/account/settings"?Ur():e==="/account/inventory"?Vr():e==="/account/history"?Kr():e==="/account/history/match"?Gr(new URLSearchParams(t)):e==="/account/achievements"?Yr():e==="/account/billing"?Wr():e==="/checkout"?Xr(new URLSearchParams(t)):e==="/checkout/result"?Zr(new URLSearchParams(t)):["/support","/contact","/report-player"].includes(e)?Jr(e):e==="/invite"?Qr(new URLSearchParams(t)):["/faq","/about","/credits","/status","/changelog","/legal/privacy","/legal/terms","/legal/refunds","/legal/cookies"].includes(e)?ea(e):ct()}function Wt(){return`
   .product-page{position:relative;z-index:var(--z-content);width:min(1180px,calc(100% - 40px));min-height:75dvh;margin:0 auto;padding:clamp(54px,8vw,96px) 0 100px}
   .product-page{animation:productEnter .38s var(--e-out) both}.product-page:focus{outline:none}@keyframes productEnter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .product-hero{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid var(--line)}
@@ -3351,493 +211,183 @@ function productCss() {
   @media(max-width:900px){.product-grid,.plans-grid{grid-template-columns:repeat(2,1fr)}.plans-grid .plan-card:first-child{grid-column:1/-1}.account-grid,.checkout-layout,.product-detail,.invite-layout{grid-template-columns:1fr}.product-detail-art{min-height:360px}.profile-preview{min-height:260px}.inventory-grid{grid-template-columns:1fr}.profile-stats>div{grid-template-columns:repeat(3,1fr)}}
   @media(max-width:700px){.product-page{width:min(100% - 28px,1180px);padding-top:42px}.product-hero h1{font-size:clamp(38px,13vw,58px)}.auth-layout,.support-grid{grid-template-columns:1fr}.auth-side{order:-1}.product-grid,.plans-grid,.pricing-trust>div{grid-template-columns:1fr}.plans-grid .plan-card:first-child{grid-column:auto}.catalog-tools{align-items:flex-start;flex-direction:column}.catalog-inputs{width:100%;display:grid;grid-template-columns:1fr 1fr}.catalog-inputs input,.catalog-inputs select{width:100%}.filter-pills{max-width:100%;overflow:auto}.catalog-note{padding-inline:5px}.product-art{height:155px}.product-card-copy{min-height:220px}.product-detail-art{min-height:300px}.product-detail-art>span{width:110px;height:110px}.account-tabs{margin-inline:-7px}.inventory-item{grid-template-columns:58px 1fr auto}.inventory-glyph{width:58px;height:58px}.profile-stats>div{grid-template-columns:repeat(2,1fr)}.profile-stats>div p:nth-child(2n){border-inline-end:0}.select-row,.account-actions>div{align-items:flex-start;flex-direction:column}.select-row .input{width:100%}.checkout-item{grid-template-columns:54px 1fr}.checkout-item>strong{grid-column:2}.status-list article{grid-template-columns:10px 1fr}.status-list strong{grid-column:2}.billing-summary{align-items:flex-start;gap:15px;flex-direction:column}.receipt-list article{align-items:flex-start;gap:10px;flex-direction:column}.history-empty-grid{grid-template-columns:1fr}.empty-actions{flex-wrap:wrap;justify-content:center}}
   @media(prefers-reduced-motion:reduce){.product-page{animation:none}.product-card{transition:none}}
-  `;
-}
-
-// apps/dasssite/src/modes/catalog.ts
-var MODES = [
-  {
-    id: "majlis",
-    name: "المجلس",
-    codename: "THE ORIGINAL",
-    premise: "خمس جوالات، طاولة واحدة، ووعود تنقلب في السر.",
-    brief: "الطور الأساسي وأول ما تلعبونه. كل لاعب يجلس على الطاولة ويعلن نيّته أمام الجميع، لكن القرار الحقيقي يُقفل على جواله. ما تكشفه الشاشة في نهاية الجولة هو الفرق بين ما قيل وما فُعل.",
-    hook: "وعدك معلن للجميع، وقرارك مخفي عن الكل.",
-    players: "٤–٨ لاعبين",
-    duration: "١٥–٢٥ دقيقة",
-    intensity: "متوسط",
-    price: "مجاني",
-    priceNote: "ضمن اللعبة",
-    availability: "playable",
-    accent: "#b72e38",
-    playRoute: "/create",
-    beats: ["أعلنوا نيّاتكم على الطاولة", "اقفلوا القرار الحقيقي سرًّا", "الشاشة تكشف من التزم ومن انقلب"]
-  },
-  {
-    id: "classroom",
-    name: "الصف",
-    codename: "THE CLASS",
-    premise: "سرٌّ واحد بين خمسة طلاب، ومجلس تأديب لا يعرف الرحمة.",
-    brief: "حدث شيء في الصف، والإدارة تريد اسمًا واحدًا قبل الجرس. كل طالب يحمل جزءًا من الحقيقة وسببًا للكذب. من يحمي صاحبه؟ ومن يبيعه ليخرج نظيفًا؟",
-    hook: "أحدكم يعرف الفاعل. وأحدكم هو الفاعل.",
-    players: "٥ لاعبين",
-    duration: "٢٠ دقيقة",
-    intensity: "عالٍ",
-    price: "٢٩ ر.س",
-    availability: "coming-soon",
-    accent: "#c8873a",
-    beats: ["وزّعوا الشهادات المتناقضة", "صوّتوا على اسم قبل الجرس", "الحقيقة تظهر بعد فوات الأوان"]
-  },
-  {
-    id: "siege",
-    name: "الحصار",
-    codename: "SIEGE",
-    premise: "المدينة محاصرة، والقرار: من يخرج ومن يبقى خلف الجدار.",
-    brief: "المؤن تكفي القليل، والبوابة تُفتح مرة واحدة كل ليلة. كل لاعب يمثّل بيتًا له مصالحه وأسراره. التحالفات تُبنى في الظلام، وتنهار عند أول رغيف.",
-    hook: "من تُنقذه الليلة قد يغلق البوابة في وجهك غدًا.",
-    players: "٥–٦ لاعبين",
-    duration: "٣٠ دقيقة",
-    intensity: "عالٍ جدًا",
-    price: "٣٤ ر.س",
-    availability: "coming-soon",
-    accent: "#d0552f",
-    beats: ["قسّموا المؤن سرًّا", "افتحوا البوابة لواحد فقط", "الجوع يكشف من خان الحصار"]
-  },
-  {
-    id: "blackout",
-    name: "العتمة",
-    codename: "BLACKOUT",
-    premise: "انطفأت المدينة، وكل قرار في الظلام قد يضيء الهدف الخطأ.",
-    brief: "انقطعت الكهرباء، ومعها كل وسيلة للتأكد. لديكم مولّد واحد وقرارات لا رجعة فيها. ما تفعله في العتمة لا يراه أحد… حتى تعود الأنوار.",
-    hook: "في الظلام، الجميع بريء. عند الضوء، يظهر أثر واحد.",
-    players: "٥ لاعبين",
-    duration: "١٨ دقيقة",
-    intensity: "متوسط",
-    price: "٢٤ ر.س",
-    availability: "waitlist",
-    accent: "#e0e0dc",
-    beats: ["تحرّكوا وأنتم في العتمة", "وجّهوا المولّد لغرفة واحدة", "الضوء يفضح ما جرى في الظلام"]
-  },
-  {
-    id: "orbit",
-    name: "المدار",
-    codename: "ORBIT",
-    premise: "المحطة تتهاوى، والأكسجين لا يكفي الجميع — من تُنقذ؟",
-    brief: "المحطة تفقد مدارها، والوحدات تُغلق واحدة تلو الأخرى. كل طاقم يخفي عطلًا يخصّه وحلًّا يخص غيره. القرار جماعي، والهبوط فردي.",
-    hook: "كل وحدة تُغلقها لإنقاذ نفسك تحبس أحدهم بالداخل.",
-    players: "٦ لاعبين",
-    duration: "٢٥ دقيقة",
-    intensity: "عالٍ",
-    price: "٣٩ ر.س",
-    availability: "coming-soon",
-    accent: "#7f97a6",
-    beats: ["شخّصوا الأعطال سرًّا", "أغلقوا وحدة لإنقاذ المدار", "المحطة تتذكّر من ضحّى بمن"]
-  },
-  {
-    id: "hotel",
-    name: "النزيل",
-    codename: "THE GUEST",
-    premise: "فندق بلا خروج، ونزيل واحد ليس كما يدّعي.",
-    brief: "الليل طويل، والغرف كلها محجوزة، والمفاتيح تنتقل بين الأيدي. كل نزيل يحمل قصة غطاء وسببًا للبقاء مستيقظًا. باب واحد موارب يكفي ليقلب الليلة كلها.",
-    hook: "أحد النزلاء لا يملك غرفة… لكنه يملك مفتاحك.",
-    players: "٥–٧ لاعبين",
-    duration: "٢٢ دقيقة",
-    intensity: "متوسط",
-    price: "٢٩ ر.س",
-    availability: "coming-soon",
-    accent: "#8a2f44",
-    beats: ["بدّلوا المفاتيح في الممر", "اطرقوا بابًا واحدًا في الليل", "الصباح يكشف من لم يكن نزيلًا"]
-  }
-];
-function modeById(id2) {
-  return MODES.find((mode) => mode.id === id2);
-}
-function availabilityLabel(availability) {
-  return { playable: "متاح الآن", "coming-soon": "قريبًا", waitlist: "قائمة الانتظار" }[availability];
-}
-
-// apps/dasssite/src/modes/covers.ts
-var N = {
-  black: "#080808",
-  ink: "#0c0c0d",
-  charcoal: "#151517",
-  graphite: "#222226",
-  lead: "#3a3a40",
-  steel: "#66666d",
-  gray: "#808088",
-  muted: "#9a9a9f",
-  paper: "#efece4",
-  white: "#fafaf7"
-};
-function silhouette(fill, o = {}) {
-  const hr = o.hr ?? 24, hx = o.hx ?? 50, hy = o.hy ?? 62, sw = o.sw ?? 92, rise = o.rise ?? 0, neck = o.neck ?? 98;
-  const l = 50 - sw / 2, r = 50 + sw / 2;
-  const body = `M${l} 152 C${l} ${neck + 24 + rise} ${l + 20} ${neck + rise} ${hx} ${neck} C${r - 20} ${neck - rise} ${r} ${neck + 24 - rise} ${r} 152 Z`;
-  return `<circle cx="${hx}" cy="${hy}" r="${hr}" fill="${fill}"/><path d="${body}" fill="${fill}"/>`;
-}
-function person(x, y, s, fill, o = {}) {
-  return `<g transform="translate(${x} ${y}) scale(${s})">${silhouette(fill, o)}</g>`;
-}
-function frame(accent) {
-  return `<rect x="14" y="14" width="472" height="572" fill="none" stroke="${accent}" stroke-width="1.4" opacity=".38"/>`;
-}
-function defs(accent, id2) {
-  return `<defs>
-    <linearGradient id="sky-${id2}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${N.charcoal}"/><stop offset="1" stop-color="${N.black}"/></linearGradient>
-    <radialGradient id="glow-${id2}" cx="50%" cy="34%" r="62%"><stop offset="0" stop-color="${accent}" stop-opacity=".26"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient>
-    <filter id="sh-${id2}" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#000" flood-opacity=".45"/></filter>
-  </defs>`;
-}
-function phone(cx, cy, s, rot, screen) {
-  const w = 26, h3 = 52;
-  return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${s})"><rect x="${-w / 2}" y="${-h3 / 2}" width="${w}" height="${h3}" rx="5" fill="${N.charcoal}" stroke="${N.lead}" stroke-width="1.2"/><rect x="${-w / 2 + 3}" y="${-h3 / 2 + 5}" width="${w - 6}" height="${h3 - 10}" rx="2" fill="${screen}"/></g>`;
-}
-function joinGlyph(x, y, u, fill) {
-  const cells = [[0, 0], [1, 0], [2, 0], [0, 1], [2, 1], [0, 2], [1, 2], [2, 2], [4, 0], [4, 2], [1, 4], [3, 4], [4, 4], [0, 4]];
-  return cells.map(([cx, cy]) => `<rect x="${x + cx * u}" y="${y + cy * u}" width="${u * 0.8}" height="${u * 0.8}" fill="${fill}" opacity=".8"/>`).join("");
-}
-function majlis(accent) {
-  const id2 = "mode-majlis";
-  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="غرفة معيشة: خمسة أشخاص حول تلفزيون واحد مضاء، كل واحد يمسك جوالًا، وخط ملوّن يخرج من جوال إلى الشاشة ويعود إلى صاحبه">
-    ${defs(accent, id2)}
-    <rect width="500" height="600" fill="url(#sky-${id2})"/><rect width="500" height="600" fill="url(#glow-${id2})"/>
+  `}var Te=[{id:"majlis",name:"المجلس",codename:"THE ORIGINAL",premise:"خمس جوالات، طاولة واحدة، ووعود تنقلب في السر.",brief:"الطور الأساسي وأول ما تلعبونه. كل لاعب يجلس على الطاولة ويعلن نيّته أمام الجميع، لكن القرار الحقيقي يُقفل على جواله. ما تكشفه الشاشة في نهاية الجولة هو الفرق بين ما قيل وما فُعل.",hook:"وعدك معلن للجميع، وقرارك مخفي عن الكل.",players:"٤–٨ لاعبين",duration:"١٥–٢٥ دقيقة",intensity:"متوسط",price:"مجاني",priceNote:"ضمن اللعبة",availability:"playable",accent:"#b72e38",playRoute:"/create",beats:["أعلنوا نيّاتكم على الطاولة","اقفلوا القرار الحقيقي سرًّا","الشاشة تكشف من التزم ومن انقلب"]},{id:"classroom",name:"الصف",codename:"THE CLASS",premise:"سرٌّ واحد بين خمسة طلاب، ومجلس تأديب لا يعرف الرحمة.",brief:"حدث شيء في الصف، والإدارة تريد اسمًا واحدًا قبل الجرس. كل طالب يحمل جزءًا من الحقيقة وسببًا للكذب. من يحمي صاحبه؟ ومن يبيعه ليخرج نظيفًا؟",hook:"أحدكم يعرف الفاعل. وأحدكم هو الفاعل.",players:"٥ لاعبين",duration:"٢٠ دقيقة",intensity:"عالٍ",price:"٢٩ ر.س",availability:"coming-soon",accent:"#c8873a",beats:["وزّعوا الشهادات المتناقضة","صوّتوا على اسم قبل الجرس","الحقيقة تظهر بعد فوات الأوان"]},{id:"siege",name:"الحصار",codename:"SIEGE",premise:"المدينة محاصرة، والقرار: من يخرج ومن يبقى خلف الجدار.",brief:"المؤن تكفي القليل، والبوابة تُفتح مرة واحدة كل ليلة. كل لاعب يمثّل بيتًا له مصالحه وأسراره. التحالفات تُبنى في الظلام، وتنهار عند أول رغيف.",hook:"من تُنقذه الليلة قد يغلق البوابة في وجهك غدًا.",players:"٥–٦ لاعبين",duration:"٣٠ دقيقة",intensity:"عالٍ جدًا",price:"٣٤ ر.س",availability:"coming-soon",accent:"#d0552f",beats:["قسّموا المؤن سرًّا","افتحوا البوابة لواحد فقط","الجوع يكشف من خان الحصار"]},{id:"blackout",name:"العتمة",codename:"BLACKOUT",premise:"انطفأت المدينة، وكل قرار في الظلام قد يضيء الهدف الخطأ.",brief:"انقطعت الكهرباء، ومعها كل وسيلة للتأكد. لديكم مولّد واحد وقرارات لا رجعة فيها. ما تفعله في العتمة لا يراه أحد… حتى تعود الأنوار.",hook:"في الظلام، الجميع بريء. عند الضوء، يظهر أثر واحد.",players:"٥ لاعبين",duration:"١٨ دقيقة",intensity:"متوسط",price:"٢٤ ر.س",availability:"waitlist",accent:"#e0e0dc",beats:["تحرّكوا وأنتم في العتمة","وجّهوا المولّد لغرفة واحدة","الضوء يفضح ما جرى في الظلام"]},{id:"orbit",name:"المدار",codename:"ORBIT",premise:"المحطة تتهاوى، والأكسجين لا يكفي الجميع — من تُنقذ؟",brief:"المحطة تفقد مدارها، والوحدات تُغلق واحدة تلو الأخرى. كل طاقم يخفي عطلًا يخصّه وحلًّا يخص غيره. القرار جماعي، والهبوط فردي.",hook:"كل وحدة تُغلقها لإنقاذ نفسك تحبس أحدهم بالداخل.",players:"٦ لاعبين",duration:"٢٥ دقيقة",intensity:"عالٍ",price:"٣٩ ر.س",availability:"coming-soon",accent:"#7f97a6",beats:["شخّصوا الأعطال سرًّا","أغلقوا وحدة لإنقاذ المدار","المحطة تتذكّر من ضحّى بمن"]},{id:"hotel",name:"النزيل",codename:"THE GUEST",premise:"فندق بلا خروج، ونزيل واحد ليس كما يدّعي.",brief:"الليل طويل، والغرف كلها محجوزة، والمفاتيح تنتقل بين الأيدي. كل نزيل يحمل قصة غطاء وسببًا للبقاء مستيقظًا. باب واحد موارب يكفي ليقلب الليلة كلها.",hook:"أحد النزلاء لا يملك غرفة… لكنه يملك مفتاحك.",players:"٥–٧ لاعبين",duration:"٢٢ دقيقة",intensity:"متوسط",price:"٢٩ ر.س",availability:"coming-soon",accent:"#8a2f44",beats:["بدّلوا المفاتيح في الممر","اطرقوا بابًا واحدًا في الليل","الصباح يكشف من لم يكن نزيلًا"]}];function Xt(e){return Te.find(t=>t.id===e)}function Ve(e){return{playable:"متاح الآن","coming-soon":"قريبًا",waitlist:"قائمة الانتظار"}[e]}var C={black:"#080808",ink:"#0c0c0d",charcoal:"#151517",graphite:"#222226",lead:"#3a3a40",steel:"#66666d",gray:"#808088",muted:"#9a9a9f",paper:"#efece4",white:"#fafaf7"};function ra(e,t={}){let r=t.hr??24,a=t.hx??50,n=t.hy??62,i=t.sw??92,s=t.rise??0,d=t.neck??98,p=50-i/2,E=50+i/2,N=`M${p} 152 C${p} ${d+24+s} ${p+20} ${d+s} ${a} ${d} C${E-20} ${d-s} ${E} ${d+24-s} ${E} 152 Z`;return`<circle cx="${a}" cy="${n}" r="${r}" fill="${e}"/><path d="${N}" fill="${e}"/>`}function fe(e,t,r,a,n={}){return`<g transform="translate(${e} ${t}) scale(${r})">${ra(a,n)}</g>`}function Pe(e){return`<rect x="14" y="14" width="472" height="572" fill="none" stroke="${e}" stroke-width="1.4" opacity=".38"/>`}function Re(e,t){return`<defs>
+    <linearGradient id="sky-${t}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.charcoal}"/><stop offset="1" stop-color="${C.black}"/></linearGradient>
+    <radialGradient id="glow-${t}" cx="50%" cy="34%" r="62%"><stop offset="0" stop-color="${e}" stop-opacity=".26"/><stop offset="1" stop-color="${e}" stop-opacity="0"/></radialGradient>
+    <filter id="sh-${t}" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#000" flood-opacity=".45"/></filter>
+  </defs>`}function Ue(e,t,r,a,n){return`<g transform="translate(${e} ${t}) rotate(${a}) scale(${r})"><rect x="${-26/2}" y="${-52/2}" width="26" height="52" rx="5" fill="${C.charcoal}" stroke="${C.lead}" stroke-width="1.2"/><rect x="${-26/2+3}" y="${-52/2+5}" width="20" height="42" rx="2" fill="${n}"/></g>`}function aa(e,t,r,a){return[[0,0],[1,0],[2,0],[0,1],[2,1],[0,2],[1,2],[2,2],[4,0],[4,2],[1,4],[3,4],[4,4],[0,4]].map(([i,s])=>`<rect x="${e+i*r}" y="${t+s*r}" width="${r*.8}" height="${r*.8}" fill="${a}" opacity=".8"/>`).join("")}function Zt(e){let t="mode-majlis";return`<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="غرفة معيشة: خمسة أشخاص حول تلفزيون واحد مضاء، كل واحد يمسك جوالًا، وخط ملوّن يخرج من جوال إلى الشاشة ويعود إلى صاحبه">
+    ${Re(e,t)}
+    <rect width="500" height="600" fill="url(#sky-${t})"/><rect width="500" height="600" fill="url(#glow-${t})"/>
     <!-- the one shared TV -->
-    <rect x="118" y="290" width="24" height="30" fill="${N.graphite}"/>
-    <ellipse cx="250" cy="322" rx="70" ry="11" fill="${N.ink}"/>
-    <g filter="url(#sh-${id2})"><rect x="112" y="64" width="276" height="168" rx="10" fill="${N.charcoal}" stroke="${N.lead}" stroke-width="2"/></g>
-    <rect x="124" y="76" width="252" height="144" rx="6" fill="${N.ink}"/>
-    <clipPath id="tv-${id2}"><rect x="124" y="76" width="252" height="144" rx="6"/></clipPath>
-    <g clip-path="url(#tv-${id2})">
-      ${person(176, 96, 0.6, N.steel, { hx: 54, sw: 96 })}
-      ${person(250, 104, 0.54, N.lead, { hx: 44, sw: 92 })}
-      <rect x="236" y="164" width="34" height="18" rx="2" fill="${accent}" transform="rotate(-8 253 173)"/>
-      <circle cx="144" cy="96" r="4" fill="${accent}"/>
-      <rect x="154" y="93" width="22" height="6" rx="2" fill="${N.steel}" opacity=".7"/>
-      ${joinGlyph(322, 168, 8, N.muted)}
+    <rect x="118" y="290" width="24" height="30" fill="${C.graphite}"/>
+    <ellipse cx="250" cy="322" rx="70" ry="11" fill="${C.ink}"/>
+    <g filter="url(#sh-${t})"><rect x="112" y="64" width="276" height="168" rx="10" fill="${C.charcoal}" stroke="${C.lead}" stroke-width="2"/></g>
+    <rect x="124" y="76" width="252" height="144" rx="6" fill="${C.ink}"/>
+    <clipPath id="tv-${t}"><rect x="124" y="76" width="252" height="144" rx="6"/></clipPath>
+    <g clip-path="url(#tv-${t})">
+      ${fe(176,96,.6,C.steel,{hx:54,sw:96})}
+      ${fe(250,104,.54,C.lead,{hx:44,sw:92})}
+      <rect x="236" y="164" width="34" height="18" rx="2" fill="${e}" transform="rotate(-8 253 173)"/>
+      <circle cx="144" cy="96" r="4" fill="${e}"/>
+      <rect x="154" y="93" width="22" height="6" rx="2" fill="${C.steel}" opacity=".7"/>
+      ${aa(322,168,8,C.muted)}
     </g>
     <!-- five people gathered around it, from behind -->
-    ${person(60, 250, 0.95, N.lead, { hx: 46, sw: 84 })}
-    ${person(345, 250, 0.95, N.lead, { hx: 54, sw: 84 })}
-    ${person(30, 322, 1.16, N.steel, { sw: 94 })}
-    ${person(355, 322, 1.16, N.steel, { hx: 54, sw: 94 })}
-    ${person(178, 352, 1.36, N.muted, { sw: 96 })}
+    ${fe(60,250,.95,C.lead,{hx:46,sw:84})}
+    ${fe(345,250,.95,C.lead,{hx:54,sw:84})}
+    ${fe(30,322,1.16,C.steel,{sw:94})}
+    ${fe(355,322,1.16,C.steel,{hx:54,sw:94})}
+    ${fe(178,352,1.36,C.muted,{sw:96})}
     <!-- each phone throws a faint decision line up to the screen -->
-    <g stroke="${N.steel}" stroke-width="1.2" fill="none" opacity=".3" stroke-linecap="round">
+    <g stroke="${C.steel}" stroke-width="1.2" fill="none" opacity=".3" stroke-linecap="round">
       <path d="M140 342 C 190 300 230 262 250 232"/>
       <path d="M112 440 C 170 360 220 280 248 230"/>
       <path d="M388 440 C 330 360 280 280 252 230"/>
       <path d="M360 342 C 310 300 270 262 250 232"/>
     </g>
     <!-- the phones; the central one is the live decision -->
-    ${phone(140, 352, 0.5, -12, N.muted)}
-    ${phone(360, 352, 0.5, 12, N.muted)}
-    ${phone(110, 456, 0.66, -10, N.muted)}
-    ${phone(390, 456, 0.66, 10, N.muted)}
-    ${phone(246, 500, 0.86, 0, accent)}
+    ${Ue(140,352,.5,-12,C.muted)}
+    ${Ue(360,352,.5,12,C.muted)}
+    ${Ue(110,456,.66,-10,C.muted)}
+    ${Ue(390,456,.66,10,C.muted)}
+    ${Ue(246,500,.86,0,e)}
     <!-- the return line: decision rises to the TV, consequence loops back to its sender -->
-    <path d="M246 478 C 244 400 250 300 250 232 C 250 190 330 190 326 270 C 322 340 290 372 258 384" fill="none" stroke="${accent}" stroke-width="2.4" stroke-linecap="round"/>
-    <circle cx="246" cy="478" r="5" fill="${accent}"/>
-    <path d="M258 384 l16 -10 4 20z" fill="${accent}"/>
-    ${frame(accent)}
-  </svg>`;
-}
-function classroom(accent) {
-  const id2 = "mode-class";
-  const slit = { x: 300, y: 150, w: 52, h: 300 };
-  let desks = "";
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 3; c++) {
-      const x = 96 + c * 116, y = 300 + r * 96;
-      const marked = r === 1 && c === 1;
-      desks += person(x - 26, y - 128, 0.62, marked ? accent : N.lead, { sw: 88 });
-      desks += `<rect x="${x - 34}" y="${y}" width="68" height="14" rx="2" fill="${marked ? accent : N.graphite}"/>`;
-      desks += `<rect x="${x - 30}" y="${y + 14}" width="60" height="26" fill="${N.ink}"/>`;
-    }
-  }
-  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="صفّ دراسي من طاولات وطلاب، أحدهم معلّم بالأحمر، يُرى جزء منه عبر شقّ مراقبة">
-    ${defs(accent, id2)}
-    <rect width="500" height="600" fill="url(#sky-${id2})"/><rect width="500" height="600" fill="url(#glow-${id2})"/>
+    <path d="M246 478 C 244 400 250 300 250 232 C 250 190 330 190 326 270 C 322 340 290 372 258 384" fill="none" stroke="${e}" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="246" cy="478" r="5" fill="${e}"/>
+    <path d="M258 384 l16 -10 4 20z" fill="${e}"/>
+    ${Pe(e)}
+  </svg>`}function ia(e){let t="mode-class",r={x:300,y:150,w:52,h:300},a="";for(let n=0;n<3;n++)for(let i=0;i<3;i++){let s=96+i*116,d=300+n*96,p=n===1&&i===1;a+=fe(s-26,d-128,.62,p?e:C.lead,{sw:88}),a+=`<rect x="${s-34}" y="${d}" width="68" height="14" rx="2" fill="${p?e:C.graphite}"/>`,a+=`<rect x="${s-30}" y="${d+14}" width="60" height="26" fill="${C.ink}"/>`}return`<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="صفّ دراسي من طاولات وطلاب، أحدهم معلّم بالأحمر، يُرى جزء منه عبر شقّ مراقبة">
+    ${Re(e,t)}
+    <rect width="500" height="600" fill="url(#sky-${t})"/><rect width="500" height="600" fill="url(#glow-${t})"/>
     <!-- chalkboard -->
-    <rect x="70" y="70" width="360" height="150" rx="4" fill="${N.ink}" stroke="${N.lead}" stroke-width="2"/>
-    <line x1="110" y1="120" x2="300" y2="120" stroke="${N.steel}" stroke-width="2" opacity=".6"/>
-    <line x1="110" y1="150" x2="250" y2="150" stroke="${N.steel}" stroke-width="2" opacity=".45"/>
-    <path d="M330 108 C 372 96 392 128 356 150" fill="none" stroke="${accent}" stroke-width="2.4" stroke-linecap="round"/>
-    <path d="M356 150 l10 -12 4 14z" fill="${accent}"/>
-    <g filter="url(#sh-${id2})">${desks}</g>
+    <rect x="70" y="70" width="360" height="150" rx="4" fill="${C.ink}" stroke="${C.lead}" stroke-width="2"/>
+    <line x1="110" y1="120" x2="300" y2="120" stroke="${C.steel}" stroke-width="2" opacity=".6"/>
+    <line x1="110" y1="150" x2="250" y2="150" stroke="${C.steel}" stroke-width="2" opacity=".45"/>
+    <path d="M330 108 C 372 96 392 128 356 150" fill="none" stroke="${e}" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M356 150 l10 -12 4 14z" fill="${e}"/>
+    <g filter="url(#sh-${t})">${a}</g>
     <!-- the monitor's slit exposes one column brighter -->
-    <g clip-path="url(#clip-${id2})"><rect x="${slit.x}" y="${slit.y}" width="${slit.w}" height="${slit.h}" fill="${accent}" opacity=".08"/></g>
-    <clipPath id="clip-${id2}"><rect x="${slit.x}" y="${slit.y}" width="${slit.w}" height="${slit.h}"/></clipPath>
-    <line x1="${slit.x}" y1="${slit.y}" x2="${slit.x}" y2="${slit.y + slit.h}" stroke="${N.paper}" stroke-width="1.6" opacity=".5"/>
-    <line x1="${slit.x + slit.w}" y1="${slit.y}" x2="${slit.x + slit.w}" y2="${slit.y + slit.h}" stroke="${N.paper}" stroke-width="1.6" opacity=".5"/>
-    ${frame(accent)}
-  </svg>`;
-}
-function siege(accent) {
-  const id2 = "mode-siege";
-  const heights = [210, 300, 160, 360, 250, 420, 300, 190, 340, 240, 300];
-  let city = "";
-  heights.forEach((h3, i) => {
-    const x = 60 + i * 38, lit = i === 5;
-    city += `<rect x="${x}" y="${520 - h3}" width="30" height="${h3}" fill="${lit ? N.graphite : N.ink}" stroke="${N.lead}" stroke-width="1"/>`;
-    for (let wy = 520 - h3 + 16; wy < 500; wy += 34) {
-      const on = lit && wy < 520 - h3 + 120;
-      city += `<rect x="${x + 8}" y="${wy}" width="6" height="10" fill="${on ? accent : N.steel}" opacity="${on ? ".9" : ".35"}"/>`;
-      city += `<rect x="${x + 18}" y="${wy}" width="6" height="10" fill="${N.steel}" opacity=".28"/>`;
-    }
-  });
-  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="أفق مدينة من أبراج مظلمة، برج واحد مضاء، وقوس أحمر يطبق حول المدينة">
-    ${defs(accent, id2)}
-    <rect width="500" height="600" fill="url(#sky-${id2})"/><rect width="500" height="600" fill="url(#glow-${id2})"/>
-    <g filter="url(#sh-${id2})">${city}</g>
-    <rect x="0" y="518" width="500" height="82" fill="${N.black}"/>
+    <g clip-path="url(#clip-${t})"><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${e}" opacity=".08"/></g>
+    <clipPath id="clip-${t}"><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"/></clipPath>
+    <line x1="${r.x}" y1="${r.y}" x2="${r.x}" y2="${r.y+r.h}" stroke="${C.paper}" stroke-width="1.6" opacity=".5"/>
+    <line x1="${r.x+r.w}" y1="${r.y}" x2="${r.x+r.w}" y2="${r.y+r.h}" stroke="${C.paper}" stroke-width="1.6" opacity=".5"/>
+    ${Pe(e)}
+  </svg>`}function na(e){let t="mode-siege",r=[210,300,160,360,250,420,300,190,340,240,300],a="";return r.forEach((n,i)=>{let s=60+i*38,d=i===5;a+=`<rect x="${s}" y="${520-n}" width="30" height="${n}" fill="${d?C.graphite:C.ink}" stroke="${C.lead}" stroke-width="1"/>`;for(let p=520-n+16;p<500;p+=34){let E=d&&p<520-n+120;a+=`<rect x="${s+8}" y="${p}" width="6" height="10" fill="${E?e:C.steel}" opacity="${E?".9":".35"}"/>`,a+=`<rect x="${s+18}" y="${p}" width="6" height="10" fill="${C.steel}" opacity=".28"/>`}}),`<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="أفق مدينة من أبراج مظلمة، برج واحد مضاء، وقوس أحمر يطبق حول المدينة">
+    ${Re(e,t)}
+    <rect width="500" height="600" fill="url(#sky-${t})"/><rect width="500" height="600" fill="url(#glow-${t})"/>
+    <g filter="url(#sh-${t})">${a}</g>
+    <rect x="0" y="518" width="500" height="82" fill="${C.black}"/>
     <!-- the closing perimeter -->
-    <path d="M-20 470 C 120 430 260 520 640 430" fill="none" stroke="${accent}" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>
-    <path d="M-10 520 C 150 500 320 560 520 500" fill="none" stroke="${accent}" stroke-width="1.6" stroke-linecap="round" opacity=".4"/>
-    <circle cx="250" cy="497" r="5" fill="${accent}"/>
-    ${frame(accent)}
-  </svg>`;
-}
-function blackout(accent) {
-  const id2 = "mode-blackout";
-  let grid = "";
-  const litR = 2, litC = 3;
-  for (let r = 0; r < 6; r++) {
-    for (let c = 0; c < 5; c++) {
-      const x = 66 + c * 78, y = 92 + r * 74, lit = r === litR && c === litC;
-      grid += `<rect x="${x}" y="${y}" width="56" height="52" fill="${lit ? accent : N.ink}" opacity="${lit ? ".92" : "1"}" stroke="${N.lead}" stroke-width="1"/>`;
-      if (lit) grid += person(x + 6, y - 6, 0.4, N.black, { sw: 96 });
-      else if ((r + c) % 3 === 0) grid += `<rect x="${x + 10}" y="${y + 12}" width="36" height="4" fill="${N.steel}" opacity=".22"/>`;
-    }
-  }
-  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="واجهة مبنى من نوافذ مظلمة، نافذة واحدة مضاءة بالأحمر، وخط طاقة ينقطع">
-    ${defs(accent, id2)}
-    <rect width="500" height="600" fill="${N.black}"/><rect width="500" height="600" fill="url(#glow-${id2})"/>
-    <g filter="url(#sh-${id2})">${grid}</g>
+    <path d="M-20 470 C 120 430 260 520 640 430" fill="none" stroke="${e}" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>
+    <path d="M-10 520 C 150 500 320 560 520 500" fill="none" stroke="${e}" stroke-width="1.6" stroke-linecap="round" opacity=".4"/>
+    <circle cx="250" cy="497" r="5" fill="${e}"/>
+    ${Pe(e)}
+  </svg>`}function oa(e){let t="mode-blackout",r="";for(let i=0;i<6;i++)for(let s=0;s<5;s++){let d=66+s*78,p=92+i*74,E=i===2&&s===3;r+=`<rect x="${d}" y="${p}" width="56" height="52" fill="${E?e:C.ink}" opacity="${E?".92":"1"}" stroke="${C.lead}" stroke-width="1"/>`,E?r+=fe(d+6,p-6,.4,C.black,{sw:96}):(i+s)%3===0&&(r+=`<rect x="${d+10}" y="${p+12}" width="36" height="4" fill="${C.steel}" opacity=".22"/>`)}return`<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="واجهة مبنى من نوافذ مظلمة، نافذة واحدة مضاءة بالأحمر، وخط طاقة ينقطع">
+    ${Re(e,t)}
+    <rect width="500" height="600" fill="${C.black}"/><rect width="500" height="600" fill="url(#glow-${t})"/>
+    <g filter="url(#sh-${t})">${r}</g>
     <!-- the failing power line: a jagged return that snaps toward the one lit room -->
-    <path d="M40 60 L 120 60 L 150 96 L 210 96 L 236 150" fill="none" stroke="${accent}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="40" cy="60" r="5" fill="${accent}"/>
-    <path d="M236 150 l-12 -4 2 14z" fill="${accent}"/>
-    ${frame(accent)}
-  </svg>`;
-}
-function orbit(accent) {
-  const id2 = "mode-orbit";
-  let modules = "";
-  const cx = 250, cy = 300, R = 150;
-  for (let i = 0; i < 8; i++) {
-    const a = i / 8 * Math.PI * 2 - Math.PI / 2;
-    const x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R, sealed = i === 2;
-    modules += `<rect x="${x - 20}" y="${y - 16}" width="40" height="32" rx="4" transform="rotate(${a * 180 / Math.PI + 90} ${x} ${y})" fill="${sealed ? accent : N.graphite}" stroke="${N.steel}" stroke-width="1.4"/>`;
-    if (!sealed) modules += `<circle cx="${x}" cy="${y}" r="3" fill="${N.muted}"/>`;
-  }
-  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="محطة فضائية على شكل حلقة، وحدة واحدة مغلقة بالأحمر، ومدار متهاوٍ">
-    ${defs(accent, id2)}
-    <rect width="500" height="600" fill="url(#sky-${id2})"/><rect width="500" height="600" fill="url(#glow-${id2})"/>
-    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${N.lead}" stroke-width="18"/>
-    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${N.steel}" stroke-width="1.4" opacity=".5"/>
-    <circle cx="${cx}" cy="${cy}" r="58" fill="${N.ink}" stroke="${N.lead}" stroke-width="2"/>
-    <g filter="url(#sh-${id2})">${modules}</g>
+    <path d="M40 60 L 120 60 L 150 96 L 210 96 L 236 150" fill="none" stroke="${e}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="40" cy="60" r="5" fill="${e}"/>
+    <path d="M236 150 l-12 -4 2 14z" fill="${e}"/>
+    ${Pe(e)}
+  </svg>`}function sa(e){let t="mode-orbit",r="";for(let s=0;s<8;s++){let d=s/8*Math.PI*2-Math.PI/2,p=250+Math.cos(d)*150,E=300+Math.sin(d)*150,N=s===2;r+=`<rect x="${p-20}" y="${E-16}" width="40" height="32" rx="4" transform="rotate(${d*180/Math.PI+90} ${p} ${E})" fill="${N?e:C.graphite}" stroke="${C.steel}" stroke-width="1.4"/>`,N||(r+=`<circle cx="${p}" cy="${E}" r="3" fill="${C.muted}"/>`)}return`<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="محطة فضائية على شكل حلقة، وحدة واحدة مغلقة بالأحمر، ومدار متهاوٍ">
+    ${Re(e,t)}
+    <rect width="500" height="600" fill="url(#sky-${t})"/><rect width="500" height="600" fill="url(#glow-${t})"/>
+    <circle cx="250" cy="300" r="150" fill="none" stroke="${C.lead}" stroke-width="18"/>
+    <circle cx="250" cy="300" r="150" fill="none" stroke="${C.steel}" stroke-width="1.4" opacity=".5"/>
+    <circle cx="250" cy="300" r="58" fill="${C.ink}" stroke="${C.lead}" stroke-width="2"/>
+    <g filter="url(#sh-${t})">${r}</g>
     <!-- decaying orbit: a red arc spiralling outward and breaking -->
-    <path d="M250 300 m0 -${R + 34} a ${R + 34} ${R + 34} 0 1 1 -2 0" fill="none" stroke="${accent}" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="6 10" opacity=".85"/>
-    <circle cx="${cx}" cy="${cy - R - 34}" r="5" fill="${accent}"/>
-    ${frame(accent)}
-  </svg>`;
-}
-function hotel(accent) {
-  const id2 = "mode-hotel";
-  let doors = "";
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 4; c++) {
-      const x = 74 + c * 96, y = 96 + r * 108, ajar = r === 2 && c === 2;
-      doors += `<rect x="${x}" y="${y}" width="64" height="86" rx="3" fill="${N.ink}" stroke="${N.lead}" stroke-width="1.4"/>`;
-      if (ajar) {
-        doors += `<rect x="${x}" y="${y}" width="30" height="86" rx="3" fill="${accent}" opacity=".85"/>`;
-        doors += `<path d="M${x + 30} ${y} L ${x + 44} ${y + 10} L ${x + 44} ${y + 78} L ${x + 30} ${y + 86} Z" fill="${N.charcoal}"/>`;
-      } else {
-        doors += `<circle cx="${x + 52}" cy="${y + 46}" r="3" fill="${N.steel}"/>`;
-        doors += `<rect x="${x + 12}" y="${y + 14}" width="40" height="3" fill="${N.steel}" opacity=".3"/>`;
-      }
-    }
-  }
-  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="واجهة فندق من أبواب مغلقة، باب واحد موارب يتسرب منه ضوء أحمر، ومفتاح يعود على خيط">
-    ${defs(accent, id2)}
-    <rect width="500" height="600" fill="url(#sky-${id2})"/><rect width="500" height="600" fill="url(#glow-${id2})"/>
-    <g filter="url(#sh-${id2})">${doors}</g>
+    <path d="M250 300 m0 -184 a 184 184 0 1 1 -2 0" fill="none" stroke="${e}" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="6 10" opacity=".85"/>
+    <circle cx="250" cy="116" r="5" fill="${e}"/>
+    ${Pe(e)}
+  </svg>`}function la(e){let t="mode-hotel",r="";for(let a=0;a<4;a++)for(let n=0;n<4;n++){let i=74+n*96,s=96+a*108,d=a===2&&n===2;r+=`<rect x="${i}" y="${s}" width="64" height="86" rx="3" fill="${C.ink}" stroke="${C.lead}" stroke-width="1.4"/>`,d?(r+=`<rect x="${i}" y="${s}" width="30" height="86" rx="3" fill="${e}" opacity=".85"/>`,r+=`<path d="M${i+30} ${s} L ${i+44} ${s+10} L ${i+44} ${s+78} L ${i+30} ${s+86} Z" fill="${C.charcoal}"/>`):(r+=`<circle cx="${i+52}" cy="${s+46}" r="3" fill="${C.steel}"/>`,r+=`<rect x="${i+12}" y="${s+14}" width="40" height="3" fill="${C.steel}" opacity=".3"/>`)}return`<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="واجهة فندق من أبواب مغلقة، باب واحد موارب يتسرب منه ضوء أحمر، ومفتاح يعود على خيط">
+    ${Re(e,t)}
+    <rect width="500" height="600" fill="url(#sky-${t})"/><rect width="500" height="600" fill="url(#glow-${t})"/>
+    <g filter="url(#sh-${t})">${r}</g>
     <!-- a key on a return line, arriving back at the ajar door -->
-    <path d="M420 70 C 300 40 150 70 300 300" fill="none" stroke="${accent}" stroke-width="2" stroke-linecap="round" opacity=".8"/>
-    <circle cx="420" cy="70" r="8" fill="none" stroke="${accent}" stroke-width="3"/><rect x="416" y="78" width="8" height="20" fill="${accent}"/><rect x="416" y="92" width="14" height="4" fill="${accent}"/>
-    <path d="M300 300 l-10 -8 -2 16z" fill="${accent}"/>
-    ${frame(accent)}
-  </svg>`;
-}
-var COVERS = {
-  majlis,
-  classroom,
-  siege,
-  blackout,
-  orbit,
-  hotel
-};
-function modeCover(id2, accent) {
-  return (COVERS[id2] ?? majlis)(accent);
-}
-
-// apps/dasssite/src/modes/modes-page.ts
-var h2 = escapeHtml;
-var ICON = {
-  players: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.6"/><path d="M18 14.5c1.9.5 3.5 2.2 3.5 4.5"/></svg>',
-  duration: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/></svg>',
-  intensity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>'
-};
-function availabilityTag(mode) {
-  return `<span class="mode-flag ${mode.availability}">${availabilityLabel(mode.availability)}</span>`;
-}
-function metaRow(mode) {
-  return `<ul class="mode-meta" aria-label="مواصفات الطور">
-    <li>${ICON.players}<span>${h2(mode.players)}</span></li>
-    <li>${ICON.duration}<span>${h2(mode.duration)}</span></li>
-    <li>${ICON.intensity}<span>${h2(mode.intensity)}</span></li>
-  </ul>`;
-}
-function primaryAction(mode) {
-  if (mode.availability === "playable") return `<a class="btn primary" data-link="${mode.playRoute}">ابدأ لعبة</a>`;
-  if (mode.availability === "waitlist") return `<button class="btn primary mode-waitlist" type="button" data-mode="${mode.id}">أضفني لقائمة الانتظار</button>`;
-  return '<button class="btn primary" type="button" disabled>قريبًا</button>';
-}
-function featuredCard(mode) {
-  return `<article class="mode-featured" style="--accent:${mode.accent}">
-    <a class="mode-featured-art" data-link="/modes/mode?id=${mode.id}" aria-label="استعرض ${h2(mode.name)}">${modeCover(mode.id, mode.accent)}</a>
+    <path d="M420 70 C 300 40 150 70 300 300" fill="none" stroke="${e}" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+    <circle cx="420" cy="70" r="8" fill="none" stroke="${e}" stroke-width="3"/><rect x="416" y="78" width="8" height="20" fill="${e}"/><rect x="416" y="92" width="14" height="4" fill="${e}"/>
+    <path d="M300 300 l-10 -8 -2 16z" fill="${e}"/>
+    ${Pe(e)}
+  </svg>`}var da={majlis:Zt,classroom:ia,siege:na,blackout:oa,orbit:sa,hotel:la};function Ke(e,t){return(da[e]??Zt)(t)}var q=$e,pt={players:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.6"/><path d="M18 14.5c1.9.5 3.5 2.2 3.5 4.5"/></svg>',duration:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/></svg>',intensity:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>'};function ut(e){return`<span class="mode-flag ${e.availability}">${Ve(e.availability)}</span>`}function Jt(e){return`<ul class="mode-meta" aria-label="مواصفات الطور">
+    <li>${pt.players}<span>${q(e.players)}</span></li>
+    <li>${pt.duration}<span>${q(e.duration)}</span></li>
+    <li>${pt.intensity}<span>${q(e.intensity)}</span></li>
+  </ul>`}function mt(e){return e.availability==="playable"?`<a class="btn primary" data-link="${e.playRoute}">ابدأ لعبة</a>`:e.availability==="waitlist"?`<button class="btn primary mode-waitlist" type="button" data-mode="${e.id}">أضفني لقائمة الانتظار</button>`:'<button class="btn primary" type="button" disabled>قريبًا</button>'}function ca(e){return`<article class="mode-featured" style="--accent:${e.accent}">
+    <a class="mode-featured-art" data-link="/modes/mode?id=${e.id}" aria-label="استعرض ${q(e.name)}">${Ke(e.id,e.accent)}</a>
     <div class="mode-featured-copy">
-      <div class="mode-flags">${availabilityTag(mode)}<span class="mode-code" dir="ltr">${h2(mode.codename)}</span></div>
-      <h2>${h2(mode.name)}</h2>
-      <p class="mode-premise">${h2(mode.premise)}</p>
-      ${metaRow(mode)}
-      <p class="mode-hook"><span>الخبيئة</span>${h2(mode.hook)}</p>
-      <div class="mode-actions">${primaryAction(mode)}<a class="btn ghost" data-link="/modes/mode?id=${mode.id}">استعرض الطور</a></div>
+      <div class="mode-flags">${ut(e)}<span class="mode-code" dir="ltr">${q(e.codename)}</span></div>
+      <h2>${q(e.name)}</h2>
+      <p class="mode-premise">${q(e.premise)}</p>
+      ${Jt(e)}
+      <p class="mode-hook"><span>الخبيئة</span>${q(e.hook)}</p>
+      <div class="mode-actions">${mt(e)}<a class="btn ghost" data-link="/modes/mode?id=${e.id}">استعرض الطور</a></div>
     </div>
-  </article>`;
-}
-function portalCard(mode) {
-  const price = mode.availability === "playable" ? `<b>${h2(mode.price)}</b>${mode.priceNote ? `<span>${h2(mode.priceNote)}</span>` : ""}` : `<b>${h2(mode.price)}</b><span>${availabilityLabel(mode.availability)}</span>`;
-  return `<article class="mode-card ${mode.availability}" style="--accent:${mode.accent}" data-mode="${mode.id}">
-    <a class="mode-card-art" data-link="/modes/mode?id=${mode.id}" aria-label="استعرض ${h2(mode.name)}">
-      ${modeCover(mode.id, mode.accent)}
+  </article>`}function pa(e){let t=e.availability==="playable"?`<b>${q(e.price)}</b>${e.priceNote?`<span>${q(e.priceNote)}</span>`:""}`:`<b>${q(e.price)}</b><span>${Ve(e.availability)}</span>`;return`<article class="mode-card ${e.availability}" style="--accent:${e.accent}" data-mode="${e.id}">
+    <a class="mode-card-art" data-link="/modes/mode?id=${e.id}" aria-label="استعرض ${q(e.name)}">
+      ${Ke(e.id,e.accent)}
       <span class="mode-enter">استعرض الطور</span>
     </a>
     <div class="mode-card-body">
-      <div class="mode-flags">${availabilityTag(mode)}<span class="mode-code" dir="ltr">${h2(mode.codename)}</span></div>
-      <h3><a data-link="/modes/mode?id=${mode.id}">${h2(mode.name)}</a></h3>
-      <p class="mode-premise">${h2(mode.premise)}</p>
-      ${metaRow(mode)}
-      <div class="mode-card-foot"><div class="mode-price">${price}</div>${primaryAction(mode)}</div>
+      <div class="mode-flags">${ut(e)}<span class="mode-code" dir="ltr">${q(e.codename)}</span></div>
+      <h3><a data-link="/modes/mode?id=${e.id}">${q(e.name)}</a></h3>
+      <p class="mode-premise">${q(e.premise)}</p>
+      ${Jt(e)}
+      <div class="mode-card-foot"><div class="mode-price">${t}</div>${mt(e)}</div>
     </div>
-  </article>`;
-}
-function modesGallery() {
-  const featured = MODES.find((mode) => mode.availability === "playable") ?? MODES[0];
-  const rest = MODES.filter((mode) => mode.id !== featured.id);
-  const html = `<main id="main-content" class="product-page modes-page" tabindex="-1">
+  </article>`}function ua(){let e=Te.find(a=>a.availability==="playable")??Te[0],t=Te.filter(a=>a.id!==e.id);return{active:"modes",title:"الأطوار",description:"عوالم BACKFIRE القابلة للّعب — كل طور بقواعده وتوتره الخاص.",html:`<main id="main-content" class="product-page modes-page" tabindex="-1">
     <header class="product-hero"><div>
       <span class="eyebrow">أطوار BACKFIRE</span>
       <h1>عوالم تُلعب،<br>لا تُشترى.</h1>
       <p>كل طور عالم مستقل بقواعده وتوتره الخاص، لكن القلب واحد: معلومة مخبّأة، قرار سري، وعاقبة تعود. طور واحد متاح الآن، والبقية أبواب على وشك أن تُفتح.</p>
     </div></header>
     <aside class="modes-note" role="note"><span class="demo-dot"></span><div><b>الأطوار القادمة معاينة تصميم</b><span>الطور الأساسي فقط قابل للّعب الآن. باقي العوالم مفاهيم بصرية بلا شراء فعلي أو تفعيل.</span></div></aside>
-    ${featuredCard(featured)}
+    ${ca(e)}
     <div class="modes-rail-head"><h2>عوالم أخرى</h2><span>خمسة أبواب — كل واحد يقلب القواعد.</span></div>
-    <section class="modes-grid">${rest.map(portalCard).join("")}</section>
+    <section class="modes-grid">${t.map(pa).join("")}</section>
     <section class="modes-store-link">
       <div><span class="eyebrow">تخصيص</span><h2>تبغى تغيّر شكل الجلسة؟</h2><p>مظاهر وإطارات ومؤثرات تقديم اختيارية — تجميلية فقط، بلا أفضلية لعب.</p></div>
     </section>
-  </main>`;
-  return {
-    active: "modes",
-    title: "الأطوار",
-    description: "عوالم BACKFIRE القابلة للّعب — كل طور بقواعده وتوتره الخاص.",
-    html,
-    bind: bindWaitlist
-  };
-}
-function beatList(mode) {
-  return `<ol class="mode-beats">${mode.beats.map((beat, i) => `<li><b>${["٠١", "٠٢", "٠٣"][i]}</b><span>${h2(beat)}</span></li>`).join("")}</ol>`;
-}
-function modeDetail(search) {
-  const mode = modeById(new URLSearchParams(search).get("id") ?? "");
-  if (!mode) {
-    return {
-      active: "modes",
-      title: "الطور غير موجود",
-      description: "لم نجد هذا الطور.",
-      html: `<main id="main-content" class="product-page" tabindex="-1"><section class="empty-state panel"><span class="empty-glyph">؟</span><h2>هذا الطور غير موجود</h2><p>يمكن أن الرابط تغيّر. ارجع لصفحة الأطوار واختر عالمًا.</p><a class="btn primary" data-link="/modes">كل الأطوار</a></section></main>`
-    };
-  }
-  const html = `<main id="main-content" class="product-page mode-detail-page" tabindex="-1" style="--accent:${mode.accent}">
+  </main>`,bind:Qt}}function ma(e){return`<ol class="mode-beats">${e.beats.map((t,r)=>`<li><b>${["٠١","٠٢","٠٣"][r]}</b><span>${q(t)}</span></li>`).join("")}</ol>`}function ga(e){let t=Xt(new URLSearchParams(e).get("id")??"");if(!t)return{active:"modes",title:"الطور غير موجود",description:"لم نجد هذا الطور.",html:'<main id="main-content" class="product-page" tabindex="-1"><section class="empty-state panel"><span class="empty-glyph">؟</span><h2>هذا الطور غير موجود</h2><p>يمكن أن الرابط تغيّر. ارجع لصفحة الأطوار واختر عالمًا.</p><a class="btn primary" data-link="/modes">كل الأطوار</a></section></main>'};let r=`<main id="main-content" class="product-page mode-detail-page" tabindex="-1" style="--accent:${t.accent}">
     <a class="mode-back" data-link="/modes">← كل الأطوار</a>
     <section class="mode-detail">
-      <div class="mode-detail-art panel">${modeCover(mode.id, mode.accent)}<div class="mode-detail-art-cap">${availabilityTag(mode)}<span class="mode-code" dir="ltr">${h2(mode.codename)}</span></div></div>
+      <div class="mode-detail-art panel">${Ke(t.id,t.accent)}<div class="mode-detail-art-cap">${ut(t)}<span class="mode-code" dir="ltr">${q(t.codename)}</span></div></div>
       <div class="mode-detail-copy">
-        <h1>${h2(mode.name)}</h1>
-        <p class="mode-detail-premise">${h2(mode.premise)}</p>
-        <p class="mode-hook"><span>الخبيئة</span>${h2(mode.hook)}</p>
-        <p class="mode-brief">${h2(mode.brief)}</p>
+        <h1>${q(t.name)}</h1>
+        <p class="mode-detail-premise">${q(t.premise)}</p>
+        <p class="mode-hook"><span>الخبيئة</span>${q(t.hook)}</p>
+        <p class="mode-brief">${q(t.brief)}</p>
         <dl class="mode-detail-meta">
-          <div><dt>اللاعبون</dt><dd>${h2(mode.players)}</dd></div>
-          <div><dt>المدة</dt><dd>${h2(mode.duration)}</dd></div>
-          <div><dt>التوتر</dt><dd>${h2(mode.intensity)}</dd></div>
-          <div><dt>الحالة</dt><dd>${availabilityLabel(mode.availability)}</dd></div>
+          <div><dt>اللاعبون</dt><dd>${q(t.players)}</dd></div>
+          <div><dt>المدة</dt><dd>${q(t.duration)}</dd></div>
+          <div><dt>التوتر</dt><dd>${q(t.intensity)}</dd></div>
+          <div><dt>الحالة</dt><dd>${Ve(t.availability)}</dd></div>
         </dl>
-        <div class="mode-detail-price"><b>${h2(mode.price)}</b>${mode.priceNote ? `<span>${h2(mode.priceNote)}</span>` : mode.availability !== "playable" ? "<span>لا شراء فعلي بعد</span>" : ""}</div>
-        <div class="mode-actions">${primaryAction(mode)}<a class="btn ghost" data-link="/how-to-play">كيف تُلعب الأطوار</a></div>
+        <div class="mode-detail-price"><b>${q(t.price)}</b>${t.priceNote?`<span>${q(t.priceNote)}</span>`:t.availability!=="playable"?"<span>لا شراء فعلي بعد</span>":""}</div>
+        <div class="mode-actions">${mt(t)}<a class="btn ghost" data-link="/how-to-play">كيف تُلعب الأطوار</a></div>
         <p class="mode-waitlist-note" hidden role="status"></p>
       </div>
     </section>
     <section class="mode-round">
-      <div class="mode-round-head"><span class="eyebrow">كيف تمرّ الجولة</span><h2>ثلاث لحظات في ${h2(mode.name)}</h2></div>
-      ${beatList(mode)}
+      <div class="mode-round-head"><span class="eyebrow">كيف تمرّ الجولة</span><h2>ثلاث لحظات في ${q(t.name)}</h2></div>
+      ${ma(t)}
     </section>
-  </main>`;
-  return { active: "modes", title: mode.name, description: mode.premise, html, bind: bindWaitlist };
-}
-function bindWaitlist() {
-  document.querySelectorAll(".mode-waitlist").forEach((button) => {
-    button.addEventListener("click", () => {
-      button.disabled = true;
-      button.classList.add("on");
-      button.textContent = "في قائمة انتظارك ✓";
-      const note = document.querySelector(".mode-waitlist-note");
-      if (note) {
-        note.hidden = false;
-        note.textContent = "هذه معاينة محلية — التسجيل الفعلي في قائمة الانتظار يبدأ عند إطلاق الطور. لم نرسل أي بيانات.";
-      }
-    });
-  });
-}
-function modesHomeSection() {
-  const featured = MODES.slice(0, 4);
-  return `<section class="home-modes on-dark" data-reveal>
+  </main>`;return{active:"modes",title:t.name,description:t.premise,html:r,bind:Qt}}function Qt(){document.querySelectorAll(".mode-waitlist").forEach(e=>{e.addEventListener("click",()=>{e.disabled=!0,e.classList.add("on"),e.textContent="في قائمة انتظارك ✓";let t=document.querySelector(".mode-waitlist-note");t&&(t.hidden=!1,t.textContent="هذه معاينة محلية — التسجيل الفعلي في قائمة الانتظار يبدأ عند إطلاق الطور. لم نرسل أي بيانات.")})})}function er(){return`<section class="home-modes on-dark" data-reveal>
     <div class="home-modes-head">
       <span class="eyebrow">عوالم BACKFIRE</span>
       <h2>طور واحد يبدأ الليلة.<br><em>وخمسة أبواب تنتظر.</em></h2>
       <p>نفس القلب — معلومة مخبّأة وقرار سري وعاقبة تعود — في عوالم مختلفة القواعد والتوتر.</p>
     </div>
     <div class="home-modes-rail">
-      ${featured.map((mode) => `<a class="home-mode" data-link="/modes/mode?id=${mode.id}" style="--accent:${mode.accent}" aria-label="استعرض ${h2(mode.name)}">
-        <span class="home-mode-art">${modeCover(mode.id, mode.accent)}</span>
-        <span class="home-mode-cap"><span class="mode-flag ${mode.availability}">${availabilityLabel(mode.availability)}</span><b>${h2(mode.name)}</b><small dir="ltr">${h2(mode.codename)}</small></span>
+      ${Te.slice(0,4).map(t=>`<a class="home-mode" data-link="/modes/mode?id=${t.id}" style="--accent:${t.accent}" aria-label="استعرض ${q(t.name)}">
+        <span class="home-mode-art">${Ke(t.id,t.accent)}</span>
+        <span class="home-mode-cap"><span class="mode-flag ${t.availability}">${Ve(t.availability)}</span><b>${q(t.name)}</b><small dir="ltr">${q(t.codename)}</small></span>
       </a>`).join("")}
     </div>
     <div class="home-modes-cta"><a class="btn ghost lg" data-link="/modes">استكشف كل الأطوار</a></div>
-  </section>`;
-}
-var MODES_PATHS = /* @__PURE__ */ new Set(["/modes", "/modes/mode"]);
-function renderModesPage(path, search = "") {
-  if (path === "/modes/mode") return modeDetail(search);
-  return modesGallery();
-}
-
-// apps/dasssite/src/modes/modes-css.ts
-function modesCss() {
-  return `
+  </section>`}var gt=new Set(["/modes","/modes/mode"]);function tr(e,t=""){return e==="/modes/mode"?ga(t):ua()}function rr(){return`
   .modes-page .product-hero h1{line-height:.98}
   .mode-cover-art{display:block;width:100%;height:100%;object-fit:cover}
 
@@ -3966,177 +516,56 @@ function modesCss() {
   .home-modes-cta{max-width:var(--maxw);margin:clamp(30px,4vw,44px) auto 0;display:flex}
   @media(max-width:900px){.home-modes-rail{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:560px){.home-modes-rail{grid-template-columns:1fr 1fr;gap:12px}.home-mode-cap b{font-size:16px}.home-modes-cta .btn{width:100%}}
-  `;
-}
-
-// apps/dasssite/src/site-brand.ts
-var SITE_BRAND = "BACKFIRE";
-var SOCIAL_PREVIEW_PATH = "/og-backfire.png";
-var LEGACY_ARABIC_BRAND = "دسّ";
-var LEGACY_DEMO_EMAIL = `demo@${"dass"}.local`;
-function rebrandVisibleText(value) {
-  return value.replaceAll(LEGACY_ARABIC_BRAND, SITE_BRAND).replaceAll(LEGACY_DEMO_EMAIL, "demo@backfire.local");
-}
-
-// apps/dasssite/src/site-product.ts
-var demoJoinUrl = "/play?code=BF24X7";
-var AVATARS = ["#b3202d", "#7e151e", "#8a4a2e", "#5c5c60", "#a3a3a5", "#d24850"];
-function avatar(seat) {
-  return AVATARS[seat % AVATARS.length] ?? "#b3202d";
-}
-function seatDot(initial, seat, cls = "") {
-  return `<span class="p-av ${cls}" style="--av:${avatar(seat)}">${initial}</span>`;
-}
-var ICN = {
-  support: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V7"/><path d="M6 13l6-6 6 6"/></svg>`,
-  attack: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v13"/><path d="M6 11l6 6 6-6"/></svg>`,
-  vault: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2.5"/><circle cx="12" cy="12" r="3.4"/><path d="M12 12v3.6"/></svg>`
-};
-function ring(pct) {
-  return `<span class="gs-ring" style="--p:${pct}"></span>`;
-}
-function secretBody(eyebrow, lead, note) {
-  return `<div class="scr scr-secret"><span class="scr-eyebrow">${eyebrow}</span><p class="scr-lead">${lead}</p><div class="scr-seal"><span class="seal-mark"></span><span>${note}</span></div></div>`;
-}
-function GameScreenPreview(state = "round") {
-  if (state === "lobby") {
-    return `<div class="game-screen tv-lobby-screen" data-product-screen="tv-lobby">
+  `}var ft="BACKFIRE";var ar="/og-backfire.png";var fa="demo@dass.local";function Qe(e){return e.replaceAll("دسّ",ft).replaceAll(fa,"demo@backfire.local")}var ha="/play?code=BF24X7",ir=["#b3202d","#7e151e","#8a4a2e","#5c5c60","#a3a3a5","#d24850"];function va(e){return ir[e%ir.length]??"#b3202d"}function G(e,t,r=""){return`<span class="p-av ${r}" style="--av:${va(t)}">${e}</span>`}var Ie={support:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V7"/><path d="M6 13l6-6 6 6"/></svg>',attack:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v13"/><path d="M6 11l6 6 6-6"/></svg>',vault:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2.5"/><circle cx="12" cy="12" r="3.4"/><path d="M12 12v3.6"/></svg>'};function ba(e){return`<span class="gs-ring" style="--p:${e}"></span>`}function xa(e,t,r){return`<div class="scr scr-secret"><span class="scr-eyebrow">${e}</span><p class="scr-lead">${t}</p><div class="scr-seal"><span class="seal-mark"></span><span>${r}</span></div></div>`}function ya(e="round"){return e==="lobby"?`<div class="game-screen tv-lobby-screen" data-product-screen="tv-lobby">
       <header class="gs-hud"><span class="gs-brand">BACKFIRE</span><span class="gs-chip live">غرفة مفتوحة</span></header>
       <div class="lobby-body">
-        <div class="lobby-qr">${qrSvg(demoJoinUrl, "#0d0d0e", "#f1f0ec", 2)}</div>
+        <div class="lobby-qr">${Bt(ha,"#0d0d0e","#f1f0ec",2)}</div>
         <div class="lobby-join"><small>امسح الرمز من جوالك أو اكتبه</small><strong dir="ltr">BF24X7</strong><span class="lobby-count">٤ / ٨ جاهزين</span></div>
       </div>
-      <div class="lobby-roster">${seatDot("ي", 0)}${seatDot("ن", 1)}${seatDot("س", 2)}${seatDot("ر", 3)}${seatDot("٥", 4, "ghost")}${seatDot("٦", 5, "ghost")}</div>
-    </div>`;
-  }
-  if (state === "reveal") {
-    return `<div class="game-screen tv-reveal-screen" data-product-screen="tv-reveal">
+      <div class="lobby-roster">${G("ي",0)}${G("ن",1)}${G("س",2)}${G("ر",3)}${G("٥",4,"ghost")}${G("٦",5,"ghost")}</div>
+    </div>`:e==="reveal"?`<div class="game-screen tv-reveal-screen" data-product-screen="tv-reveal">
       <header class="gs-hud"><span class="gs-brand">BACKFIRE</span><span class="gs-phase">الكشف</span><span class="gs-round mono" dir="ltr">4 / 8</span></header>
       <div class="reveal-list">
-        <article class="rv dassa">${seatDot("ن", 1)}<div class="rv-copy"><small>نورة وعدت أن تدعم يزيد</small><b>غيّرت قرارها في السر</b></div><em class="rv-tag dassa">دسّة</em></article>
-        <article class="rv kept">${seatDot("ي", 0)}<div class="rv-copy"><small>يزيد ثبّت قراره</small><b>التزم بوعده للمجلس</b></div><em class="rv-tag kept">التزم</em></article>
+        <article class="rv dassa">${G("ن",1)}<div class="rv-copy"><small>نورة وعدت أن تدعم يزيد</small><b>غيّرت قرارها في السر</b></div><em class="rv-tag dassa">دسّة</em></article>
+        <article class="rv kept">${G("ي",0)}<div class="rv-copy"><small>يزيد ثبّت قراره</small><b>التزم بوعده للمجلس</b></div><em class="rv-tag kept">التزم</em></article>
       </div>
       <footer class="reveal-foot"><span>الأثر التالي</span><strong>المسار رجع إلى نورة</strong></footer>
-    </div>`;
-  }
-  if (state === "consequence") {
-    return `<div class="game-screen tv-conseq-screen" data-product-screen="tv-consequence">
+    </div>`:e==="consequence"?`<div class="game-screen tv-conseq-screen" data-product-screen="tv-consequence">
       <header class="gs-hud"><span class="gs-brand">BACKFIRE</span><span class="gs-phase">النتيجة العامة</span><span class="gs-round mono" dir="ltr">4 / 8</span></header>
       <div class="conseq-body"><span class="conseq-eyebrow">تغيّر إيقاع الغرفة</span><h3>سقطت خزنة راكان،<br><em>وارتفع رصيد نورة.</em></h3></div>
       <div class="conseq-bars">
-        <span class="cb up" style="--h:78%">${seatDot("ن", 1)}<i>+٦</i></span>
-        <span class="cb up" style="--h:54%">${seatDot("ي", 0)}<i>+٢</i></span>
-        <span class="cb flat" style="--h:40%">${seatDot("س", 2)}<i>٠</i></span>
-        <span class="cb down" style="--h:22%">${seatDot("ر", 3)}<i>−٤</i></span>
+        <span class="cb up" style="--h:78%">${G("ن",1)}<i>+٦</i></span>
+        <span class="cb up" style="--h:54%">${G("ي",0)}<i>+٢</i></span>
+        <span class="cb flat" style="--h:40%">${G("س",2)}<i>٠</i></span>
+        <span class="cb down" style="--h:22%">${G("ر",3)}<i>−٤</i></span>
       </div>
-    </div>`;
-  }
-  return `<div class="game-screen tv-round-screen" data-product-screen="tv-round">
-    <header class="gs-hud"><span class="gs-brand">BACKFIRE</span><span class="gs-phase">الإعلان</span><span class="gs-round mono" dir="ltr">3 / 8</span>${ring(0.62)}</header>
+    </div>`:`<div class="game-screen tv-round-screen" data-product-screen="tv-round">
+    <header class="gs-hud"><span class="gs-brand">BACKFIRE</span><span class="gs-phase">الإعلان</span><span class="gs-round mono" dir="ltr">3 / 8</span>${ba(.62)}</header>
     <div class="round-prompt"><small>أعلنوا نيّاتكم على جوالاتكم</small><strong class="round-count" dir="ltr">12</strong></div>
     <div class="round-floor">
-      <span class="rf-col"><i class="rf-intent up">${ICN.support}</i><span class="rf-bar" style="--h:70%"></span>${seatDot("ي", 0)}</span>
-      <span class="rf-col"><i class="rf-intent"></i><span class="rf-bar" style="--h:48%"></span>${seatDot("ن", 1)}</span>
-      <span class="rf-col"><i class="rf-intent dn">${ICN.attack}</i><span class="rf-bar" style="--h:86%"></span>${seatDot("ر", 3)}</span>
-      <span class="rf-col"><i class="rf-intent"></i><span class="rf-bar" style="--h:34%"></span>${seatDot("س", 2)}</span>
-      <span class="rf-col wait"><i class="rf-intent">◌</i><span class="rf-bar" style="--h:58%"></span>${seatDot("ح", 4)}</span>
+      <span class="rf-col"><i class="rf-intent up">${Ie.support}</i><span class="rf-bar" style="--h:70%"></span>${G("ي",0)}</span>
+      <span class="rf-col"><i class="rf-intent"></i><span class="rf-bar" style="--h:48%"></span>${G("ن",1)}</span>
+      <span class="rf-col"><i class="rf-intent dn">${Ie.attack}</i><span class="rf-bar" style="--h:86%"></span>${G("ر",3)}</span>
+      <span class="rf-col"><i class="rf-intent"></i><span class="rf-bar" style="--h:34%"></span>${G("س",2)}</span>
+      <span class="rf-col wait"><i class="rf-intent">◌</i><span class="rf-bar" style="--h:58%"></span>${G("ح",4)}</span>
     </div>
-  </div>`;
-}
-function phoneChip(state) {
-  const chips = { secret: "الجولة ٣", decision: "الإعلان", waiting: "قُفل", backfire: "الكشف", join: "" };
-  return chips[state] ? `<span class="app-chip">${chips[state]}</span>` : `<span class="app-chip ghost">جوّالك</span>`;
-}
-function phoneScreen(state) {
-  switch (state) {
-    case "secret":
-      return secretBody("معلومة تخصّك وحدك", "راكان يقدر يغيّر اتجاه القرار بعد ما تُقفلونه.", "لا أحد غيرك يعرف هذا الآن");
-    case "decision":
-      return `<div class="scr scr-pick">
+  </div>`}function wa(e){let t={secret:"الجولة ٣",decision:"الإعلان",waiting:"قُفل",backfire:"الكشف",join:""};return t[e]?`<span class="app-chip">${t[e]}</span>`:'<span class="app-chip ghost">جوّالك</span>'}function ka(e){switch(e){case"secret":return xa("معلومة تخصّك وحدك","راكان يقدر يغيّر اتجاه القرار بعد ما تُقفلونه.","لا أحد غيرك يعرف هذا الآن");case"decision":return`<div class="scr scr-pick">
         <span class="scr-eyebrow">أعلن نيّتك</span>
-        <div class="pick-acts"><span class="pa up on">${ICN.support}<b>دعم</b></span><span class="pa dn">${ICN.attack}<b>هجوم</b></span><span class="pa gd">${ICN.vault}<b>خزنة</b></span></div>
+        <div class="pick-acts"><span class="pa up on">${Ie.support}<b>دعم</b></span><span class="pa dn">${Ie.attack}<b>هجوم</b></span><span class="pa gd">${Ie.vault}<b>خزنة</b></span></div>
         <span class="pick-label">أدعم مين؟</span>
-        <div class="pick-chips"><span class="pchip on">${seatDot("ي", 0, "sm")}يزيد</span><span class="pchip">${seatDot("ر", 3, "sm")}راكان</span><span class="pchip">${seatDot("س", 2, "sm")}سارة</span></div>
+        <div class="pick-chips"><span class="pchip on">${G("ي",0,"sm")}يزيد</span><span class="pchip">${G("ر",3,"sm")}راكان</span><span class="pchip">${G("س",2,"sm")}سارة</span></div>
         <span class="scr-confirm">اقفل الفعل</span>
-      </div>`;
-    case "waiting":
-      return `<div class="scr scr-wait"><span class="wait-seal">${ICN.vault}</span><p class="scr-lead">أقفلت فعلك</p><span class="scr-note">ارفع عينك للتلفاز</span><div class="wait-dots"><i class="on"></i><i class="on"></i><i></i><i class="on"></i></div></div>`;
-    case "backfire":
-      return `<div class="scr scr-result"><span class="scr-eyebrow warn">رجع عليك</span><span class="result-arrow" aria-hidden="true">↩</span><p class="scr-lead">المسار الذي عطّلته صار طريقك الوحيد.</p><span class="result-delta" dir="ltr">−4</span><span class="scr-note">الجولة القادمة تغيّرت</span></div>`;
-    case "join":
-      return `<div class="scr scr-join"><span class="scr-eyebrow">انضمام</span><b class="scr-title">خشّ المجلس</b><span class="join-field mono" dir="ltr">BF24X7</span><span class="join-field ghost">اسمك</span><span class="scr-confirm">انضم</span></div>`;
-  }
-}
-function PhoneMockup(state, label, extraClass = "", body) {
-  return `<div class="phone-unit ${state} ${extraClass}" data-product-screen="player-${state}">${label ? `<span class="device-label">${label}</span>` : ""}<div class="phone-shell">
+      </div>`;case"waiting":return`<div class="scr scr-wait"><span class="wait-seal">${Ie.vault}</span><p class="scr-lead">أقفلت فعلك</p><span class="scr-note">ارفع عينك للتلفاز</span><div class="wait-dots"><i class="on"></i><i class="on"></i><i></i><i class="on"></i></div></div>`;case"backfire":return'<div class="scr scr-result"><span class="scr-eyebrow warn">رجع عليك</span><span class="result-arrow" aria-hidden="true">↩</span><p class="scr-lead">المسار الذي عطّلته صار طريقك الوحيد.</p><span class="result-delta" dir="ltr">−4</span><span class="scr-note">الجولة القادمة تغيّرت</span></div>';case"join":return'<div class="scr scr-join"><span class="scr-eyebrow">انضمام</span><b class="scr-title">خشّ المجلس</b><span class="join-field mono" dir="ltr">BF24X7</span><span class="join-field ghost">اسمك</span><span class="scr-confirm">انضم</span></div>'}}function et(e,t,r="",a){return`<div class="phone-unit ${e} ${r}" data-product-screen="player-${e}">${t?`<span class="device-label">${t}</span>`:""}<div class="phone-shell">
     <span class="phone-island"></span><span class="phone-btn vol"></span><span class="phone-btn pow"></span>
     <div class="phone-screen">
-      <div class="app-top"><span class="app-brand"><span class="app-mark"></span><b>BACKFIRE</b></span>${phoneChip(state)}</div>
-      <div class="app-body">${body ?? phoneScreen(state)}</div>
+      <div class="app-top"><span class="app-brand"><span class="app-mark"></span><b>BACKFIRE</b></span>${wa(e)}</div>
+      <div class="app-body">${a??ka(e)}</div>
     </div>
     <span class="home-ind"></span>
-  </div></div>`;
-}
-function TvStage(state = "round", className = "") {
-  return `<div class="tv-stage ${className}"><div class="tv-frame"><div class="tv-bezel">${GameScreenPreview(state)}<span class="tv-glare" aria-hidden="true"></span></div><span class="tv-led"></span></div><div class="tv-neck"></div><div class="tv-foot"></div></div>`;
-}
-
-// apps/dasssite/src/site-scenes.ts
-var NOIR = {
-  black: "#080808",
-  ink: "#0c0c0d",
-  charcoal: "#151517",
-  graphite: "#222226",
-  lead: "#3a3a40",
-  steel: "#66666d",
-  gray: "#808088",
-  muted: "#9a9a9f",
-  paper: "#f0efea",
-  paperShadow: "#d8d6d0",
-  white: "#fafaf7",
-  red: "#b72e38",
-  redDark: "#811c25",
-  redSoft: "#c8454d"
-};
-function bust(fill) {
-  return `<circle cx="50" cy="62" r="26" fill="${fill}"/><path d="M4 150 C4 110 27 96 50 96 C73 96 96 110 96 150 Z" fill="${fill}"/>`;
-}
-function place(x, y, s, inner) {
-  return `<g transform="translate(${x} ${y}) scale(${s})">${inner}</g>`;
-}
-function rect(x, y, w, h3, fill, extra = "") {
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h3}" fill="${fill}"${extra ? " " + extra : ""}/>`;
-}
-function silhouette2(fill, o = {}) {
-  const hr = o.hr ?? 24;
-  const hx = o.hx ?? 50;
-  const hy = o.hy ?? 62;
-  const sw = o.sw ?? 92;
-  const rise = o.rise ?? 0;
-  const neck = o.neck ?? 98;
-  const l = 50 - sw / 2;
-  const r = 50 + sw / 2;
-  const body = `M${l} 152 C${l} ${neck + 24 + rise} ${l + 20} ${neck + rise} ${hx} ${neck} C${r - 20} ${neck - rise} ${r} ${neck + 24 - rise} ${r} 152 Z`;
-  return `<circle cx="${hx}" cy="${hy}" r="${hr}" fill="${fill}"/><path d="${body}" fill="${fill}"/>`;
-}
-function person2(x, y, s, fill, o = {}) {
-  return place(x, y, s, silhouette2(fill, o));
-}
-function phone2(cx, cy, s, rot, screen, glowId = "") {
-  const w = 30;
-  const h3 = 60;
-  const halo = glowId ? `<ellipse cx="0" cy="0" rx="40" ry="58" fill="${screen}" opacity=".22" filter="url(#${glowId})"/>` : "";
-  return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${s})">${halo}<rect x="${-w / 2}" y="${-h3 / 2}" width="${w}" height="${h3}" rx="6" fill="${NOIR.charcoal}" stroke="${NOIR.lead}" stroke-width="1.4"/><rect x="${-w / 2 + 3.5}" y="${-h3 / 2 + 6}" width="${w - 7}" height="${h3 - 12}" rx="3" fill="${screen}"/></g>`;
-}
-function joinGlyph2(x, y, u, fill) {
-  const cells = [[0, 0], [1, 0], [2, 0], [0, 1], [2, 1], [0, 2], [1, 2], [2, 2], [4, 0], [4, 2], [1, 4], [3, 4], [4, 4], [0, 4]];
-  return cells.map(([cx, cy]) => rect(x + cx * u, y + cy * u, u * 0.8, u * 0.8, fill, 'opacity=".8"')).join("");
-}
-function HeroScene() {
-  return `<svg class="scene hero-scene" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" role="img" aria-label="غرفة معيشة: خمسة أشخاص حول تلفزيون واحد مضاء، كل واحد يمسك جوالًا، وخط أحمر يخرج من جوال إلى الشاشة ثم يعود كعاقبة نحو صاحبه">
+  </div></div>`}function ht(e="round",t=""){return`<div class="tv-stage ${t}"><div class="tv-frame"><div class="tv-bezel">${ya(e)}<span class="tv-glare" aria-hidden="true"></span></div><span class="tv-led"></span></div><div class="tv-neck"></div><div class="tv-foot"></div></div>`}var $={black:"#080808",ink:"#0c0c0d",charcoal:"#151517",graphite:"#222226",lead:"#3a3a40",steel:"#66666d",gray:"#808088",muted:"#9a9a9f",paper:"#f0efea",paperShadow:"#d8d6d0",white:"#fafaf7",red:"#b72e38",redDark:"#811c25",redSoft:"#c8454d"};function vt(e){return`<circle cx="50" cy="62" r="26" fill="${e}"/><path d="M4 150 C4 110 27 96 50 96 C73 96 96 110 96 150 Z" fill="${e}"/>`}function tt(e,t,r,a){return`<g transform="translate(${e} ${t}) scale(${r})">${a}</g>`}function Ye(e,t,r,a,n,i=""){return`<rect x="${e}" y="${t}" width="${r}" height="${a}" fill="${n}"${i?" "+i:""}/>`}function $a(e,t={}){let r=t.hr??24,a=t.hx??50,n=t.hy??62,i=t.sw??92,s=t.rise??0,d=t.neck??98,p=50-i/2,E=50+i/2,N=`M${p} 152 C${p} ${d+24+s} ${p+20} ${d+s} ${a} ${d} C${E-20} ${d-s} ${E} ${d+24-s} ${E} 152 Z`;return`<circle cx="${a}" cy="${n}" r="${r}" fill="${e}"/><path d="${N}" fill="${e}"/>`}function te(e,t,r,a,n={}){return tt(e,t,r,$a(a,n))}function Ge(e,t,r,a,n,i=""){let p=i?`<ellipse cx="0" cy="0" rx="40" ry="58" fill="${n}" opacity=".22" filter="url(#${i})"/>`:"";return`<g transform="translate(${e} ${t}) rotate(${a}) scale(${r})">${p}<rect x="${-30/2}" y="${-60/2}" width="30" height="60" rx="6" fill="${$.charcoal}" stroke="${$.lead}" stroke-width="1.4"/><rect x="${-30/2+3.5}" y="${-60/2+6}" width="23" height="48" rx="3" fill="${n}"/></g>`}function Ea(e,t,r,a){return[[0,0],[1,0],[2,0],[0,1],[2,1],[0,2],[1,2],[2,2],[4,0],[4,2],[1,4],[3,4],[4,4],[0,4]].map(([i,s])=>Ye(e+i*r,t+s*r,r*.8,r*.8,a,'opacity=".8"')).join("")}function nr(){return`<svg class="scene hero-scene" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" role="img" aria-label="غرفة معيشة: خمسة أشخاص حول تلفزيون واحد مضاء، كل واحد يمسك جوالًا، وخط أحمر يخرج من جوال إلى الشاشة ثم يعود كعاقبة نحو صاحبه">
     <defs>
-      <radialGradient id="hero-glow" cx="50%" cy="34%" r="60%"><stop offset="0" stop-color="${NOIR.red}" stop-opacity=".22"/><stop offset="1" stop-color="${NOIR.red}" stop-opacity="0"/></radialGradient>
-      <linearGradient id="hero-screen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${NOIR.graphite}"/><stop offset="1" stop-color="${NOIR.black}"/></linearGradient>
+      <radialGradient id="hero-glow" cx="50%" cy="34%" r="60%"><stop offset="0" stop-color="${$.red}" stop-opacity=".22"/><stop offset="1" stop-color="${$.red}" stop-opacity="0"/></radialGradient>
+      <linearGradient id="hero-screen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${$.graphite}"/><stop offset="1" stop-color="${$.black}"/></linearGradient>
       <filter id="hero-soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9"/></filter>
       <filter id="hero-sh" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#000" flood-opacity=".5"/></filter>
       <clipPath id="hero-tv"><rect x="330" y="84" width="340" height="196" rx="6"/></clipPath>
@@ -4144,137 +573,106 @@ function HeroScene() {
     <!-- ambient light thrown by the TV -->
     <ellipse cx="500" cy="220" rx="380" ry="250" fill="url(#hero-glow)"/>
     <!-- TV: the one shared screen -->
-    <rect x="486" y="290" width="28" height="34" fill="${NOIR.graphite}"/>
-    <ellipse cx="500" cy="330" rx="78" ry="12" fill="${NOIR.ink}"/>
-    <g filter="url(#hero-sh)"><rect x="314" y="70" width="372" height="224" rx="12" fill="${NOIR.charcoal}" stroke="${NOIR.lead}" stroke-width="2"/></g>
+    <rect x="486" y="290" width="28" height="34" fill="${$.graphite}"/>
+    <ellipse cx="500" cy="330" rx="78" ry="12" fill="${$.ink}"/>
+    <g filter="url(#hero-sh)"><rect x="314" y="70" width="372" height="224" rx="12" fill="${$.charcoal}" stroke="${$.lead}" stroke-width="2"/></g>
     <rect x="330" y="84" width="340" height="196" rx="6" fill="url(#hero-screen)"/>
     <g clip-path="url(#hero-tv)">
-      <line x1="330" y1="214" x2="670" y2="214" stroke="${NOIR.steel}" stroke-width="1.4" opacity=".3"/>
-      ${person2(392, 118, 0.74, NOIR.steel, { hx: 54, sw: 96 })}
-      ${person2(488, 128, 0.66, NOIR.lead, { hx: 44, sw: 92 })}
-      <rect x="470" y="196" width="40" height="22" rx="2" fill="${NOIR.red}" transform="rotate(-8 490 207)"/>
-      <circle cx="352" cy="106" r="5" fill="${NOIR.red}"/>
-      <rect x="364" y="102" width="26" height="7" rx="2" fill="${NOIR.steel}" opacity=".7"/>
-      <rect x="396" y="102" width="16" height="7" rx="2" fill="${NOIR.steel}" opacity=".5"/>
-      ${joinGlyph2(600, 224, 9, NOIR.muted)}
+      <line x1="330" y1="214" x2="670" y2="214" stroke="${$.steel}" stroke-width="1.4" opacity=".3"/>
+      ${te(392,118,.74,$.steel,{hx:54,sw:96})}
+      ${te(488,128,.66,$.lead,{hx:44,sw:92})}
+      <rect x="470" y="196" width="40" height="22" rx="2" fill="${$.red}" transform="rotate(-8 490 207)"/>
+      <circle cx="352" cy="106" r="5" fill="${$.red}"/>
+      <rect x="364" y="102" width="26" height="7" rx="2" fill="${$.steel}" opacity=".7"/>
+      <rect x="396" y="102" width="16" height="7" rx="2" fill="${$.steel}" opacity=".5"/>
+      ${Ea(600,224,9,$.muted)}
     </g>
     <!-- the gathered players, seen from behind, facing the TV -->
-    ${person2(150, 300, 1.3, NOIR.lead, { hx: 52, sw: 88, hr: 22 })}
-    ${person2(770, 300, 1.3, NOIR.lead, { hx: 48, sw: 88, hr: 22 })}
-    ${person2(300, 336, 1.5, NOIR.steel, { sw: 96 })}
-    ${person2(625, 336, 1.5, NOIR.steel, { hx: 54, sw: 96 })}
-    ${person2(417, 356, 1.66, NOIR.muted, { sw: 100 })}
+    ${te(150,300,1.3,$.lead,{hx:52,sw:88,hr:22})}
+    ${te(770,300,1.3,$.lead,{hx:48,sw:88,hr:22})}
+    ${te(300,336,1.5,$.steel,{sw:96})}
+    ${te(625,336,1.5,$.steel,{hx:54,sw:96})}
+    ${te(417,356,1.66,$.muted,{sw:100})}
     <!-- every phone throws a faint decision line up to the shared screen -->
-    <g stroke="${NOIR.steel}" stroke-width="1.4" fill="none" opacity=".32" stroke-linecap="round">
+    <g stroke="${$.steel}" stroke-width="1.4" fill="none" opacity=".32" stroke-linecap="round">
       <path d="M240 452 C 340 380 430 320 496 290"/>
       <path d="M362 500 C 410 420 460 340 500 292"/>
       <path d="M640 500 C 592 420 542 340 504 292"/>
       <path d="M760 452 C 660 380 570 320 504 290"/>
     </g>
     <!-- the five phones; the central one is the live red decision -->
-    ${phone2(240, 466, 0.62, -14, NOIR.muted)}
-    ${phone2(362, 516, 0.8, -8, NOIR.muted)}
-    ${phone2(640, 516, 0.8, 9, NOIR.muted)}
-    ${phone2(760, 466, 0.62, 13, NOIR.muted)}
-    ${phone2(500, 552, 0.98, 0, NOIR.red, "hero-soft")}
+    ${Ge(240,466,.62,-14,$.muted)}
+    ${Ge(362,516,.8,-8,$.muted)}
+    ${Ge(640,516,.8,9,$.muted)}
+    ${Ge(760,466,.62,13,$.muted)}
+    ${Ge(500,552,.98,0,$.red,"hero-soft")}
     <!-- the Return Line: the red decision rises to the TV, then the consequence loops back onto its sender -->
-    <path class="cs-shadow" d="M500 524 C 494 452 500 372 500 300 C 500 250 612 246 606 336 C 600 408 546 440 508 452" fill="none" stroke="${NOIR.graphite}" stroke-width="8" stroke-linecap="round" transform="translate(9 12)"/>
-    <path class="return-line rl-draw" pathLength="1" d="M500 524 C 494 452 500 372 500 300 C 500 250 612 246 606 336 C 600 408 546 440 508 452" fill="none" stroke="${NOIR.red}" stroke-width="2.6" stroke-linecap="round"/>
-    <circle class="rl-src" cx="500" cy="524" r="6" fill="${NOIR.redSoft}"/>
-    <path class="rl-head" d="M508 452 l16 -10 4 20z" fill="${NOIR.red}"/>
-  </svg>`;
-}
-function IncompleteScene() {
-  const truth = person2(-8, 44, 2.9, NOIR.steel, { hx: 58, sw: 98 }) + person2(360, 96, 2.6, NOIR.lead, { hx: 42, sw: 92 }) + rect(20, 456, 620, 16, NOIR.lead) + rect(150, 402, 96, 54, NOIR.muted) + rect(300, 406, 84, 50, NOIR.steel) + rect(472, 300, 66, 74, NOIR.red);
-  const holders = [
-    { id: "a", x: 48, y: 150, w: 150, h: 250, head: 118 },
-    // ← a person fragment
-    { id: "b", x: 250, y: 250, w: 150, h: 250, head: 220 },
-    // ← the table + decision
-    { id: "c", x: 452, y: 168, w: 150, h: 250, head: 136 }
-    // ← the red clue + a person
-  ];
-  const phoneFragment = (p) => `
-    ${person2(p.x + p.w / 2 - 42, p.head - 26, 0.84, NOIR.graphite, { sw: 96 })}
-    <rect x="${p.x - 9}" y="${p.y - 9}" width="${p.w + 18}" height="${p.h + 18}" rx="15" fill="${NOIR.ink}" stroke="${NOIR.lead}" stroke-width="1.6"/>
-    <rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="6" fill="${NOIR.black}"/>
-    <clipPath id="frag-${p.id}"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="6"/></clipPath>
-    <g clip-path="url(#frag-${p.id})">${truth}</g>
-    <rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="6" fill="none" stroke="${NOIR.steel}" stroke-width="1" opacity=".55"/>
-    <rect x="${p.x + p.w / 2 - 15}" y="${p.y - 5}" width="30" height="3.4" rx="1.7" fill="${NOIR.lead}"/>`;
-  return `<svg class="scene incomplete-scene" viewBox="0 0 660 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="مشهد واحد كامل مخفيّ في الخلفية، وأجزاؤه موزّعة على ثلاثة جوالات يمسكها ثلاثة لاعبين، بينها فجوات مظلمة، ولا أحد يرى الصورة كاملة">
+    <path class="cs-shadow" d="M500 524 C 494 452 500 372 500 300 C 500 250 612 246 606 336 C 600 408 546 440 508 452" fill="none" stroke="${$.graphite}" stroke-width="8" stroke-linecap="round" transform="translate(9 12)"/>
+    <path class="return-line rl-draw" pathLength="1" d="M500 524 C 494 452 500 372 500 300 C 500 250 612 246 606 336 C 600 408 546 440 508 452" fill="none" stroke="${$.red}" stroke-width="2.6" stroke-linecap="round"/>
+    <circle class="rl-src" cx="500" cy="524" r="6" fill="${$.redSoft}"/>
+    <path class="rl-head" d="M508 452 l16 -10 4 20z" fill="${$.red}"/>
+  </svg>`}function or(){let e=te(-8,44,2.9,$.steel,{hx:58,sw:98})+te(360,96,2.6,$.lead,{hx:42,sw:92})+Ye(20,456,620,16,$.lead)+Ye(150,402,96,54,$.muted)+Ye(300,406,84,50,$.steel)+Ye(472,300,66,74,$.red),t=[{id:"a",x:48,y:150,w:150,h:250,head:118},{id:"b",x:250,y:250,w:150,h:250,head:220},{id:"c",x:452,y:168,w:150,h:250,head:136}],r=a=>`
+    ${te(a.x+a.w/2-42,a.head-26,.84,$.graphite,{sw:96})}
+    <rect x="${a.x-9}" y="${a.y-9}" width="${a.w+18}" height="${a.h+18}" rx="15" fill="${$.ink}" stroke="${$.lead}" stroke-width="1.6"/>
+    <rect x="${a.x}" y="${a.y}" width="${a.w}" height="${a.h}" rx="6" fill="${$.black}"/>
+    <clipPath id="frag-${a.id}"><rect x="${a.x}" y="${a.y}" width="${a.w}" height="${a.h}" rx="6"/></clipPath>
+    <g clip-path="url(#frag-${a.id})">${e}</g>
+    <rect x="${a.x}" y="${a.y}" width="${a.w}" height="${a.h}" rx="6" fill="none" stroke="${$.steel}" stroke-width="1" opacity=".55"/>
+    <rect x="${a.x+a.w/2-15}" y="${a.y-5}" width="30" height="3.4" rx="1.7" fill="${$.lead}"/>`;return`<svg class="scene incomplete-scene" viewBox="0 0 660 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="مشهد واحد كامل مخفيّ في الخلفية، وأجزاؤه موزّعة على ثلاثة جوالات يمسكها ثلاثة لاعبين، بينها فجوات مظلمة، ولا أحد يرى الصورة كاملة">
     <defs>
       <filter id="inc-sh" x="-15%" y="-15%" width="130%" height="140%"><feDropShadow dx="0" dy="9" stdDeviation="7" flood-color="#0c0c0d" flood-opacity=".34"/></filter>
     </defs>
-    <rect width="660" height="560" fill="${NOIR.black}"/>
+    <rect width="660" height="560" fill="${$.black}"/>
     <!-- the whole truth, present but unlit -->
-    <g opacity=".12">${truth}</g>
-    <g filter="url(#inc-sh)">${holders.map(phoneFragment).join("")}</g>
+    <g opacity=".12">${e}</g>
+    <g filter="url(#inc-sh)">${t.map(r).join("")}</g>
     <!-- the picture line that the fragments never fully rebuild -->
-    <path d="M52 500 L 240 500" stroke="${NOIR.lead}" stroke-width="2" stroke-dasharray="4 8" opacity=".5"/>
-    <path d="M266 500 L 442 500" stroke="${NOIR.lead}" stroke-width="2" stroke-dasharray="4 8" opacity=".5"/>
-    <path d="M468 500 L 610 500" stroke="${NOIR.red}" stroke-width="2.4"/>
-  </svg>`;
-}
-function PrivateScene() {
-  const known = { x: 150, y: 214, s: 1.62 };
-  const kcx = known.x + 50 * known.s;
-  return `<svg class="scene private-scene" viewBox="0 0 640 520" preserveAspectRatio="xMidYMid meet" role="img" aria-label="مجموعة لاعبين مربوطين بخيوط رمادية متساوية، جوال أحدهم يضيء بالأحمر بمعلومة خاصة، فيتقدّم عن الصف ويرسم خطًّا أحمر جديدًا نحو لاعب آخر بينما ينقطع خيطه القديم">
+    <path d="M52 500 L 240 500" stroke="${$.lead}" stroke-width="2" stroke-dasharray="4 8" opacity=".5"/>
+    <path d="M266 500 L 442 500" stroke="${$.lead}" stroke-width="2" stroke-dasharray="4 8" opacity=".5"/>
+    <path d="M468 500 L 610 500" stroke="${$.red}" stroke-width="2.4"/>
+  </svg>`}function sr(){let e={x:150,y:214,s:1.62},t=e.x+50*e.s;return`<svg class="scene private-scene" viewBox="0 0 640 520" preserveAspectRatio="xMidYMid meet" role="img" aria-label="مجموعة لاعبين مربوطين بخيوط رمادية متساوية، جوال أحدهم يضيء بالأحمر بمعلومة خاصة، فيتقدّم عن الصف ويرسم خطًّا أحمر جديدًا نحو لاعب آخر بينما ينقطع خيطه القديم">
     <defs>
       <filter id="pv-soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="8"/></filter>
     </defs>
-    <rect x="30" y="452" width="580" height="20" fill="${NOIR.ink}"/>
+    <rect x="30" y="452" width="580" height="20" fill="${$.ink}"/>
     <!-- the public, neutral group -->
-    ${person2(46, 250, 1.12, NOIR.steel, { sw: 92 })}
-    ${person2(300, 246, 1.16, NOIR.steel, { hx: 52, sw: 94, rise: 4 })}
-    ${person2(430, 252, 1.12, NOIR.steel, { sw: 90 })}
-    ${person2(552, 258, 1.02, NOIR.lead, { sw: 84, rise: -6 })}
+    ${te(46,250,1.12,$.steel,{sw:92})}
+    ${te(300,246,1.16,$.steel,{hx:52,sw:94,rise:4})}
+    ${te(430,252,1.12,$.steel,{sw:90})}
+    ${te(552,258,1.02,$.lead,{sw:84,rise:-6})}
     <!-- the even ties everyone shares -->
-    <g stroke="${NOIR.steel}" stroke-width="1.6" fill="none" opacity=".4" stroke-linecap="round">
+    <g stroke="${$.steel}" stroke-width="1.6" fill="none" opacity=".4" stroke-linecap="round">
       <path d="M103 300 C 180 268 250 268 358 300"/>
       <path d="M486 300 C 520 288 560 288 603 306"/>
     </g>
     <!-- the old tie from the knower to their neighbour — now snapped -->
-    <path d="M${kcx} 300 C 300 262 340 262 358 300" fill="none" stroke="${NOIR.lead}" stroke-width="1.6" stroke-dasharray="5 9" opacity=".45"/>
+    <path d="M${t} 300 C 300 262 340 262 358 300" fill="none" stroke="${$.lead}" stroke-width="1.6" stroke-dasharray="5 9" opacity=".45"/>
     <!-- the knower steps forward, brighter -->
-    ${person2(known.x, known.y, known.s, NOIR.muted, { hx: 52, sw: 96 })}
+    ${te(e.x,e.y,e.s,$.muted,{hx:52,sw:96})}
     <!-- the private red info, on their phone only -->
-    <ellipse class="pv-secret" cx="${kcx + 40}" cy="360" rx="34" ry="46" fill="${NOIR.red}" opacity=".2" filter="url(#pv-soft)"/>
-    ${phoneReveal(kcx + 40, 360)}
+    <ellipse class="pv-secret" cx="${t+40}" cy="360" rx="34" ry="46" fill="${$.red}" opacity=".2" filter="url(#pv-soft)"/>
+    ${Ma(t+40,360)}
     <!-- the new intent the knowledge creates: a red line redrawn across the group -->
-    <path class="rl-draw" pathLength="1" d="M${kcx + 40} 348 C 360 300 470 300 560 320" fill="none" stroke="${NOIR.red}" stroke-width="2.6" stroke-linecap="round"/>
-    <path class="rl-head" d="M560 320 l-18 -6 4 20z" fill="${NOIR.red}"/>
-    <circle class="rl-src" cx="${kcx + 40}" cy="348" r="5" fill="${NOIR.redSoft}"/>
-  </svg>`;
-}
-function phoneReveal(cx, cy) {
-  return `<g transform="translate(${cx} ${cy}) rotate(-8)"><rect x="-19" y="-38" width="38" height="76" rx="7" fill="${NOIR.charcoal}" stroke="${NOIR.lead}" stroke-width="1.6"/><rect class="pv-secret" x="-14" y="-31" width="28" height="62" rx="3" fill="${NOIR.red}"/><rect class="pv-secret" x="-8" y="-18" width="16" height="6" rx="2" fill="${NOIR.white}" opacity=".85"/><rect class="pv-secret" x="-8" y="-6" width="24" height="5" rx="2" fill="${NOIR.white}" opacity=".6"/></g>`;
-}
-function ConsequenceScene() {
-  return `<svg class="scene consequence-scene" viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid meet" role="img" aria-label="ظل يمثل صاحب القرار، خط أحمر يخرج منه ويضرب شخصًا آخر، ثم يعود ليقع عليه كظل أثقل ومنحرف">
-    ${place(70, 214, 2.02, bust(NOIR.graphite))}
-    ${place(120, 250, 1.78, bust(NOIR.steel))}
-    <rect x="150" y="262" width="42" height="8" rx="1" fill="${NOIR.paper}" opacity=".85"/>
-    ${place(560, 300, 1.5, bust(NOIR.lead))}
-    <circle class="cs-impact" cx="632" cy="392" r="12" fill="${NOIR.red}"/>
-    <path class="cs-shadow" d="M250 358 C 420 316 520 340 632 392 C 770 456 856 356 762 300 C 700 264 560 300 250 452" fill="none" stroke="${NOIR.graphite}" stroke-width="12" stroke-linecap="round" transform="translate(14 16)"/>
-    <path class="cs-line rl-draw" pathLength="1" d="M250 358 C 420 316 520 340 632 392 C 770 456 856 356 762 300 C 700 264 560 300 250 452" fill="none" stroke="${NOIR.red}" stroke-width="2.8" stroke-linecap="round"/>
-    <path class="cs-return" d="M300 430 C 270 442 250 448 234 452" fill="none" stroke="${NOIR.red}" stroke-width="5.4" stroke-linecap="round"/>
-    <circle class="cs-src" cx="250" cy="358" r="8" fill="${NOIR.redSoft}"/>
-    <path class="cs-head" d="M234 452 l30 -20 3 32z" fill="${NOIR.red}"/>
-  </svg>`;
-}
-function FinalScene() {
-  return `<svg class="scene final-scene" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-    <path class="fs-shadow" d="M452 120 C 690 120 760 300 620 400 C 470 508 250 470 220 320 C 196 200 320 150 470 176" fill="none" stroke="${NOIR.graphite}" stroke-width="12" stroke-linecap="round" transform="translate(14 16)"/>
-    <path class="fs-line rl-draw" pathLength="1" d="M450 108 C 690 108 762 292 620 392 C 466 502 244 462 216 312 C 194 196 322 142 470 168" fill="none" stroke="${NOIR.red}" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="450" cy="108" r="7" fill="${NOIR.redSoft}"/>
-    <path class="fs-head" d="M470 168 l-30 -14 2 30z" fill="${NOIR.red}"/>
-  </svg>`;
-}
-
-// apps/dasssite/src/site-theme.ts
-var SITE_CSS = String.raw`
+    <path class="rl-draw" pathLength="1" d="M${t+40} 348 C 360 300 470 300 560 320" fill="none" stroke="${$.red}" stroke-width="2.6" stroke-linecap="round"/>
+    <path class="rl-head" d="M560 320 l-18 -6 4 20z" fill="${$.red}"/>
+    <circle class="rl-src" cx="${t+40}" cy="348" r="5" fill="${$.redSoft}"/>
+  </svg>`}function Ma(e,t){return`<g transform="translate(${e} ${t}) rotate(-8)"><rect x="-19" y="-38" width="38" height="76" rx="7" fill="${$.charcoal}" stroke="${$.lead}" stroke-width="1.6"/><rect class="pv-secret" x="-14" y="-31" width="28" height="62" rx="3" fill="${$.red}"/><rect class="pv-secret" x="-8" y="-18" width="16" height="6" rx="2" fill="${$.white}" opacity=".85"/><rect class="pv-secret" x="-8" y="-6" width="24" height="5" rx="2" fill="${$.white}" opacity=".6"/></g>`}function lr(){return`<svg class="scene consequence-scene" viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid meet" role="img" aria-label="ظل يمثل صاحب القرار، خط أحمر يخرج منه ويضرب شخصًا آخر، ثم يعود ليقع عليه كظل أثقل ومنحرف">
+    ${tt(70,214,2.02,vt($.graphite))}
+    ${tt(120,250,1.78,vt($.steel))}
+    <rect x="150" y="262" width="42" height="8" rx="1" fill="${$.paper}" opacity=".85"/>
+    ${tt(560,300,1.5,vt($.lead))}
+    <circle class="cs-impact" cx="632" cy="392" r="12" fill="${$.red}"/>
+    <path class="cs-shadow" d="M250 358 C 420 316 520 340 632 392 C 770 456 856 356 762 300 C 700 264 560 300 250 452" fill="none" stroke="${$.graphite}" stroke-width="12" stroke-linecap="round" transform="translate(14 16)"/>
+    <path class="cs-line rl-draw" pathLength="1" d="M250 358 C 420 316 520 340 632 392 C 770 456 856 356 762 300 C 700 264 560 300 250 452" fill="none" stroke="${$.red}" stroke-width="2.8" stroke-linecap="round"/>
+    <path class="cs-return" d="M300 430 C 270 442 250 448 234 452" fill="none" stroke="${$.red}" stroke-width="5.4" stroke-linecap="round"/>
+    <circle class="cs-src" cx="250" cy="358" r="8" fill="${$.redSoft}"/>
+    <path class="cs-head" d="M234 452 l30 -20 3 32z" fill="${$.red}"/>
+  </svg>`}function dr(){return`<svg class="scene final-scene" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <path class="fs-shadow" d="M452 120 C 690 120 760 300 620 400 C 470 508 250 470 220 320 C 196 200 320 150 470 176" fill="none" stroke="${$.graphite}" stroke-width="12" stroke-linecap="round" transform="translate(14 16)"/>
+    <path class="fs-line rl-draw" pathLength="1" d="M450 108 C 690 108 762 292 620 392 C 466 502 244 462 216 312 C 194 196 322 142 470 168" fill="none" stroke="${$.red}" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="450" cy="108" r="7" fill="${$.redSoft}"/>
+    <path class="fs-head" d="M470 168 l-30 -14 2 30z" fill="${$.red}"/>
+  </svg>`}var cr=String.raw`
 :root[data-site-theme="backfire"]{
   color-scheme:dark;
   /* Editorial-noir palette: black / graphite / paper, with a single controlled red. */
@@ -4671,106 +1069,15 @@ em{font-style:normal;color:var(--bf-red)}
 .dass-reduced-motion *{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
 .dass-high-contrast{--bf-muted:#d0d0d2;--bf-gray:#b8b8ba;--line:rgba(250,250,247,.3);--line-2:rgba(250,250,247,.5)}
 .dass-large-text{font-size:112%}
-`;
-
-// apps/dasssite/src/main.ts
-injectBase();
-document.documentElement.dataset.siteTheme = "backfire";
-document.body.classList.add("backfire-site");
-addStyle(SITE_CSS);
-addStyle(productCss());
-addStyle(modesCss());
-var app = document.getElementById("app");
-var SPA = /* @__PURE__ */ new Set(["/", "/create", "/join", "/how-to-play", ...MODES_PATHS, ...PRODUCT_PATHS]);
-var cleanups = [];
-var wordmark = '<span class="bf-word" dir="ltr">BACKFIRE</span>';
-function go(target) {
-  const url = new URL(target, location.origin);
-  if (!SPA.has(url.pathname)) {
-    location.href = `${url.pathname}${url.search}${url.hash}`;
-    return;
-  }
-  history.pushState({}, "", `${url.pathname}${url.search}${url.hash}`);
-  render();
-  requestAnimationFrame(() => {
-    if (url.hash) document.querySelector(url.hash)?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth" });
-    else scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" });
-    qs("#main")?.focus({ preventScroll: true });
-  });
-}
-addEventListener("click", (event) => {
-  const mouse = event;
-  if (mouse.button !== 0 || mouse.metaKey || mouse.ctrlKey || mouse.shiftKey || mouse.altKey) return;
-  const link = event.target.closest("[data-link]");
-  if (!link?.dataset.link) return;
-  event.preventDefault();
-  backfireAudio.tick();
-  go(link.dataset.link);
-});
-addEventListener("popstate", render);
-function teardown() {
-  for (const cleanup of cleanups) cleanup();
-  cleanups = [];
-  delete document.body.dataset.route;
-  document.body.classList.remove("menu-open");
-}
-function render() {
-  teardown();
-  applyProductPreferences();
-  try {
-    switch (location.pathname) {
-      case "/":
-        updateMeta("لعبة جماعية عن الشك والعواقب", "كل لاعب يرى جزءًا مختلفًا. القرار سري، والنتيجة أمام الجميع.");
-        home();
-        break;
-      case "/create":
-        updateMeta("ابدأ لعبة", "افتح غرفة BACKFIRE على الشاشة الكبيرة، ثم أدخل الشلة من جوالاتهم.");
-        createRoom();
-        break;
-      case "/join":
-        updateMeta("انضم بكود", "أدخل رمز الغرفة واسمك للانضمام إلى BACKFIRE من جوالك.");
-        joinRoom();
-        break;
-      case "/how-to-play":
-        updateMeta("كيف تلعب", "الشاشة تحكي، والجوالات تخبّي. خمس خطوات للبدء.");
-        howToPlay();
-        break;
-      default:
-        if (MODES_PATHS.has(location.pathname)) modesRoute(location.pathname);
-        else productRoute(location.pathname);
-    }
-  } catch (error) {
-    console.error("[BACKFIRE site] route render failed", error);
-    updateMeta("تعذّر فتح الصفحة", "حدث خطأ آمن أثناء عرض الصفحة.");
-    app.innerHTML = `${header()}<main id="main" class="cinema-page" tabindex="-1"><section class="door-card"><span class="eyebrow">خطأ آمن</span><h1>المشهد ما اكتمل.</h1><p>لم نرسل أي بيانات. حدّث الصفحة أو ارجع للرئيسية.</p><button id="retry" class="btn primary wide">إعادة المحاولة</button><a data-link="/" class="text-link">العودة للرئيسية</a></section></main>`;
-    qs("#retry")?.addEventListener("click", render);
-  }
-  bindChrome();
-  bindNetworkNotice();
-}
-function applyProductPreferences() {
-  try {
-    const settings = platform.getSettings();
-    document.documentElement.classList.toggle("dass-high-contrast", settings.highContrast);
-    document.documentElement.classList.toggle("dass-large-text", settings.textScale === "large");
-    document.documentElement.classList.toggle("dass-reduced-motion", settings.reducedMotion || !settings.animations);
-  } catch {
-    document.documentElement.classList.remove("dass-high-contrast", "dass-large-text", "dass-reduced-motion");
-  }
-}
-function header(active = "") {
-  return `<a class="skip-link" href="#main">تخطَّ إلى المحتوى</a>
+`;St();document.documentElement.dataset.siteTheme="backfire";document.body.classList.add("backfire-site");qe(cr);qe(Wt());qe(rr());var xe=document.getElementById("app"),Aa=new Set(["/","/create","/join","/how-to-play",...gt,...dt]),ze=[],ur='<span class="bf-word" dir="ltr">BACKFIRE</span>';function bt(e){let t=new URL(e,location.origin);if(!Aa.has(t.pathname)){location.href=`${t.pathname}${t.search}${t.hash}`;return}history.pushState({},"",`${t.pathname}${t.search}${t.hash}`),De(),requestAnimationFrame(()=>{t.hash?document.querySelector(t.hash)?.scrollIntoView({behavior:me()?"auto":"smooth"}):scrollTo({top:0,behavior:me()?"auto":"smooth"}),re("#main")?.focus({preventScroll:!0})})}addEventListener("click",e=>{let t=e;if(t.button!==0||t.metaKey||t.ctrlKey||t.shiftKey||t.altKey)return;let r=e.target.closest("[data-link]");r?.dataset.link&&(e.preventDefault(),Ee.tick(),bt(r.dataset.link))});addEventListener("popstate",De);function Sa(){for(let e of ze)e();ze=[],delete document.body.dataset.route,document.body.classList.remove("menu-open")}function De(){Sa(),Ca();try{switch(location.pathname){case"/":be("لعبة جماعية عن الشك والعواقب","كل لاعب يرى جزءًا مختلفًا. القرار سري، والنتيجة أمام الجميع."),La();break;case"/create":be("ابدأ لعبة","افتح غرفة BACKFIRE على الشاشة الكبيرة، ثم أدخل الشلة من جوالاتهم."),Ta();break;case"/join":be("انضم بكود","أدخل رمز الغرفة واسمك للانضمام إلى BACKFIRE من جوالك."),Pa();break;case"/how-to-play":be("كيف تلعب","الشاشة تحكي، والجوالات تخبّي. خمس خطوات للبدء."),Ra();break;default:gt.has(location.pathname)?Ia(location.pathname):Ba(location.pathname)}}catch(e){console.error("[BACKFIRE site] route render failed",e),be("تعذّر فتح الصفحة","حدث خطأ آمن أثناء عرض الصفحة."),xe.innerHTML=`${ye()}<main id="main" class="cinema-page" tabindex="-1"><section class="door-card"><span class="eyebrow">خطأ آمن</span><h1>المشهد ما اكتمل.</h1><p>لم نرسل أي بيانات. حدّث الصفحة أو ارجع للرئيسية.</p><button id="retry" class="btn primary wide">إعادة المحاولة</button><a data-link="/" class="text-link">العودة للرئيسية</a></section></main>`,re("#retry")?.addEventListener("click",De)}za(),Da()}function Ca(){try{let e=P.getSettings();document.documentElement.classList.toggle("dass-high-contrast",e.highContrast),document.documentElement.classList.toggle("dass-large-text",e.textScale==="large"),document.documentElement.classList.toggle("dass-reduced-motion",e.reducedMotion||!e.animations)}catch{document.documentElement.classList.remove("dass-high-contrast","dass-large-text","dass-reduced-motion")}}function ye(e=""){return`<a class="skip-link" href="#main">تخطَّ إلى المحتوى</a>
     <header class="site-head" id="site-head">
-      <a class="nav-logo" data-link="/" aria-label="BACKFIRE — الرئيسية">${wordmark}</a>
-      <nav class="head-nav" aria-label="التنقل الرئيسي"><a data-link="/modes" class="${active === "modes" || active === "store" ? "on" : ""}">الأطوار</a><a data-link="/how-to-play" class="${active === "how" ? "on" : ""}">كيف تلعب</a><a data-link="/join">انضم بكود</a></nav>
+      <a class="nav-logo" data-link="/" aria-label="BACKFIRE — الرئيسية">${ur}</a>
+      <nav class="head-nav" aria-label="التنقل الرئيسي"><a data-link="/modes" class="${e==="modes"||e==="store"?"on":""}">الأطوار</a><a data-link="/how-to-play" class="${e==="how"?"on":""}">كيف تلعب</a><a data-link="/join">انضم بكود</a></nav>
       <div class="head-actions"><a data-link="/create" class="head-cta">ابدأ لعبة</a><button id="menu" class="head-menu" type="button" aria-label="القائمة" aria-expanded="false" aria-controls="mpanel"><span></span><span></span></button></div>
       <div id="mpanel" class="mobile-panel" hidden><a data-link="/modes">الأطوار</a><a data-link="/how-to-play">كيف تلعب</a><a data-link="/join">انضم بكود</a><a data-link="/create">ابدأ لعبة</a></div>
-    </header>`;
-}
-function footer() {
-  return `<footer class="foot-noir" data-reveal>
+    </header>`}function _e(){return`<footer class="foot-noir" data-reveal>
     <div class="foot-inner">
-      <div class="foot-brand">${wordmark}<p>كل حركة لها عواقب. لعبة جماعية على شاشة واحدة وجوالات اللاعبين.</p></div>
+      <div class="foot-brand">${ur}<p>كل حركة لها عواقب. لعبة جماعية على شاشة واحدة وجوالات اللاعبين.</p></div>
       <div class="foot-links">
         <div><b>اللعب</b><a data-link="/create">ابدأ لعبة</a><a data-link="/join">انضم بكود</a><a data-link="/how-to-play">كيف تلعب</a></div>
         <div><b>العوالم</b><a data-link="/modes">الأطوار</a><a data-link="/pricing">الأسعار</a></div>
@@ -4779,35 +1086,31 @@ function footer() {
       </div>
     </div>
     <div class="foot-cap"><span>BACKFIRE — كل حركة لها عواقب.</span><span>٢٠٢٦</span></div>
-  </footer>`;
-}
-function home() {
-  document.body.dataset.route = "home";
-  app.innerHTML = `${header()}<main id="main" tabindex="-1">
+  </footer>`}function La(){document.body.dataset.route="home",xe.innerHTML=`${ye()}<main id="main" tabindex="-1">
     <section class="hero-noir">
       <div class="hero-inner"><div class="hero-copy" data-reveal>
         <span class="eyebrow">لعبة جماعية للشاشة والجوال</span>
         <h1>كل حركة<br>لها <em>عواقب.</em></h1>
         <p class="hero-lead">كل لاعب يرى جزءًا مختلفًا. القرار سري، والنتيجة أمام الجميع.</p>
-        <ul class="hero-facts" aria-label="مواصفات سريعة"><li>٤–٨ لاعبين</li><li>شاشة واحدة</li><li>جوال لكل لاعب</li><li>بلا تحميل</li></ul>
+        <ul class="hero-facts" aria-label="مواصفات سريعة"><li>٥ لاعبين</li><li>شاشة واحدة</li><li>جوال لكل لاعب</li><li>بلا تحميل</li></ul>
         <div class="hero-cta"><a data-link="/create" class="btn primary lg">ابدأ لعبة</a><a data-link="/join" class="btn ghost lg">انضم بكود</a></div>
         <div class="hero-note"><i></i><span>نسخة تجريبية — نظام السيناريو الجديد قيد التطوير.</span></div>
       </div></div>
-      <div class="hero-art" data-reveal>${HeroScene()}</div>
+      <div class="hero-art" data-reveal>${nr()}</div>
       <a class="scroll-cue" data-link="/#poster01"><span>انزل</span><i></i></a>
     </section>
 
     <section id="poster01" class="poster poster-incomplete on-paper" data-reveal>
       <div class="poster-inner">
         <div class="poster-copy"><span class="sec-index">01</span><h2>لا أحد يرى<br>الصورة كاملة.</h2><p>المعلومة موزّعة. والثقة قرار.</p></div>
-        <div class="poster-art">${IncompleteScene()}</div>
+        <div class="poster-art">${or()}</div>
       </div>
     </section>
 
     <section class="poster poster-private on-dark" data-reveal>
       <div class="poster-inner">
         <div class="poster-copy"><span class="sec-index">02</span><h2>ما تعرفه<br>يغيّر كل شيء.</h2><p>كل واحد يعرف شيئًا، ولا أحد يعرف كل شيء. على جوالك جزء لا يراه غيرك.</p></div>
-        <div class="poster-art">${PrivateScene()}</div>
+        <div class="poster-art">${sr()}</div>
       </div>
     </section>
 
@@ -4830,7 +1133,7 @@ function home() {
     <section class="poster poster-consequence on-dark" data-reveal>
       <div class="poster-inner">
         <div class="poster-copy"><span class="sec-index">03</span><h2>القرار يخرج منك.<br>والعاقبة <em>تعود إليك.</em></h2><p>كل جولة تتذكّر ما فعلتموه قبلها.</p></div>
-        <div class="poster-art">${ConsequenceScene()}</div>
+        <div class="poster-art">${lr()}</div>
       </div>
     </section>
 
@@ -4838,86 +1141,42 @@ function home() {
       <div class="product-inner">
         <div class="product-head"><span class="eyebrow">المنتج</span><h2>شاشة واحدة.<br>أسرار مختلفة.</h2><p>التلفزيون يعرض ما يعرفه الجميع. هاتفك يحتفظ بما يخصك.</p></div>
         <div class="product-stage">
-          <figure class="stage-tv">${TvStage("reveal")}<figcaption><b>التلفزيون</b><span>المشهد العام الذي يراه الجميع.</span></figcaption></figure>
-          <div class="stage-phones"><figure>${PhoneMockup("secret", "معلومة خاصة")}</figure><figure>${PhoneMockup("decision", "قرار سري")}</figure></div>
+          <figure class="stage-tv">${ht("reveal")}<figcaption><b>التلفزيون</b><span>المشهد العام الذي يراه الجميع.</span></figcaption></figure>
+          <div class="stage-phones"><figure>${et("secret","معلومة خاصة")}</figure><figure>${et("decision","قرار سري")}</figure></div>
         </div>
         <ol class="product-steps"><li><b>01</b><span>افتح غرفة</span></li><li><b>02</b><span>امسح الرمز</span></li><li><b>03</b><span>اختر بسرية</span></li></ol>
       </div>
     </section>
 
-    ${modesHomeSection()}
+    ${er()}
 
     <section class="final-noir" data-reveal>
-      <div class="final-art">${FinalScene()}</div>
+      <div class="final-art">${dr()}</div>
       <div class="final-inner"><span class="eyebrow">BACKFIRE</span><h2>ابدأ قبل أن<br>تكتمل الصورة.</h2><p>ضع الشاشة أمام الجميع، وادخلوا من جوالاتكم.</p><div class="hero-cta"><a data-link="/create" class="btn primary lg">ابدأ لعبة</a><a data-link="/join" class="btn ghost lg">انضم بكود</a></div></div>
     </section>
-  </main>${footer()}`;
-  bindPageMotion();
-}
-function createRoom() {
-  document.body.dataset.route = "create";
-  app.innerHTML = `${header()}<main id="main" class="door" tabindex="-1">
+  </main>${_e()}`,xt()}function Ta(){document.body.dataset.route="create",xe.innerHTML=`${ye()}<main id="main" class="door" tabindex="-1">
     <section class="door-form" data-reveal>
       <span class="eyebrow">غرفة جديدة</span>
       <h1>افتح الشاشة.<br>واجمع الشلة.</h1>
       <p>سننقلك إلى شاشة التلفزيون الحالية. هناك يظهر رمز الغرفة ليدخل اللاعبون من جوالاتهم.</p>
-      <div class="door-specs"><span><b>٤–٨</b>لاعبين</span><span><b>رمز</b>أو كود</span><span><b>بلا</b>تحميل</span></div>
+      <div class="door-specs"><span><b>٥</b>لاعبين</span><span><b>رمز</b>أو كود</span><span><b>بلا</b>تحميل</span></div>
       <button id="startbtn" class="btn primary lg wide">افتح الغرفة على التلفاز</button>
       <a data-link="/" class="text-link">العودة للرئيسية</a>
     </section>
-    <aside class="door-aside">${TvStage("lobby")}<div class="door-caption"><span>شاشة واحدة</span><b>رمز الدخول وحالة اللاعبين.</b></div></aside>
-  </main>${footer()}`;
-  revealPage();
-  qs("#startbtn")?.addEventListener("click", (event) => {
-    const button = event.currentTarget;
-    press(button);
-    backfireAudio.cta();
-    button.disabled = true;
-    button.innerHTML = '<span class="spinner"></span><span>جاري فتح الشاشة…</span>';
-    window.setTimeout(() => {
-      location.href = "/tv";
-    }, 260);
-  });
-}
-function joinRoom() {
-  document.body.dataset.route = "join";
-  const code = new URLSearchParams(location.search).get("code") ?? "";
-  app.innerHTML = `${header()}<main id="main" class="door join-door" tabindex="-1">
+    <aside class="door-aside">${ht("lobby")}<div class="door-caption"><span>شاشة واحدة</span><b>رمز الدخول وحالة اللاعبين.</b></div></aside>
+  </main>${_e()}`,rt(),re("#startbtn")?.addEventListener("click",e=>{let t=e.currentTarget;At(t),Ee.cta(),t.disabled=!0,t.innerHTML='<span class="spinner"></span><span>جاري فتح الشاشة…</span>',window.setTimeout(()=>{location.href="/tv"},260)})}function Pa(){document.body.dataset.route="join";let e=new URLSearchParams(location.search).get("code")??"";xe.innerHTML=`${ye()}<main id="main" class="door join-door" tabindex="-1">
     <section class="door-form" data-reveal>
       <span class="eyebrow">انضمام من الجوال</span>
       <h1>ادخل الغرفة.<br>ولا تكشف شيئًا.</h1>
       <p>اكتب الرمز الظاهر على التلفزيون، ثم الاسم الذي سيراه بقية اللاعبين.</p>
-      <label class="field"><span>رمز الغرفة</span><input id="code" class="input mono" placeholder="AB12CD" value="${escapeHtml(code)}" maxlength="12" autocapitalize="characters" autocorrect="off" autocomplete="off" inputmode="text"></label>
+      <label class="field"><span>رمز الغرفة</span><input id="code" class="input mono" placeholder="AB12CD" value="${$e(e)}" maxlength="12" autocapitalize="characters" autocorrect="off" autocomplete="off" inputmode="text"></label>
       <label class="field"><span>اسم اللاعب</span><input id="name" class="input" placeholder="اسمك" maxlength="20" autocomplete="off"></label>
       <button id="joinbtn" class="btn primary lg wide">انضم إلى الغرفة</button>
       <div id="jerr" class="j-err" role="alert" aria-live="polite"></div>
       <a data-link="/" class="text-link">العودة للرئيسية</a>
     </section>
-    <aside class="door-aside">${PhoneMockup("secret")}<div class="door-caption"><span>لك وحدك</span><b>ما تعرفه لا يظهر على الشاشة العامة.</b></div></aside>
-  </main>${footer()}`;
-  revealPage();
-  const codeElement = qs("#code");
-  const nameElement = qs("#name");
-  (code ? nameElement : codeElement).focus();
-  const submit = () => {
-    const roomCode = codeElement.value.trim();
-    const name = nameElement.value.trim();
-    if (!roomCode) return fieldError(codeElement, "اكتب رمز الغرفة");
-    if (!name) return fieldError(nameElement, "اكتب اسمك");
-    backfireAudio.cta();
-    location.href = `/play?code=${encodeURIComponent(roomCode)}&name=${encodeURIComponent(name)}`;
-  };
-  qs("#joinbtn")?.addEventListener("click", submit);
-  nameElement.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") submit();
-  });
-  codeElement.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") nameElement.focus();
-  });
-}
-function howToPlay() {
-  document.body.dataset.route = "how";
-  app.innerHTML = `${header("how")}<main id="main" class="how-noir" tabindex="-1">
+    <aside class="door-aside">${et("secret")}<div class="door-caption"><span>لك وحدك</span><b>ما تعرفه لا يظهر على الشاشة العامة.</b></div></aside>
+  </main>${_e()}`,rt();let t=re("#code"),r=re("#name");(e?r:t).focus();let a=()=>{let n=t.value.trim(),i=r.value.trim();if(!n)return pr(t,"اكتب رمز الغرفة");if(!i)return pr(r,"اكتب اسمك");Ee.cta(),location.href=`/play?code=${encodeURIComponent(n)}&name=${encodeURIComponent(i)}`};re("#joinbtn")?.addEventListener("click",a),r.addEventListener("keydown",n=>{n.key==="Enter"&&a()}),t.addEventListener("keydown",n=>{n.key==="Enter"&&r.focus()})}function Ra(){document.body.dataset.route="how",xe.innerHTML=`${ye("how")}<main id="main" class="how-noir" tabindex="-1">
     <header class="how-hero" data-reveal>
       <span class="eyebrow">كيف تلعب</span>
       <h1>الشاشة تحكي.<br>الجوالات تخبّي.</h1>
@@ -4934,12 +1193,12 @@ function howToPlay() {
     </section>
 
     <div class="how-steps">
-      <article class="how-step" data-reveal><span class="n">01</span><div><h3>افتح الغرفة على الشاشة</h3><p>أنشئ الغرفة من تلفاز أو متصفح كبير يراه الجميع، فيظهر رمز الغرفة و QR.</p></div>${stepArt("room")}</article>
-      <article class="how-step" data-reveal><span class="n">02</span><div><h3>ادخلوا بمسح الرمز</h3><p>كل لاعب يمسح رمز QR أو يكتب الكود من جواله — بلا تسجيل ولا انتظار.</p></div>${stepArt("scan")}</article>
-      <article class="how-step" data-reveal><span class="n">03</span><div><h3>استلم معلوماتك السرية</h3><p>تصل لكل جوال بطاقة خاصة لا يراها غيره: دور، أو معلومة، أو ورقة ضغط.</p></div>${stepArt("secret")}</article>
-      <article class="how-step" data-reveal><span class="n">04</span><div><h3>ناقشوا وتشاوروا</h3><p>الكلام على الطاولة: وعود، وتحالفات، ونصف حقائق. اللعبة الحقيقية بينكم لا في جوالكم.</p></div>${stepArt("discuss")}</article>
-      <article class="how-step" data-reveal><span class="n">05</span><div><h3>اتخذ قرارك سرًّا</h3><p>تقفل حركتك على جوالك بعيدًا عن العيون، وتبقى مخفية حتى تكشفها الشاشة.</p></div>${stepArt("decide")}</article>
-      <article class="how-step" data-reveal><span class="n">06</span><div><h3>واجه العاقبة… ثم تذكّرها</h3><p>النتيجة تظهر أمام الجميع على الشاشة، وقرارك يُحفظ ليعود ضدك أو لك في جولة قادمة.</p></div>${stepArt("return")}</article>
+      <article class="how-step" data-reveal><span class="n">01</span><div><h3>افتح الغرفة على الشاشة</h3><p>أنشئ الغرفة من تلفاز أو متصفح كبير يراه الجميع، فيظهر رمز الغرفة و QR.</p></div>${Be("room")}</article>
+      <article class="how-step" data-reveal><span class="n">02</span><div><h3>ادخلوا بمسح الرمز</h3><p>كل لاعب يمسح رمز QR أو يكتب الكود من جواله — بلا تسجيل ولا انتظار.</p></div>${Be("scan")}</article>
+      <article class="how-step" data-reveal><span class="n">03</span><div><h3>استلم معلوماتك السرية</h3><p>تصل لكل جوال بطاقة خاصة لا يراها غيره: دور، أو معلومة، أو ورقة ضغط.</p></div>${Be("secret")}</article>
+      <article class="how-step" data-reveal><span class="n">04</span><div><h3>ناقشوا وتشاوروا</h3><p>الكلام على الطاولة: وعود، وتحالفات، ونصف حقائق. اللعبة الحقيقية بينكم لا في جوالكم.</p></div>${Be("discuss")}</article>
+      <article class="how-step" data-reveal><span class="n">05</span><div><h3>اتخذ قرارك سرًّا</h3><p>تقفل حركتك على جوالك بعيدًا عن العيون، وتبقى مخفية حتى تكشفها الشاشة.</p></div>${Be("decide")}</article>
+      <article class="how-step" data-reveal><span class="n">06</span><div><h3>واجه العاقبة… ثم تذكّرها</h3><p>النتيجة تظهر أمام الجميع على الشاشة، وقرارك يُحفظ ليعود ضدك أو لك في جولة قادمة.</p></div>${Be("return")}</article>
     </div>
 
     <section class="how-endgame on-dark" data-reveal>
@@ -4973,130 +1232,5 @@ function howToPlay() {
     </section>
 
     <div class="how-cta" data-reveal><h2>والباقي عليكم.</h2><div class="hero-cta"><a data-link="/create" class="btn primary lg">ابدأ لعبة</a><a data-link="/join" class="btn ghost lg">انضم بكود</a></div></div>
-  </main>${footer()}`;
-  bindPageMotion();
-}
-function stepArt(kind) {
-  const s = (inner) => `<svg class="step-art" viewBox="0 0 120 78" aria-hidden="true">${inner}</svg>`;
-  const R = "#b3202d";
-  const G = "#707075";
-  const L = "#38383d";
-  switch (kind) {
-    case "room":
-      return s(`<rect x="16" y="12" width="88" height="48" rx="4" fill="none" stroke="${G}" stroke-width="2"/><rect x="52" y="62" width="16" height="4" fill="${L}"/><rect x="44" y="66" width="32" height="3" fill="${L}"/>`);
-    case "scan":
-      return s(`<path d="M22 30 V20 H32 M88 20 H98 V30 M98 48 V58 H88 M32 58 H22 V48" fill="none" stroke="${G}" stroke-width="2"/><line x1="32" y1="39" x2="88" y2="39" stroke="${R}" stroke-width="2"/>`);
-    case "secret":
-      return s(`<rect x="34" y="12" width="52" height="54" fill="${L}"/><rect x="44" y="32" width="32" height="8" fill="${R}"/><rect x="44" y="46" width="20" height="5" fill="${G}"/>`);
-    case "discuss":
-      return s(`<rect x="18" y="20" width="42" height="28" rx="5" fill="none" stroke="${G}" stroke-width="2"/><path d="M30 48 l0 8 8 -8z" fill="${G}"/><rect x="62" y="34" width="40" height="26" rx="5" fill="none" stroke="${R}" stroke-width="2"/><path d="M90 60 l0 7 -7 -7z" fill="${R}"/><line x1="26" y1="30" x2="50" y2="30" stroke="${G}" stroke-width="2"/><line x1="70" y1="44" x2="94" y2="44" stroke="${R}" stroke-width="2"/>`);
-    case "decide":
-      return s(`<rect x="36" y="14" width="48" height="50" rx="6" fill="none" stroke="${G}" stroke-width="2"/><rect x="44" y="24" width="14" height="12" rx="2" fill="none" stroke="${G}" stroke-width="1.6"/><rect x="62" y="24" width="14" height="12" rx="2" fill="${R}"/><rect x="44" y="46" width="32" height="8" rx="2" fill="${R}"/>`);
-    case "return":
-      return s(`<path d="M28 42 C 50 18 80 20 92 38 C 99 48 90 58 78 52" fill="none" stroke="${R}" stroke-width="2.4" stroke-linecap="round"/><path d="M78 52 l11 -2 -3 10z" fill="${R}"/><circle cx="28" cy="42" r="3.4" fill="${R}"/>`);
-    default:
-      return s("");
-  }
-}
-function fieldError(element, message) {
-  element.classList.add("err");
-  const error = qs("#jerr");
-  if (error) error.textContent = message;
-  backfireAudio.error();
-  if (!reduced()) element.animate({ transform: ["translateX(-6px)", "translateX(5px)", "translateX(0)"] }, { duration: 180 });
-  window.setTimeout(() => element.classList.remove("err"), 700);
-}
-function bindPageMotion() {
-  revealPage();
-  qsa(".btn.primary").forEach((button) => button.addEventListener("pointerenter", () => backfireAudio.cta(), { once: true }));
-}
-function revealPage() {
-  const observer = observeReveal();
-  cleanups.push(() => observer.disconnect());
-}
-function modesRoute(path) {
-  document.body.dataset.route = "modes";
-  const page = renderModesPage(path, location.search);
-  updateMeta(page.title, page.description);
-  app.innerHTML = `${header(page.active)}${page.html}${footer()}`;
-  page.bind?.(go, render);
-  bindPageMotion();
-}
-function productRoute(path) {
-  document.body.dataset.route = "product";
-  const page = renderProductPage(path, location.search);
-  updateMeta(rebrandVisibleText(page.title), rebrandVisibleText(page.description));
-  app.innerHTML = `${header(page.active)}${rebrandVisibleText(page.html)}${footer()}`;
-  page.bind?.(go, render);
-  revealPage();
-}
-function updateMeta(title, description) {
-  document.title = `${SITE_BRAND} — ${title}`;
-  document.querySelector('meta[name="description"]')?.setAttribute("content", description);
-  const canonical = document.querySelector('link[rel="canonical"]') ?? document.head.appendChild(Object.assign(document.createElement("link"), { rel: "canonical" }));
-  canonical.href = new URL(location.pathname, configuredPublicOrigin || location.origin).href;
-  document.querySelector('meta[property="og:url"]')?.setAttribute("content", canonical.href);
-  document.querySelector('meta[property="og:title"]')?.setAttribute("content", document.title);
-  document.querySelector('meta[property="og:description"]')?.setAttribute("content", description);
-  const preview = new URL(SOCIAL_PREVIEW_PATH, configuredPublicOrigin || location.origin).href;
-  document.querySelector('meta[property="og:image"]')?.setAttribute("content", preview);
-  document.querySelector('meta[name="twitter:image"]')?.setAttribute("content", preview);
-}
-function bindChrome() {
-  const head = qs("#site-head");
-  const onScroll = () => {
-    head?.classList.toggle("scrolled", scrollY > 12);
-  };
-  onScroll();
-  addEventListener("scroll", onScroll, { passive: true });
-  cleanups.push(() => removeEventListener("scroll", onScroll));
-  const menu = qs("#menu");
-  const panel = qs("#mpanel");
-  const close = () => {
-    if (panel) panel.hidden = true;
-    menu?.setAttribute("aria-expanded", "false");
-    document.body.classList.remove("menu-open");
-  };
-  menu?.addEventListener("click", (event) => {
-    event.stopPropagation();
-    if (!panel) return;
-    panel.hidden = !panel.hidden;
-    menu.setAttribute("aria-expanded", String(!panel.hidden));
-    document.body.classList.toggle("menu-open", !panel.hidden);
-  });
-  const outside = (event) => {
-    const target = event.target;
-    if (!panel?.contains(target) && !menu?.contains(target)) close();
-  };
-  const escape = (event) => {
-    if (event.key === "Escape") {
-      close();
-      menu?.focus();
-    }
-  };
-  document.addEventListener("click", outside);
-  document.addEventListener("keydown", escape);
-  cleanups.push(() => document.removeEventListener("click", outside), () => document.removeEventListener("keydown", escape));
-}
-function bindNetworkNotice() {
-  const paint = () => {
-    qs("#network-notice")?.remove();
-    if (navigator.onLine) return;
-    const banner = document.createElement("div");
-    banner.id = "network-notice";
-    banner.className = "network-notice";
-    banner.setAttribute("role", "status");
-    banner.textContent = "أنت غير متصل — إنشاء الغرف والانضمام يحتاجان اتصالًا بالإنترنت.";
-    document.body.append(banner);
-  };
-  addEventListener("online", paint);
-  addEventListener("offline", paint);
-  paint();
-  cleanups.push(() => {
-    removeEventListener("online", paint);
-    removeEventListener("offline", paint);
-    qs("#network-notice")?.remove();
-  });
-}
-queueMicrotask(render);
+  </main>${_e()}`,xt()}function Be(e){let t=i=>`<svg class="step-art" viewBox="0 0 120 78" aria-hidden="true">${i}</svg>`,r="#b3202d",a="#707075",n="#38383d";switch(e){case"room":return t(`<rect x="16" y="12" width="88" height="48" rx="4" fill="none" stroke="${a}" stroke-width="2"/><rect x="52" y="62" width="16" height="4" fill="${n}"/><rect x="44" y="66" width="32" height="3" fill="${n}"/>`);case"scan":return t(`<path d="M22 30 V20 H32 M88 20 H98 V30 M98 48 V58 H88 M32 58 H22 V48" fill="none" stroke="${a}" stroke-width="2"/><line x1="32" y1="39" x2="88" y2="39" stroke="${r}" stroke-width="2"/>`);case"secret":return t(`<rect x="34" y="12" width="52" height="54" fill="${n}"/><rect x="44" y="32" width="32" height="8" fill="${r}"/><rect x="44" y="46" width="20" height="5" fill="${a}"/>`);case"discuss":return t(`<rect x="18" y="20" width="42" height="28" rx="5" fill="none" stroke="${a}" stroke-width="2"/><path d="M30 48 l0 8 8 -8z" fill="${a}"/><rect x="62" y="34" width="40" height="26" rx="5" fill="none" stroke="${r}" stroke-width="2"/><path d="M90 60 l0 7 -7 -7z" fill="${r}"/><line x1="26" y1="30" x2="50" y2="30" stroke="${a}" stroke-width="2"/><line x1="70" y1="44" x2="94" y2="44" stroke="${r}" stroke-width="2"/>`);case"decide":return t(`<rect x="36" y="14" width="48" height="50" rx="6" fill="none" stroke="${a}" stroke-width="2"/><rect x="44" y="24" width="14" height="12" rx="2" fill="none" stroke="${a}" stroke-width="1.6"/><rect x="62" y="24" width="14" height="12" rx="2" fill="${r}"/><rect x="44" y="46" width="32" height="8" rx="2" fill="${r}"/>`);case"return":return t(`<path d="M28 42 C 50 18 80 20 92 38 C 99 48 90 58 78 52" fill="none" stroke="${r}" stroke-width="2.4" stroke-linecap="round"/><path d="M78 52 l11 -2 -3 10z" fill="${r}"/><circle cx="28" cy="42" r="3.4" fill="${r}"/>`);default:return t("")}}function pr(e,t){e.classList.add("err");let r=re("#jerr");r&&(r.textContent=t),Ee.error(),me()||e.animate({transform:["translateX(-6px)","translateX(5px)","translateX(0)"]},{duration:180}),window.setTimeout(()=>e.classList.remove("err"),700)}function xt(){rt(),Et(".btn.primary").forEach(e=>e.addEventListener("pointerenter",()=>Ee.cta(),{once:!0}))}function rt(){let e=zt();ze.push(()=>e.disconnect())}function Ia(e){document.body.dataset.route="modes";let t=tr(e,location.search);be(t.title,t.description),xe.innerHTML=`${ye(t.active)}${t.html}${_e()}`,t.bind?.(bt,De),xt()}function Ba(e){document.body.dataset.route="product";let t=Yt(e,location.search);be(Qe(t.title),Qe(t.description)),xe.innerHTML=`${ye(t.active)}${Qe(t.html)}${_e()}`,t.bind?.(bt,De),rt()}function be(e,t){document.title=`${ft} — ${e}`,document.querySelector('meta[name="description"]')?.setAttribute("content",t);let r=document.querySelector('link[rel="canonical"]')??document.head.appendChild(Object.assign(document.createElement("link"),{rel:"canonical"}));r.href=new URL(location.pathname,Ne||location.origin).href,document.querySelector('meta[property="og:url"]')?.setAttribute("content",r.href),document.querySelector('meta[property="og:title"]')?.setAttribute("content",document.title),document.querySelector('meta[property="og:description"]')?.setAttribute("content",t);let a=new URL(ar,Ne||location.origin).href;document.querySelector('meta[property="og:image"]')?.setAttribute("content",a),document.querySelector('meta[name="twitter:image"]')?.setAttribute("content",a)}function za(){let e=re("#site-head"),t=()=>{e?.classList.toggle("scrolled",scrollY>12)};t(),addEventListener("scroll",t,{passive:!0}),ze.push(()=>removeEventListener("scroll",t));let r=re("#menu"),a=re("#mpanel"),n=()=>{a&&(a.hidden=!0),r?.setAttribute("aria-expanded","false"),document.body.classList.remove("menu-open")};r?.addEventListener("click",d=>{d.stopPropagation(),a&&(a.hidden=!a.hidden,r.setAttribute("aria-expanded",String(!a.hidden)),document.body.classList.toggle("menu-open",!a.hidden))});let i=d=>{let p=d.target;!a?.contains(p)&&!r?.contains(p)&&n()},s=d=>{d.key==="Escape"&&(n(),r?.focus())};document.addEventListener("click",i),document.addEventListener("keydown",s),ze.push(()=>document.removeEventListener("click",i),()=>document.removeEventListener("keydown",s))}function Da(){let e=()=>{if(re("#network-notice")?.remove(),navigator.onLine)return;let t=document.createElement("div");t.id="network-notice",t.className="network-notice",t.setAttribute("role","status"),t.textContent="أنت غير متصل — إنشاء الغرف والانضمام يحتاجان اتصالًا بالإنترنت.",document.body.append(t)};addEventListener("online",e),addEventListener("offline",e),e(),ze.push(()=>{removeEventListener("online",e),removeEventListener("offline",e),re("#network-notice")?.remove()})}queueMicrotask(De);
 //# sourceMappingURL=bundle.js.map

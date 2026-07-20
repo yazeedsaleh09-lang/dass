@@ -420,8 +420,10 @@ function scoreRound1(game: BfGame): void {
       case 'r1o_threat_low':
         won = game.world.threat <= 1;
         break;
-      case 'r1o_not_operator':
-        won = r1.operatorId !== p.id;
+      case 'r1o_minority':
+        // Real agency for every seat: you must cast a vote that lands on the losing side. A tie
+        // has no minority, so it is not a win — the same fairness the majority objective uses.
+        won = !r1.tiedDefault && !!vote && vote !== r1.operatorId;
         break;
       case 'r1o_majority':
         won = !r1.tiedDefault && !!vote && vote === r1.operatorId;
@@ -946,7 +948,16 @@ export function r3Reveal(game: BfGame): R3Reveal | undefined {
   };
 }
 
-/** The five cards + the required one-sentence causal summary (§29, §30). */
+/**
+ * The causal reveal (§29, §30). ADAPTIVE: the deck is directed, not fixed. Two beats are
+ * causally load-bearing and ALWAYS shown — the first choice that born the Echo, and the outcome
+ * that ended it. The three interference/protection beats appear ONLY when that action actually
+ * happened, so the reveal never spends a card announcing "nothing happened". A beat that occurred
+ * is always kept, even when it changed no outcome, because the fact that a player *tried* is the
+ * betrayal the room argues about. Cards always stay in the fixed causal order — omission never
+ * reorders the chain — and the one-sentence summary + origin carry the full chain in text as a
+ * legibility floor, so compressing a beat never hides why the outcome happened.
+ */
 export function buildFinalReveal(game: BfGame): BfFinalReveal {
   const n = (id: string | null | undefined): string => nameOf(game, id);
   const r1 = game.r1;
@@ -957,6 +968,8 @@ export function buildFinalReveal(game: BfGame): BfFinalReveal {
   // NOTE ON COPY: player names are free text and carry no inferable gender, so every generated
   // line uses nominal, gender-neutral Arabic ("اختيار X" rather than "اختير X"). A masculine
   // verb reads as a bug the moment someone at the table is called سارة.
+
+  // Beat 1 — the first choice. ALWAYS shown: this is where the Echo was born.
   const votesFor = (id: string | null): number => (id ? (r1.tally[id] ?? 0) : 0);
   const other = r1.candidateIds.find((id) => id !== r1.operatorId) ?? null;
   cards.push({
@@ -969,38 +982,43 @@ export function buildFinalReveal(game: BfGame): BfFinalReveal {
     tone: 'neutral',
   });
 
-  cards.push({
-    id: 'hidden_interference',
-    title: 'التدخّل الخفي',
-    line: r2.disrupt
-      ? `${n(r2.disrupt.actorId)} — تعطيل ${n(r2.disrupt.target)}${r2.disruptChangedCarrier ? '، وبه تغيّرت هوية الحامل.' : '، والحامل لم يتغيّر.'}`
-      : 'لم يقع أي تعطيل في تلك الجولة.',
-    focusId: r2.disrupt?.actorId ?? null,
-    tone: 'interference',
-  });
+  // Beat 2 — hidden interference. Shown only when a Disrupt was actually cast.
+  if (r2.disrupt) {
+    cards.push({
+      id: 'hidden_interference',
+      title: 'التدخّل الخفي',
+      line: `${n(r2.disrupt.actorId)} — تعطيل ${n(r2.disrupt.target)}${r2.disruptChangedCarrier ? '، وبه تغيّرت هوية الحامل.' : '، والحامل لم يتغيّر.'}`,
+      focusId: r2.disrupt.actorId,
+      tone: 'interference',
+    });
+  }
 
-  cards.push({
-    id: 'changed_path',
-    title: 'المسار المُبدَّل',
-    line: !r2.redirect
-      ? 'لم يُنقل أي دعم.'
-      : r2.redirectApplied
+  // Beat 3 — the changed path. Shown only when a Redirect was actually attempted (a failed
+  // attempt is kept: it explains why the carrier did NOT move).
+  if (r2.redirect) {
+    cards.push({
+      id: 'changed_path',
+      title: 'المسار المُبدَّل',
+      line: r2.redirectApplied
         ? `${n(r2.redirect.actorId)} — نقل دعمٍ من ${n(r2.redirect.source)} إلى ${n(r2.redirect.target)}${r2.redirectChangedCarrier ? '، وبه تبدّل الحامل.' : '، والحامل لم يتبدّل.'}`
         : `${n(r2.redirect.actorId)} — محاولة نقل دعمٍ من ${n(r2.redirect.source)}، وسقطت لأن المصدر بلا دعمٍ موجب.`,
-    focusId: r2.redirect?.actorId ?? null,
-    tone: 'interference',
-  });
+      focusId: r2.redirect.actorId,
+      tone: 'interference',
+    });
+  }
 
-  cards.push({
-    id: 'protection',
-    title: 'الحماية',
-    line: r3.protectedId
-      ? `${n(r3.guardianId)} — حماية ${n(r3.protectedId)} في الجولة الأخيرة.`
-      : `${n(r3.guardianId)} — بلا حماية مستخدَمة.`,
-    focusId: r3.protectedId,
-    tone: 'protection',
-  });
+  // Beat 4 — the protection. Shown only when the Guardian actually shielded someone.
+  if (r3.protectedId) {
+    cards.push({
+      id: 'protection',
+      title: 'الحماية',
+      line: `${n(r3.guardianId)} — حماية ${n(r3.protectedId)} في الجولة الأخيرة.`,
+      focusId: r3.protectedId,
+      tone: 'protection',
+    });
+  }
 
+  // Beat 5 — the outcome. ALWAYS shown, and always last: the beat the room came for.
   cards.push({
     id: 'backfire',
     title: r3.outcome === 'backfire' ? 'الارتداد' : 'النهاية',

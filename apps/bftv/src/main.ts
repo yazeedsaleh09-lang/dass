@@ -6,6 +6,7 @@ import {
   WORLD_TEXT,
   addStyle,
   arNum,
+  arDigits,
   cut,
   escapeHtml,
   injectBase,
@@ -45,12 +46,16 @@ let view: BfClientView | null = null;
 let prev: BfClientView | null = null;
 let mode: 'boot' | 'lobby' | 'world' | 'final' | 'results' = 'boot';
 let seenIds = new Set<string>();
+/** Fires the "crew complete" beat exactly once per lobby, on the fifth arrival. */
+let crewAnnounced = false;
 let phaseStart = 0;
 let phaseEnd = 0;
 let lastSecond = -1;
 /** Bumped on every phase change; a running cinematic aborts when its token goes stale. */
 let sequenceToken = 0;
 let lastThreat = 1;
+/** True once the server has handed this TV the host token — only the host may restart the room. */
+let isHost = false;
 
 setupMute();
 void boot();
@@ -76,7 +81,12 @@ async function boot(): Promise<void> {
     let openingDone = false;
     room = await openRoom();
     room.onMessage('host', (m: { token?: string }) => {
-      if (m?.token && room) sessionStorage.setItem('bf_host', JSON.stringify({ roomId: room.roomId, token: m.token }));
+      if (m?.token && room) {
+        isHost = true;
+        sessionStorage.setItem('bf_host', JSON.stringify({ roomId: room.roomId, token: m.token }));
+        // A results screen already on the wall must gain its controls the moment host is confirmed.
+        if (mode === 'results' && view) void resultsScene(view);
+      }
     });
     room.onMessage('state', (v: BfClientView) => {
       prev = view;
@@ -227,7 +237,7 @@ function renderLobby(v: BfClientView): void {
         </div>
       </div>
       <div class="lb-seats">
-        <div class="lb-count eyebrow"></div>
+        <div class="lb-count" id="lbcount"></div>
         <div class="seat-grid" id="seatgrid"></div>
       </div>
       <div class="lb-foot" id="lbfoot"></div>
@@ -239,19 +249,35 @@ function updateLobby(v: BfClientView, first = false): void {
   const grid = qs('#seatgrid');
   if (!grid) return;
   const connected = v.players.filter((p) => p.connected);
+  const present = connected.length;
   const readyCount = connected.filter((p) => p.ready).length;
-  const count = qs('.lb-count');
-  if (count) count.textContent = `${COPY.seats} ${arNum(connected.length)}/${arNum(5)} · ${arNum(readyCount)} ${COPY.ready}`;
+  const full = present === 5;
+  const canStart = full && connected.every((p) => p.ready);
+
+  // The single status the room reads across the room: how many are here, how many are set.
+  // "الطاقم مكتمل" is a distinct state, not the same small count with a different number.
+  const count = qs('#lbcount');
+  if (count) {
+    count.innerHTML = full
+      ? `<span class="lc-badge">${COPY.crewComplete}</span><span class="lc-ready mono">${arNum(readyCount)}/${arNum(5)} ${COPY.readyPlural}</span>`
+      : `<span class="lc-count mono">${arNum(present)}/${arNum(5)}</span><span class="lc-word">${COPY.present}</span>`;
+  }
 
   const cards = v.players.slice(0, 5).map((p) => lobbySeat(p));
   const ghosts = Array.from({ length: Math.max(0, 5 - v.players.length) }, (_, i) => ghostSeat(v.players.length + i));
   grid.innerHTML = cards.concat(ghosts).join('');
 
-  const canStart = connected.length === 5 && connected.every((p) => p.ready);
+  const lobby = qs('.lobby');
+  if (lobby) {
+    lobby.classList.toggle('crew-complete', full);
+    lobby.classList.toggle('all-ready', canStart);
+  }
+
   const foot = qs('#lbfoot');
   if (foot) {
+    const hint = canStart ? COPY.allReadyGo : full ? COPY.crewReady : COPY.needFive;
     foot.innerHTML = `
-      <span class="lb-hint">${canStart ? COPY.everyoneReady : COPY.needFive}</span>
+      <span class="lb-hint ${canStart ? 'go' : ''}">${hint}</span>
       <button id="tv-start" class="btn primary lg" ${canStart ? '' : 'disabled'}>${COPY.start}</button>`;
     qs('#tv-start')?.addEventListener('click', () => {
       if (!canStart) return;
@@ -260,14 +286,25 @@ function updateLobby(v: BfClientView, first = false): void {
     });
   }
 
+  let arrived = false;
   for (const p of v.players) {
     if (seenIds.has(p.id)) continue;
     seenIds.add(p.id);
     if (first) continue;
+    arrived = true;
     const card = qs(`.seat-card[data-id="${cssId(p.id)}"]`);
     if (card) cut(card);
     sfx.join();
   }
+  // The fifth arrival is the moment the room has been waiting for: mark it louder than a join.
+  if (arrived && full && !crewAnnounced) {
+    crewAnnounced = true;
+    sfx.event();
+    const badge = qs('.lc-badge');
+    if (badge) cut(badge);
+    for (const card of qsa('.seat-card:not(.ghost)')) cut(card, 40);
+  }
+  if (!full) crewAnnounced = false;
 }
 
 function lobbySeat(p: BfPublicPlayer): string {
@@ -440,8 +477,36 @@ async function beat(ms: number, token: number): Promise<boolean> {
   return live(token);
 }
 
+/**
+ * The eyes-up beat: a hard 3·2·1 the instant the host starts, so the whole room turns to the TV
+ * before the narration begins. Aborts cleanly if the phase moves on under it (reconnect/resync).
+ */
+async function countdownScene(token: number): Promise<void> {
+  const overlay = document.createElement('div');
+  overlay.className = 'tv-countdown';
+  stage.appendChild(overlay);
+  for (const n of ['٣', '٢', '١']) {
+    if (!live(token)) return void overlay.remove();
+    overlay.innerHTML = `<span class="cd-num">${n}</span>`;
+    const num = qs('.cd-num', overlay);
+    if (num) cut(num);
+    sfx.pulse(n === '١');
+    if (!(await beat(reduced() ? 180 : 620, token))) return void overlay.remove();
+  }
+  if (live(token)) {
+    overlay.innerHTML = `<span class="cd-go">${COPY.matchStarting}</span>`;
+    const go = qs('.cd-go', overlay);
+    if (go) reveal(go);
+    sfx.event();
+    await beat(reduced() ? 150 : 560, token);
+  }
+  overlay.remove();
+}
+
 async function introScene(v: BfClientView, token: number): Promise<void> {
   clearTitle();
+  await countdownScene(token);
+  if (!live(token)) return;
   const svg = qs('.relay-svg');
   svg?.classList.add('intro-mode');
   drawRelayLine();
@@ -935,7 +1000,7 @@ async function finalRevealScene(v: BfClientView, ): Promise<void> {
       <article class="rc tone-${card.tone}">
         <div class="rc-index mono">${arNum(i + 1)} / ${arNum(final.cards.length)}</div>
         <h2 class="rc-title">${escapeHtml(card.title)}</h2>
-        <p class="rc-line">${escapeHtml(card.line)}</p>
+        <p class="rc-line">${escapeHtml(arDigits(card.line))}</p>
       </article>`;
     const article = qs('.rc', slot)!;
     reveal(article);
@@ -951,8 +1016,8 @@ async function finalRevealScene(v: BfClientView, ): Promise<void> {
   if (!live(token)) return;
   slot.innerHTML = `
     <article class="rc summary">
-      <p class="rc-summary">${escapeHtml(final.summary)}</p>
-      <p class="rc-origin">${escapeHtml(final.origin)}</p>
+      <p class="rc-summary">${escapeHtml(arDigits(final.summary))}</p>
+      <p class="rc-origin">${escapeHtml(arDigits(final.origin))}</p>
       ${final.collapsed ? `<p class="rc-collapse">${COPY.collapseLine}</p>` : ''}
     </article>`;
   reveal(qs('.rc', slot)!);
@@ -979,8 +1044,15 @@ async function resultsScene(v: BfClientView): Promise<void> {
         ${v.sharedFailure ? `<p class="rs-note">${COPY.collapseLine}</p>` : ''}
       </div>
       <div class="rs-rows" id="rsrows"></div>
-      <div class="rs-summary">${escapeHtml(v.finalReveal?.summary ?? '')}</div>
-      <div class="rs-foot muted">${COPY.playAgain} · ${COPY.newCrew} — من جوّال المُضيف</div>
+      <div class="rs-summary">${escapeHtml(arDigits(v.finalReveal?.summary ?? ''))}</div>
+      ${
+        isHost
+          ? `<div class="rs-actions">
+              <button id="tv-again" class="btn primary lg">${COPY.playAgain}</button>
+              <button id="tv-newcrew" class="btn ghost lg">${COPY.newCrew}</button>
+            </div>`
+          : `<div class="rs-foot muted">${COPY.playAgain} · ${COPY.newCrew} — من جوّال المُضيف</div>`
+      }
     </div>`;
   const rows = qs('#rsrows')!;
   results.forEach((r, i) => {
@@ -997,6 +1069,15 @@ async function resultsScene(v: BfClientView): Promise<void> {
     rows.appendChild(row);
   });
   stagger(qsa('.rs-row', rows), 140);
+  // The host controls the room's replay from the TV, exactly as it owned "Start" in the lobby.
+  qs('#tv-again')?.addEventListener('click', () => {
+    sfx.event();
+    room?.send('restart', {});
+  });
+  qs('#tv-newcrew')?.addEventListener('click', () => {
+    sfx.press();
+    room?.send('newCrew', {});
+  });
   sfx.resultsIn();
   await beat(200, token);
 }

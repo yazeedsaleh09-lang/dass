@@ -112,3 +112,7 @@ export const AR_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 export function arNum(n: number): string {
   return String(n).replace(/\d/g, (d) => AR_DIGITS[Number(d)] ?? d);
 }
+/** Localize any Latin digits inside an already-built string (e.g. server-generated reveal copy). */
+export function arDigits(s: string): string {
+  return s.replace(/\d/g, (d) => AR_DIGITS[Number(d)] ?? d);
+}

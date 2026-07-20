@@ -171,7 +171,27 @@ async function main(): Promise<void> {
     check(final.world.threat >= 0 && final.world.threat <= 5, 'Threat stays inside 0–5');
 
     const cards = final.finalReveal?.cards ?? [];
-    check(cards.length === 5, 'the final reveal is exactly five cards');
+    const cardIds = cards.map((c) => c.id);
+    const CANON = ['first_choice', 'hidden_interference', 'changed_path', 'protection', 'backfire'];
+    const isSubsequence = (ids: string[]): boolean => {
+      let k = 0;
+      for (const id of ids) {
+        while (k < CANON.length && CANON[k] !== id) k++;
+        if (k >= CANON.length) return false;
+        k++;
+      }
+      return true;
+    };
+    const FILLER = ['لم يقع أي تعطيل', 'لم يُنقل أي دعم', 'بلا حماية مستخدَمة'];
+    // Adaptive reveal: opens on the first choice, lands on the outcome, keeps causal order, and
+    // never spends a card announcing that nothing happened. This scripted match casts a Disrupt,
+    // a Redirect and a Guardian protection, so every beat is real and all five cards appear.
+    check(cards.length >= 2 && cards.length <= 5, `the final reveal is 2–5 causal cards (got ${cards.length})`);
+    check(cardIds[0] === 'first_choice', 'the reveal opens on the first choice');
+    check(cardIds[cardIds.length - 1] === 'backfire', 'the reveal lands on the outcome');
+    check(isSubsequence(cardIds), 'the cards follow the fixed causal order with no reordering');
+    check(!cards.some((c) => FILLER.some((f) => c.line.includes(f))), 'no card announces that nothing happened');
+    check(cards.length === 5, 'this scripted backfire (disrupt + redirect + protection) shows all five beats');
     check(!!final.finalReveal?.summary && final.finalReveal.summary.split('.').filter((s) => s.trim()).length === 1,
       'the causal summary is one sentence');
     const redirectorName = final.players.find((p) => p.id === final.r3?.redirectorId)?.nickname ?? '';

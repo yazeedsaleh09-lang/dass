@@ -136,7 +136,7 @@ function home(): void {
         <span class="eyebrow">لعبة جماعية للشاشة والجوال</span>
         <h1>كل حركة<br>لها <em>عواقب.</em></h1>
         <p class="hero-lead">كل لاعب يرى جزءًا مختلفًا. القرار سري، والنتيجة أمام الجميع.</p>
-        <ul class="hero-facts" aria-label="مواصفات سريعة"><li>٤–٨ لاعبين</li><li>شاشة واحدة</li><li>جوال لكل لاعب</li><li>بلا تحميل</li></ul>
+        <ul class="hero-facts" aria-label="مواصفات سريعة"><li>٥ لاعبين</li><li>شاشة واحدة</li><li>جوال لكل لاعب</li><li>بلا تحميل</li></ul>
         <div class="hero-cta"><a data-link="/create" class="btn primary lg">ابدأ لعبة</a><a data-link="/join" class="btn ghost lg">انضم بكود</a></div>
         <div class="hero-note"><i></i><span>نسخة تجريبية — نظام السيناريو الجديد قيد التطوير.</span></div>
       </div></div>
@@ -209,7 +209,7 @@ function createRoom(): void {
       <span class="eyebrow">غرفة جديدة</span>
       <h1>افتح الشاشة.<br>واجمع الشلة.</h1>
       <p>سننقلك إلى شاشة التلفزيون الحالية. هناك يظهر رمز الغرفة ليدخل اللاعبون من جوالاتهم.</p>
-      <div class="door-specs"><span><b>٤–٨</b>لاعبين</span><span><b>رمز</b>أو كود</span><span><b>بلا</b>تحميل</span></div>
+      <div class="door-specs"><span><b>٥</b>لاعبين</span><span><b>رمز</b>أو كود</span><span><b>بلا</b>تحميل</span></div>
       <button id="startbtn" class="btn primary lg wide">افتح الغرفة على التلفاز</button>
       <a data-link="/" class="text-link">العودة للرئيسية</a>
     </section>

@@ -67,7 +67,7 @@ async function main(): Promise<void> {
     check(traversal.status === 404, 'encoded path traversal is rejected');
     check(site.headers.get('content-security-policy')?.includes("default-src 'self'") === true, 'security headers are attached');
 
-    const productPaths = ['/store', '/store/product', '/pricing', '/login', '/signup', '/account/settings', '/checkout', '/faq', '/support', '/legal/privacy', '/legal/refunds', '/not-a-real-route'];
+    const productPaths = ['/modes', '/modes/mode', '/store', '/store/product', '/pricing', '/login', '/signup', '/account/settings', '/checkout', '/faq', '/support', '/legal/privacy', '/legal/refunds', '/not-a-real-route'];
     const productResponses = await Promise.all(productPaths.map((route) => fetch(origin + route)));
     const productBodies = await Promise.all(productResponses.map((response) => response.text()));
     check(productResponses.every((response) => response.status === 200) && productBodies.every((body) => body.includes('<div id="app">')), 'all commercial routes and the client 404 refresh through the site shell');

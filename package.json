@@ -47,6 +47,8 @@
     "bfbuild": "node apps/dasssite/build.mjs && node apps/bftv/build.mjs && node apps/bfplayer/build.mjs",
     "bfcheck": "tsx apps/dassserver/src/backfirecheck.ts",
     "bfbrowsercheck": "tsx apps/dassserver/src/backfirebrowsercheck.ts",
+    "bfreplaycheck": "tsx apps/dassserver/src/backfirereplaycheck.ts",
+    "bfshots": "tsx apps/dassserver/src/backfireshots.ts",
     "typecheck:bftv": "tsc --noEmit -p apps/bftv/tsconfig.json",
     "typecheck:bfplayer": "tsc --noEmit -p apps/bfplayer/tsconfig.json",
     "typecheck:dasstv": "tsc --noEmit -p apps/dasstv/tsconfig.json",

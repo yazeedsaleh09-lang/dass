@@ -20,7 +20,7 @@ export function tvCss(): string {
   /* ---------------- lobby ---------------- */
   .lobby{flex:1;display:grid;grid-template-rows:auto auto 1fr auto;gap:clamp(16px,2.6vh,34px);
     max-width:1500px;width:100%;margin-inline:auto}
-  .lb-head{display:flex;align-items:baseline;gap:18px;border-block-end:1px solid var(--line);padding-block-end:14px}
+  .lb-head{display:flex;align-items:baseline;gap:18px;border-block-end:1px solid var(--line);padding-block-end:14px;padding-inline-start:clamp(48px,4vw,72px)}
   .lb-brand{font-size:clamp(26px,3vw,44px)}
   .lb-scenario{font-size:var(--fs-h3);color:var(--muted)}
   .lb-body{display:grid;grid-template-columns:auto 1fr;gap:clamp(28px,5vw,80px);align-items:center}
@@ -42,13 +42,31 @@ export function tvCss(): string {
   .seat-card.is-ready .seat-state{color:var(--red-soft)}
   .lb-foot{display:flex;align-items:center;justify-content:space-between;gap:20px;border-block-start:1px solid var(--line);padding-block-start:16px}
   .lb-hint{font-size:var(--fs-h3);color:var(--muted)}
+  .lb-hint.go{color:var(--white);font-weight:800}
+
+  /* readiness status — the one line the whole room reads, so it is sized for the room */
+  .lb-count{display:flex;align-items:baseline;gap:14px;min-height:1.2em}
+  .lc-count{font:900 clamp(30px,3.4vw,52px)/1 var(--font-latin);color:var(--white)}
+  .lc-word{font-size:var(--fs-h3);font-weight:800;color:var(--muted);letter-spacing:.06em}
+  .lc-badge{font-size:clamp(24px,2.6vw,40px);font-weight:900;color:var(--white);letter-spacing:.02em}
+  .lc-ready{font-size:var(--fs-h3);font-weight:800;color:var(--red-soft);letter-spacing:.06em}
+  .lobby.crew-complete .lc-badge{color:var(--red-soft)}
+  .lobby.crew-complete .seat-card:not(.ghost){border-color:var(--red);background:color-mix(in oklab,var(--charcoal) 82%,var(--red) 18%)}
+  .lobby.all-ready .lc-ready{color:var(--white)}
+  .lobby.all-ready .seat-card{border-color:var(--red)}
+
+  /* match-start countdown — a full-frame eyes-up beat over the freshly built world */
+  .tv-countdown{position:absolute;inset:0;z-index:70;display:grid;place-items:center;
+    background:radial-gradient(circle at center,var(--ink),var(--black) 72%)}
+  .cd-num{font:900 clamp(120px,26vh,300px)/1 var(--font-latin);color:var(--white)}
+  .cd-go{font-size:clamp(34px,5vw,72px);font-weight:900;color:var(--red-soft);letter-spacing:.02em}
 
   /* ---------------- world ---------------- */
   .world{flex:1;display:grid;grid-template-rows:auto auto 1fr auto;gap:clamp(8px,1.4vh,20px);
     border:1px solid var(--line);border-radius:var(--r-3);padding:clamp(14px,2vh,26px) clamp(16px,2.2vw,38px);
     position:relative;transition:border-color var(--t-scene) var(--e-out)}
   .world.frozen{filter:saturate(.5)}
-  .hud{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px}
+  .hud{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;padding-inline-start:clamp(44px,3.4vw,64px)}
   .hud-left{display:flex;align-items:baseline;gap:14px}
   .hud-brand{font-size:clamp(16px,1.5vw,22px);color:var(--muted)}
   .hud-round{color:var(--muted)}
@@ -123,14 +141,15 @@ export function tvCss(): string {
   /* ---------------- final reveal ---------------- */
   .final{flex:1;display:grid;grid-template-rows:auto 1fr auto;gap:24px;border:1px solid var(--line);
     border-radius:var(--r-3);padding:clamp(18px,3vh,40px) clamp(20px,3vw,56px)}
-  .fn-head{display:flex;align-items:baseline;gap:18px;border-block-end:1px solid var(--line);padding-block-end:14px}
+  .fn-head{display:flex;align-items:baseline;gap:18px;border-block-end:1px solid var(--line);padding-block-end:14px;padding-inline-start:clamp(48px,4vw,72px)}
   .fn-head .bf-word{font-size:clamp(18px,1.6vw,24px);color:var(--muted)}
   .fn-title{font-size:var(--fs-h3);color:var(--muted)}
-  .fn-card{display:grid;place-items:center}
-  .rc{max-width:26ch;text-align:center;display:flex;flex-direction:column;gap:18px}
+  .fn-card{display:grid;place-items:center;min-height:0;overflow:hidden}
+  .rc{max-width:26ch;text-align:center;display:flex;flex-direction:column;gap:clamp(10px,2vh,18px)}
   .rc-index{font-size:14px;color:var(--muted);letter-spacing:.14em}
-  .rc-title{margin:0;font-size:var(--fs-h1);font-weight:900;letter-spacing:-.02em}
-  .rc-line{margin:0;font-size:var(--fs-h2);line-height:1.35;color:var(--white);text-wrap:balance;max-width:24ch}
+  /* Height-aware caps: a long causal line must never run past the frame on a 720 TV. */
+  .rc-title{margin:0;font-size:min(var(--fs-h1),9.5vh);font-weight:900;letter-spacing:-.02em}
+  .rc-line{margin:0;font-size:min(var(--fs-h2),5vh);line-height:1.32;color:var(--white);text-wrap:balance;max-width:24ch}
   .rc.tone-interference .rc-title{color:var(--muted)}
   .rc.tone-backfire .rc-title{color:var(--red-soft)}
   .rc.tone-backfire .rc-line{color:var(--white)}
@@ -143,12 +162,13 @@ export function tvCss(): string {
   .fn-dot.on{background:var(--red)}
 
   /* ---------------- results ---------------- */
-  .results{flex:1;display:grid;grid-template-rows:auto 1fr auto auto;gap:clamp(14px,2.4vh,30px);
+  .results{flex:1;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:clamp(12px,2.2vh,30px);
     border:1px solid var(--line);border-radius:var(--r-3);padding:clamp(18px,3vh,40px) clamp(20px,3vw,56px)}
   .rs-head{display:flex;flex-direction:column;gap:10px}
-  .rs-title{margin:0;font-size:var(--fs-display);font-weight:900;line-height:.95;letter-spacing:-.03em}
+  /* Cap the hero name by height so the replay controls below it never clip on a 720 TV. */
+  .rs-title{margin:0;font-size:min(var(--fs-display),12vh);font-weight:900;line-height:.95;letter-spacing:-.03em}
   .rs-note{margin:0;font-size:var(--fs-h3);color:var(--red-soft)}
-  .rs-rows{display:flex;flex-direction:column;gap:10px;align-content:start}
+  .rs-rows{display:flex;flex-direction:column;gap:10px;align-content:start;min-height:0;overflow-y:auto}
   .rs-row{display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--charcoal);border:1px solid var(--line);border-radius:var(--r-2)}
   .rs-row.is-winner{border-color:var(--red)}
   .rs-rank{width:2ch;color:var(--muted);font-weight:900}
@@ -159,6 +179,7 @@ export function tvCss(): string {
   .rs-inf{font-size:var(--fs-h3);font-weight:900}
   .rs-summary{font-size:var(--fs-h3);color:var(--muted);text-wrap:balance;max-width:60ch}
   .rs-foot{font-size:15px}
+  .rs-actions{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-block-start:8px}
 
   @media (max-width:900px){
     .lb-body{grid-template-columns:1fr}

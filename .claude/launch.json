@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backfire",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx", "apps/dassserver/src/index.ts"],
+      "port": 8092
+    }
+  ]
+}

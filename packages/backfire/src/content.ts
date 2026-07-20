@@ -21,7 +21,7 @@ export type IntelId =
 
 export type ObjectiveId =
   | 'r1o_threat_low'
-  | 'r1o_not_operator'
+  | 'r1o_minority'
   | 'r1o_majority'
   | 'r1o_pick_risky'
   | 'r1o_pick_stable'
@@ -65,7 +65,7 @@ const INTEL: Record<IntelId, (c: CopyContext) => string> = {
 
 const OBJECTIVE: Record<ObjectiveId, (c: CopyContext) => string> = {
   r1o_threat_low: () => 'أنهِ هذه الجولة والتهديد ١ أو أقل.',
-  r1o_not_operator: () => 'لا تكن أنت المُشغِّل.',
+  r1o_minority: () => 'كن مع الأقلية — صوّت للاسم الذي لن يصير مُشغِّلاً.',
   r1o_majority: () => 'صوّت مع الأغلبية.',
   r1o_pick_risky: (c) => `اجعل اختيار المُشغِّل يقع على ${c.risky}.`,
   r1o_pick_stable: (c) => `اجعل اختيار المُشغِّل يقع على ${c.stable}.`,
@@ -92,7 +92,7 @@ export function objectiveText(id: ObjectiveId | null, c: CopyContext): string | 
 /** Round 1 cards A–E (§9), each paired with the objective its holder pursues. */
 export const R1_CARDS: { intel: IntelId; objective: ObjectiveId }[] = [
   { intel: 'r1_stable', objective: 'r1o_threat_low' },
-  { intel: 'r1_echo', objective: 'r1o_not_operator' },
+  { intel: 'r1_echo', objective: 'r1o_minority' },
   { intel: 'r1_future', objective: 'r1o_majority' },
   { intel: 'r1_obj_risky', objective: 'r1o_pick_risky' },
   { intel: 'r1_obj_stable', objective: 'r1o_pick_stable' },
