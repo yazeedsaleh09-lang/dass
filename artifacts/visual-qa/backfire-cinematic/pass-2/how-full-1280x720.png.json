@@ -1,0 +1,24 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "flags": [
+    "--full"
+  ],
+  "page": {
+    "title": "BACKFIRE — كيف تلعب",
+    "path": "/how-to-play",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "scrollHeight": 4610,
+    "bodyHeight": 4610.359375,
+    "mainBottom": 4103.984375,
+    "footerBottom": 4610.359375,
+    "links": [
+      "http://127.0.0.1:8092/how-to-play"
+    ],
+    "images": []
+  },
+  "problems": []
+}

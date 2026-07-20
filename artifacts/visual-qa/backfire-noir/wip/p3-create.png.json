@@ -1,0 +1,22 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "flags": [],
+  "page": {
+    "title": "BACKFIRE — ابدأ لعبة",
+    "path": "/create",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "scrollHeight": 1001,
+    "bodyHeight": 1001,
+    "mainBottom": 720,
+    "footerBottom": 1001,
+    "links": [
+      "http://localhost:8092/create"
+    ],
+    "images": []
+  },
+  "problems": []
+}

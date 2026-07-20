@@ -1,4 +1,4 @@
-// Build/serve the دسّ marketing site. From repo root:
+// Build/serve the BACKFIRE marketing site. From repo root:
 //   node apps/dasssite/build.mjs           -> apps/dasssite/public/bundle.js
 //   node apps/dasssite/build.mjs --serve    -> watch + serve on :8092
 import * as esbuild from 'esbuild';
@@ -31,7 +31,7 @@ const ctx = await esbuild.context({
 if (serve) {
   await ctx.watch();
   const { hosts, port } = await ctx.serve({ servedir: 'apps/dasssite/public', port: 8092 });
-  console.log(`دسّ site: http://localhost:${port}  (${hosts.join(', ')}) · commercial services: ${demoMode ? 'local demo' : 'disabled'}`);
+  console.log(`BACKFIRE site: http://localhost:${port}  (${hosts.join(', ')}) · commercial services: ${demoMode ? 'local demo' : 'disabled'}`);
 } else {
   await ctx.rebuild();
   await ctx.dispose();
@@ -40,7 +40,7 @@ if (serve) {
   const indexPath = 'apps/dasssite/public/index.html';
   const index = await readFile(indexPath, 'utf8');
   const canonical = configuredPublicOrigin || '/';
-  const preview = configuredPublicOrigin ? `${configuredPublicOrigin}/og-preview.png` : '/og-preview.png';
+  const preview = configuredPublicOrigin ? `${configuredPublicOrigin}/og-backfire.png` : '/og-backfire.png';
   const builtIndex = index
     .replace(/\/bundle\.js(?:\?v=[a-f0-9]+)?/, `/bundle.js?v=${version}`)
     .replace(/(<meta property="og:url" content=")[^"]*(" \/>)/, `$1${canonical}$2`)

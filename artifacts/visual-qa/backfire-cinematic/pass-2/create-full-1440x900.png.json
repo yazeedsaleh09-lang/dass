@@ -1,0 +1,23 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "flags": [
+    "--full"
+  ],
+  "page": {
+    "title": "BACKFIRE — إنشاء غرفة",
+    "path": "/create",
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "scrollHeight": 900,
+    "bodyHeight": 900,
+    "mainBottom": 900,
+    "links": [
+      "http://127.0.0.1:8092/create"
+    ],
+    "images": []
+  },
+  "problems": []
+}

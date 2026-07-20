@@ -66,7 +66,7 @@ interface DemoIdentity {
 
 const DEMO_IDENTITY: DemoIdentity = {
   id: 'demo_user_seed', displayName: 'لاعب تجريبي', username: 'demo_player',
-  email: 'demo@dass.local', createdAt: '2026-01-01T00:00:00.000Z', plan: 'free',
+  email: 'demo@backfire.local', createdAt: '2026-01-01T00:00:00.000Z', plan: 'free',
 };
 
 function clone<T>(value: T): T {

@@ -1,0 +1,24 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "flags": [
+    "--full"
+  ],
+  "page": {
+    "title": "BACKFIRE — لعبة جماعية تعيد قراراتكم إليكم",
+    "path": "/",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "scrollHeight": 13289,
+    "bodyHeight": 13289.203125,
+    "mainBottom": 12430.828125,
+    "footerBottom": 745.09375,
+    "links": [
+      "http://localhost:8092/"
+    ],
+    "images": []
+  },
+  "problems": []
+}

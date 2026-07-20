@@ -1,8 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="44" fill="#08070C"/>
-  <circle cx="96" cy="96" r="70" fill="#12101A" stroke="#312A22" stroke-width="3"/>
-  <path d="M96 28 123 91 96 104 69 91Z" fill="#EBB24C"/>
-  <path d="m96 104 17 44-17 20-17-20Z" fill="#A9762A" opacity=".75"/>
-  <path d="M42 104h108" stroke="#312A22" stroke-width="5" stroke-linecap="round"/>
-  <circle cx="96" cy="99" r="5" fill="#FFF4DB"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="BACKFIRE">
+  <defs>
+    <linearGradient id="bg" x1="18" y1="8" x2="174" y2="186" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#151516"/><stop offset="1" stop-color="#080808"/>
+    </linearGradient>
+    <linearGradient id="signal" x1="45" y1="36" x2="150" y2="158" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D24850"/><stop offset=".52" stop-color="#B3202D"/><stop offset="1" stop-color="#7E151E"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#bg)"/>
+  <path d="M48 39h58c27 0 42 12 42 32 0 13-7 23-20 28 16 5 25 17 25 32 0 24-18 37-49 37H48V39Zm32 25v25h21c10 0 15-4 15-12 0-9-5-13-15-13H80Zm0 49v30h23c12 0 17-5 17-15 0-9-6-15-17-15H80Z" fill="url(#signal)"/>
+  <path d="M148 40 127 56l21 17" fill="none" stroke="#FAFAF7" stroke-width="7" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path d="M127 56h-21" fill="none" stroke="#FAFAF7" stroke-width="7"/>
 </svg>

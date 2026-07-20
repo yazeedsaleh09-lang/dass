@@ -1,14 +1,14 @@
 {
-  "name": "دسّ — لعبة مجالس",
-  "short_name": "دسّ",
-  "description": "لعبة قرارات سرية للمجالس من ٤ إلى ٨ لاعبين.",
+  "name": "BACKFIRE — كل حركة لها عواقب",
+  "short_name": "BACKFIRE",
+  "description": "لعبة جماعية على التلفاز والجوالات؛ معلومات مختلفة وقرارات تعود بعواقبها على الجميع.",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#08070C",
-  "theme_color": "#08070C",
+  "background_color": "#050507",
+  "theme_color": "#050507",
   "icons": [
     { "src": "/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

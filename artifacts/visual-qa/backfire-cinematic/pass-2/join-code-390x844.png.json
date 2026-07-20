@@ -1,0 +1,21 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "flags": [],
+  "page": {
+    "title": "BACKFIRE — الانضمام إلى غرفة",
+    "path": "/join",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "scrollHeight": 1116,
+    "bodyHeight": 1116.40625,
+    "mainBottom": 848.40625,
+    "links": [
+      "http://127.0.0.1:8092/join"
+    ],
+    "images": []
+  },
+  "problems": []
+}

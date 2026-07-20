@@ -1,0 +1,24 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "flags": [
+    "--full"
+  ],
+  "page": {
+    "title": "BACKFIRE — انضم بكود",
+    "path": "/join",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "scrollHeight": 1653,
+    "bodyHeight": 1652.9375,
+    "mainBottom": 1273.703125,
+    "footerBottom": 1652.9375,
+    "links": [
+      "http://localhost:8092/join"
+    ],
+    "images": []
+  },
+  "problems": []
+}

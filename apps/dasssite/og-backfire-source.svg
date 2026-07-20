@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="t d">
+  <title id="t">BACKFIRE — editorial poster</title>
+  <desc id="d">A quiet council of abstract silhouettes around a table, with a single red line that leaves one of them and returns to its source.</desc>
+  <defs>
+    <radialGradient id="bg" cx="34%" cy="30%" r="90%"><stop offset="0" stop-color="#151517"/><stop offset=".55" stop-color="#0b0b0c"/><stop offset="1" stop-color="#070707"/></radialGradient>
+    <pattern id="grain" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".5" fill="#fff" opacity=".05"/><circle cx="4" cy="3.5" r=".4" fill="#fff" opacity=".03"/></pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grain)"/>
+
+  <g font-family="Arial, 'Segoe UI', Tahoma, sans-serif">
+    <text x="70" y="118" fill="#fafaf7" font-size="62" font-weight="900" letter-spacing="3">BACKFIRE</text>
+    <text x="70" y="182" fill="#a3a3a5" font-size="21" font-weight="700" letter-spacing="3">لعبة الشك والقرارات والعواقب</text>
+
+    <text x="70" y="352" fill="#fafaf7" font-size="60" font-weight="900">كل حركة لها <tspan fill="#c8454d">عواقب.</tspan></text>
+    <text x="70" y="398" fill="#8a8a8e" font-size="23" font-weight="600">القرار سرّي، والنتيجة أمام الجميع.</text>
+  </g>
+
+  <!-- council, lower-right -->
+  <ellipse cx="890" cy="470" rx="290" ry="40" fill="#0c0c0d"/>
+  <ellipse cx="890" cy="460" rx="200" ry="26" fill="none" stroke="#3a3a40" stroke-width="1.4" opacity=".7"/>
+  <g transform="translate(700 250) scale(1.0)"><circle cx="50" cy="62" r="26" fill="#3a3a40"/><path d="M4 150 C4 110 27 96 50 96 C73 96 96 110 96 150 Z" fill="#3a3a40"/></g>
+  <g transform="translate(1000 250) scale(1.0)"><circle cx="50" cy="62" r="26" fill="#3a3a40"/><path d="M4 150 C4 110 27 96 50 96 C73 96 96 110 96 150 Z" fill="#3a3a40"/><rect x="30" y="50" width="40" height="7" fill="#f0efea" opacity=".8"/></g>
+  <g transform="translate(820 288) scale(1.28)"><circle cx="50" cy="62" r="26" fill="#66666d"/><path d="M4 150 C4 110 27 96 50 96 C73 96 96 110 96 150 Z" fill="#66666d"/></g>
+  <g transform="translate(1010 300) scale(1.16)"><circle cx="50" cy="62" r="26" fill="#66666d"/><path d="M4 150 C4 110 27 96 50 96 C73 96 96 110 96 150 Z" fill="#66666d"/></g>
+  <g transform="translate(690 320) scale(1.34)"><circle cx="50" cy="62" r="26" fill="#f0efea"/><path d="M4 150 C4 110 27 96 50 96 C73 96 96 110 96 150 Z" fill="#f0efea"/><rect x="30" y="50" width="40" height="7" fill="#b72e38"/></g>
+
+  <!-- the return line: leaves the lit figure, crosses, comes back -->
+  <path d="M735 356 C 880 250 1080 250 1150 340 C 1196 400 1120 430 1040 396 C 940 354 900 300 795 448" fill="none" stroke="#811c25" stroke-width="12" stroke-linecap="round" transform="translate(10 12)" opacity=".8"/>
+  <path d="M735 356 C 880 250 1080 250 1150 340 C 1196 400 1120 430 1040 396 C 940 354 900 300 795 448" fill="none" stroke="#b72e38" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="735" cy="356" r="8" fill="#c8454d"/>
+  <path d="M795 448 l30 -16 -1 30z" fill="#b72e38"/>
+</svg>

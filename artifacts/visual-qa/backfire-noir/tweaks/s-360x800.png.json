@@ -1,0 +1,24 @@
+{
+  "viewport": {
+    "width": 360,
+    "height": 800
+  },
+  "flags": [
+    "--full"
+  ],
+  "page": {
+    "title": "BACKFIRE — لعبة جماعية عن الشك والعواقب",
+    "path": "/",
+    "scrollWidth": 360,
+    "clientWidth": 360,
+    "scrollHeight": 7996,
+    "bodyHeight": 7996.453125,
+    "mainBottom": 7617.65625,
+    "footerBottom": 6350.578125,
+    "links": [
+      "http://localhost:8092/"
+    ],
+    "images": []
+  },
+  "problems": []
+}

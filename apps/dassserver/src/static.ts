@@ -13,6 +13,8 @@ const MIME: Record<string, string> = {
   '.ico': 'image/x-icon',
   '.webmanifest': 'application/manifest+json',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
   '.xml': 'application/xml; charset=utf-8',
 };
 

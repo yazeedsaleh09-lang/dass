@@ -30,12 +30,15 @@ function check(ok: boolean, message: string): void {
 async function main(): Promise<void> {
   await server.listen(port, '127.0.0.1');
   try {
-    const [health, site, tv, player, create, howto, siteBundle, tvBundle, playerBundle, missing, traversal] = await Promise.all([
+    const [health, site, tv, player, playerCode, playerNamed, create, join, howto, siteBundle, tvBundle, playerBundle, missing, traversal] = await Promise.all([
       fetch(`${origin}/health`),
       fetch(`${origin}/`),
       fetch(`${origin}/tv`),
       fetch(`${origin}/play`),
+      fetch(`${origin}/play?code=TEST`),
+      fetch(`${origin}/play?code=TEST&name=Player`),
       fetch(`${origin}/create`),
+      fetch(`${origin}/join`),
       fetch(`${origin}/how-to-play`),
       fetch(`${origin}/bundle.js`),
       fetch(`${origin}/tv/bundle.js`),
@@ -48,11 +51,13 @@ async function main(): Promise<void> {
     const playerHtml = await player.text();
 
     check(health.status === 200 && (await health.text()) === 'ok', 'health endpoint responds');
-    check(site.status === 200 && siteHtml.includes('<title>دسّ — لعبة'), '/ serves the SITE (not the game)');
+    check(site.status === 200 && siteHtml.includes('<title>BACKFIRE — كل حركة لها عواقب</title>'), '/ serves the BACKFIRE site (not the game)');
     check(tv.status === 200 && tvHtml.includes('<title>دسّ — TV</title>'), '/tv serves the TV app');
     check(player.status === 200 && playerHtml.includes('<title>دسّ</title>') && !playerHtml.includes('— TV'), '/play serves the Player app');
-    check(create.status === 200 && (await create.text()).includes('<title>دسّ — لعبة'), '/create refresh works (SPA fallback → site)');
-    check(howto.status === 200 && (await howto.text()).includes('<title>دسّ — لعبة'), '/how-to-play refresh works (SPA fallback → site)');
+    check(playerCode.status === 200 && playerNamed.status === 200, '/play query routes serve the same Player app shell');
+    check(create.status === 200 && (await create.text()).includes('<title>BACKFIRE — كل حركة لها عواقب</title>'), '/create refresh works (SPA fallback → site)');
+    check(join.status === 200 && (await join.text()).includes('<title>BACKFIRE — كل حركة لها عواقب</title>'), '/join refresh works (SPA fallback → site)');
+    check(howto.status === 200 && (await howto.text()).includes('<title>BACKFIRE — كل حركة لها عواقب</title>'), '/how-to-play refresh works (SPA fallback → site)');
     check(siteHtml.includes('src="/bundle.js?v='), 'site loads /bundle.js (its own) with a cache-busting build id');
     check(tvHtml.includes('src="/tv/bundle.js?v=') && playerHtml.includes('src="/play/bundle.js?v='), 'TV and Player load their own versioned bundles, never cross-load');
     check(siteBundle.status === 200 && tvBundle.status === 200 && playerBundle.status === 200, 'each app serves a distinct bundle');
@@ -67,7 +72,7 @@ async function main(): Promise<void> {
     const productBodies = await Promise.all(productResponses.map((response) => response.text()));
     check(productResponses.every((response) => response.status === 200) && productBodies.every((body) => body.includes('<div id="app">')), 'all commercial routes and the client 404 refresh through the site shell');
     const [manifest, preview, sitemap, robots] = await Promise.all([
-      fetch(`${origin}/site.webmanifest`), fetch(`${origin}/og-preview.png`), fetch(`${origin}/sitemap.xml`), fetch(`${origin}/robots.txt`),
+      fetch(`${origin}/site.webmanifest`), fetch(`${origin}/og-backfire.png`), fetch(`${origin}/sitemap.xml`), fetch(`${origin}/robots.txt`),
     ]);
     check(manifest.status === 200 && manifest.headers.get('content-type')?.includes('manifest') === true, 'installable web manifest is served');
     check(preview.status === 200 && preview.headers.get('content-type') === 'image/png', 'social preview image is served');
