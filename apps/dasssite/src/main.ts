@@ -4,6 +4,8 @@ import { configuredPublicOrigin } from './product/config.js';
 import { platform } from './product/platform.js';
 import { PRODUCT_PATHS, renderProductPage } from './product/pages.js';
 import { productCss } from './product/product-css.js';
+import { MODES_PATHS, modesHomeSection, renderModesPage } from './modes/modes-page.js';
+import { modesCss } from './modes/modes-css.js';
 import { rebrandVisibleText, SITE_BRAND, SOCIAL_PREVIEW_PATH } from './site-brand.js';
 import { GameScreenPreview, PhoneMockup, TvStage } from './site-product.js';
 import { ConsequenceScene, FinalScene, HeroScene, IncompleteScene, PrivateScene } from './site-scenes.js';
@@ -14,9 +16,10 @@ document.documentElement.dataset.siteTheme = 'backfire';
 document.body.classList.add('backfire-site');
 addStyle(SITE_CSS);
 addStyle(productCss());
+addStyle(modesCss());
 
 const app = document.getElementById('app')!;
-const SPA = new Set(['/', '/create', '/join', '/how-to-play', ...PRODUCT_PATHS]);
+const SPA = new Set(['/', '/create', '/join', '/how-to-play', ...MODES_PATHS, ...PRODUCT_PATHS]);
 let cleanups: Array<() => void> = [];
 
 const wordmark = '<span class="bf-word" dir="ltr">BACKFIRE</span>';
@@ -76,7 +79,8 @@ function render(): void {
         howToPlay();
         break;
       default:
-        productRoute(location.pathname);
+        if (MODES_PATHS.has(location.pathname)) modesRoute(location.pathname);
+        else productRoute(location.pathname);
     }
   } catch (error) {
     console.error('[BACKFIRE site] route render failed', error);
@@ -103,9 +107,9 @@ function header(active = ''): string {
   return `<a class="skip-link" href="#main">تخطَّ إلى المحتوى</a>
     <header class="site-head" id="site-head">
       <a class="nav-logo" data-link="/" aria-label="BACKFIRE — الرئيسية">${wordmark}</a>
-      <nav class="head-nav" aria-label="التنقل الرئيسي"><a data-link="/how-to-play" class="${active === 'how' ? 'on' : ''}">كيف تلعب</a><a data-link="/join">انضم بكود</a><a data-link="/store" class="${active === 'store' ? 'on' : ''}">المتجر</a></nav>
+      <nav class="head-nav" aria-label="التنقل الرئيسي"><a data-link="/modes" class="${active === 'modes' || active === 'store' ? 'on' : ''}">الأطوار</a><a data-link="/how-to-play" class="${active === 'how' ? 'on' : ''}">كيف تلعب</a><a data-link="/join">انضم بكود</a></nav>
       <div class="head-actions"><a data-link="/create" class="head-cta">ابدأ لعبة</a><button id="menu" class="head-menu" type="button" aria-label="القائمة" aria-expanded="false" aria-controls="mpanel"><span></span><span></span></button></div>
-      <div id="mpanel" class="mobile-panel" hidden><a data-link="/how-to-play">كيف تلعب</a><a data-link="/join">انضم بكود</a><a data-link="/store">المتجر</a><a data-link="/create">ابدأ لعبة</a></div>
+      <div id="mpanel" class="mobile-panel" hidden><a data-link="/modes">الأطوار</a><a data-link="/how-to-play">كيف تلعب</a><a data-link="/join">انضم بكود</a><a data-link="/create">ابدأ لعبة</a></div>
     </header>`;
 }
 
@@ -115,8 +119,9 @@ function footer(): string {
       <div class="foot-brand">${wordmark}<p>كل حركة لها عواقب. لعبة جماعية على شاشة واحدة وجوالات اللاعبين.</p></div>
       <div class="foot-links">
         <div><b>اللعب</b><a data-link="/create">ابدأ لعبة</a><a data-link="/join">انضم بكود</a><a data-link="/how-to-play">كيف تلعب</a></div>
+        <div><b>العوالم</b><a data-link="/modes">الأطوار</a><a data-link="/pricing">الأسعار</a></div>
         <div><b>الموقع</b><a data-link="/about">عن اللعبة</a><a data-link="/faq">الأسئلة</a><a data-link="/support">الدعم</a></div>
-        <div><b>قانوني</b><a data-link="/legal/privacy">الخصوصية</a><a data-link="/legal/terms">الشروط</a></div>
+        <div><b>قانوني</b><a data-link="/legal/privacy">الخصوصية</a><a data-link="/legal/terms">الشروط</a><a data-link="/legal/refunds">الاسترجاع</a></div>
       </div>
     </div>
     <div class="foot-cap"><span>BACKFIRE — كل حركة لها عواقب.</span><span>٢٠٢٦</span></div>
@@ -186,6 +191,8 @@ function home(): void {
         <ol class="product-steps"><li><b>01</b><span>افتح غرفة</span></li><li><b>02</b><span>امسح الرمز</span></li><li><b>03</b><span>اختر بسرية</span></li></ol>
       </div>
     </section>
+
+    ${modesHomeSection()}
 
     <section class="final-noir" data-reveal>
       <div class="final-art">${FinalScene()}</div>
@@ -258,15 +265,57 @@ function howToPlay(): void {
     <header class="how-hero" data-reveal>
       <span class="eyebrow">كيف تلعب</span>
       <h1>الشاشة تحكي.<br>الجوالات تخبّي.</h1>
-      <p>خمس خطوات للبدء. قواعد السيناريو النهائية ما زالت قيد البناء؛ أما الغرف والدخول وإعادة الاتصال فتعمل الآن.</p>
+      <p>شاشة واحدة أمام الجميع، وجوال في يد كل لاعب. الشاشة تروي المشهد العام، والجوال يحفظ ما يخصك وحدك. هذي رحلة جولة كاملة من الفتح حتى العاقبة.</p>
     </header>
+
+    <section class="how-needs" data-reveal>
+      <div class="how-needs-copy"><span class="eyebrow">ما تحتاجونه</span><h2>تجهيز بسيط،<br>بلا تحميل.</h2><p>شاشة كبيرة يراها الجميع، وجوال لكل لاعب على نفس الشبكة. لا حسابات ولا تطبيقات.</p></div>
+      <ul class="how-need-list">
+        <li><b>١</b><span>شاشة أو تلفاز</span><small>تعرض المشهد العام ورمز الدخول.</small></li>
+        <li><b>٤–٨</b><span>جوالات اللاعبين</span><small>كل جوال يحمل معلومة وقرارًا سريًّا.</small></li>
+        <li><b>١٥–٢٥</b><span>دقيقة للمباراة</span><small>ثلاث جولات، وكل جولة تتذكّر ما قبلها.</small></li>
+      </ul>
+    </section>
+
     <div class="how-steps">
-      <article class="how-step" data-reveal><span class="n">01</span><div><h3>افتح غرفة</h3><p>أنشئ الغرفة من تلفاز أو متصفح كبير يراه الجميع.</p></div>${stepArt('room')}</article>
-      <article class="how-step" data-reveal><span class="n">02</span><div><h3>ادخلوا من الجوال</h3><p>كل لاعب يمسح الرمز أو يكتب الكود من جواله.</p></div>${stepArt('scan')}</article>
-      <article class="how-step" data-reveal><span class="n">03</span><div><h3>اعرف سرّك</h3><p>تصل لكل لاعب معلومة خاصة لا يراها غيره.</p></div>${stepArt('secret')}</article>
-      <article class="how-step" data-reveal><span class="n">04</span><div><h3>قرّر بسرية</h3><p>تختار حركتك على جوالك، بعيدًا عن العيون.</p></div>${stepArt('decide')}</article>
-      <article class="how-step" data-reveal><span class="n">05</span><div><h3>واجه العاقبة</h3><p>النتيجة تظهر أمام الجميع، وقد تعود عليك في الجولة التالية.</p></div>${stepArt('return')}</article>
+      <article class="how-step" data-reveal><span class="n">01</span><div><h3>افتح الغرفة على الشاشة</h3><p>أنشئ الغرفة من تلفاز أو متصفح كبير يراه الجميع، فيظهر رمز الغرفة و QR.</p></div>${stepArt('room')}</article>
+      <article class="how-step" data-reveal><span class="n">02</span><div><h3>ادخلوا بمسح الرمز</h3><p>كل لاعب يمسح رمز QR أو يكتب الكود من جواله — بلا تسجيل ولا انتظار.</p></div>${stepArt('scan')}</article>
+      <article class="how-step" data-reveal><span class="n">03</span><div><h3>استلم معلوماتك السرية</h3><p>تصل لكل جوال بطاقة خاصة لا يراها غيره: دور، أو معلومة، أو ورقة ضغط.</p></div>${stepArt('secret')}</article>
+      <article class="how-step" data-reveal><span class="n">04</span><div><h3>ناقشوا وتشاوروا</h3><p>الكلام على الطاولة: وعود، وتحالفات، ونصف حقائق. اللعبة الحقيقية بينكم لا في جوالكم.</p></div>${stepArt('discuss')}</article>
+      <article class="how-step" data-reveal><span class="n">05</span><div><h3>اتخذ قرارك سرًّا</h3><p>تقفل حركتك على جوالك بعيدًا عن العيون، وتبقى مخفية حتى تكشفها الشاشة.</p></div>${stepArt('decide')}</article>
+      <article class="how-step" data-reveal><span class="n">06</span><div><h3>واجه العاقبة… ثم تذكّرها</h3><p>النتيجة تظهر أمام الجميع على الشاشة، وقرارك يُحفظ ليعود ضدك أو لك في جولة قادمة.</p></div>${stepArt('return')}</article>
     </div>
+
+    <section class="how-endgame on-dark" data-reveal>
+      <div class="how-endgame-inner">
+        <div class="he-copy"><span class="eyebrow">النهاية</span><h2>كل شيء مترابط.<br><em>وكل قرار يُحسب.</em></h2><p>بعد ثلاث جولات، تجمع الشاشة كل ما فعلتموه: من التزم بوعده، ومن انقلب، ومن نجا لأن قرارًا قديمًا عاد في اللحظة الصح. الفائز ليس الأذكى في جولة، بل من قرأ العواقب قبل أن تقع.</p></div>
+        <ul class="he-facts">
+          <li><b>٣</b><span>جولات متصلة</span></li>
+          <li><b>سري</b><span>القرار حتى الكشف</span></li>
+          <li><b>يعود</b><span>أثر كل قرار</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="how-tips" data-reveal>
+      <span class="eyebrow">لأفضل جلسة</span>
+      <div class="how-tips-grid">
+        <article><b>اجلسوا بحيث الشاشة أمام الجميع</b><p>المشهد العام هو مرجعكم المشترك — خلّوه واضحًا لكل اللاعبين.</p></article>
+        <article><b>احموا جوالكم</b><p>ما على جوالك يخصك وحدك. نظرة واحدة تكفي لتكشف سرًّا يقلب الجولة.</p></article>
+        <article><b>تكلّموا… واكذبوا بذكاء</b><p>النقاش سلاح. الوعد والاتهام والصمت كلها قرارات لها عواقب.</p></article>
+      </div>
+    </section>
+
+    <section class="how-faq" data-reveal>
+      <div class="faq-list wide">
+        <h2>أسئلة سريعة</h2>
+        <details open><summary>كم لاعبًا نحتاج؟</summary><p>من ٤ إلى ٨ لاعبين، وكل لاعب على جواله. أفضل توتر يبدأ من ٥ لاعبين.</p></details>
+        <details><summary>هل نحتاج تحميل تطبيق أو حساب؟</summary><p>لا. اللعبة تعمل من المتصفح على الشاشة والجوال، بلا تسجيل دخول.</p></details>
+        <details><summary>كم تستغرق المباراة؟</summary><p>غالبًا ١٥–٢٥ دقيقة على ثلاث جولات. تقدرون تلعبون أكثر من جولة متتالية.</p></details>
+        <details><summary>وش يصير لو انقطع اتصال أحدهم؟</summary><p>يقدر يرجع لنفس المقعد بنفس معلوماته السرية عبر إعادة الاتصال، من غير خلط الأوراق.</p></details>
+      </div>
+    </section>
+
     <div class="how-cta" data-reveal><h2>والباقي عليكم.</h2><div class="hero-cta"><a data-link="/create" class="btn primary lg">ابدأ لعبة</a><a data-link="/join" class="btn ghost lg">انضم بكود</a></div></div>
   </main>${footer()}`;
   bindPageMotion();
@@ -281,6 +330,7 @@ function stepArt(kind: string): string {
     case 'room': return s(`<rect x="16" y="12" width="88" height="48" rx="4" fill="none" stroke="${G}" stroke-width="2"/><rect x="52" y="62" width="16" height="4" fill="${L}"/><rect x="44" y="66" width="32" height="3" fill="${L}"/>`);
     case 'scan': return s(`<path d="M22 30 V20 H32 M88 20 H98 V30 M98 48 V58 H88 M32 58 H22 V48" fill="none" stroke="${G}" stroke-width="2"/><line x1="32" y1="39" x2="88" y2="39" stroke="${R}" stroke-width="2"/>`);
     case 'secret': return s(`<rect x="34" y="12" width="52" height="54" fill="${L}"/><rect x="44" y="32" width="32" height="8" fill="${R}"/><rect x="44" y="46" width="20" height="5" fill="${G}"/>`);
+    case 'discuss': return s(`<rect x="18" y="20" width="42" height="28" rx="5" fill="none" stroke="${G}" stroke-width="2"/><path d="M30 48 l0 8 8 -8z" fill="${G}"/><rect x="62" y="34" width="40" height="26" rx="5" fill="none" stroke="${R}" stroke-width="2"/><path d="M90 60 l0 7 -7 -7z" fill="${R}"/><line x1="26" y1="30" x2="50" y2="30" stroke="${G}" stroke-width="2"/><line x1="70" y1="44" x2="94" y2="44" stroke="${R}" stroke-width="2"/>`);
     case 'decide': return s(`<rect x="36" y="14" width="48" height="50" rx="6" fill="none" stroke="${G}" stroke-width="2"/><rect x="44" y="24" width="14" height="12" rx="2" fill="none" stroke="${G}" stroke-width="1.6"/><rect x="62" y="24" width="14" height="12" rx="2" fill="${R}"/><rect x="44" y="46" width="32" height="8" rx="2" fill="${R}"/>`);
     case 'return': return s(`<path d="M28 42 C 50 18 80 20 92 38 C 99 48 90 58 78 52" fill="none" stroke="${R}" stroke-width="2.4" stroke-linecap="round"/><path d="M78 52 l11 -2 -3 10z" fill="${R}"/><circle cx="28" cy="42" r="3.4" fill="${R}"/>`);
     default: return s('');
@@ -304,6 +354,15 @@ function bindPageMotion(): void {
 function revealPage(): void {
   const observer = observeReveal();
   cleanups.push(() => observer.disconnect());
+}
+
+function modesRoute(path: string): void {
+  document.body.dataset.route = 'modes';
+  const page = renderModesPage(path, location.search);
+  updateMeta(page.title, page.description);
+  app.innerHTML = `${header(page.active)}${page.html}${footer()}`;
+  page.bind?.(go, render);
+  bindPageMotion();
 }
 
 function productRoute(path: string): void {

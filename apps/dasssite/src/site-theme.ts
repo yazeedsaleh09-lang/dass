@@ -13,6 +13,7 @@ export const SITE_CSS = String.raw`
   --z-content:2;--r-2:8px;--r-3:12px;--r-pill:999px;--fs-h1:clamp(40px,6vw,74px);--fs-h2:clamp(28px,4vw,46px);--fs-h3:19px;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{background:var(--bf-black);scroll-behavior:smooth;scrollbar-color:var(--bf-lead) var(--bf-black)}
 body.backfire-site{margin:0;min-width:320px;background:var(--bf-black);color:var(--bf-white);font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 /* One quiet film-grain layer across the whole page, blended so it reads on paper and black alike. */
@@ -44,7 +45,7 @@ em{font-style:normal;color:var(--bf-red)}
 .head-nav{display:flex;align-items:center;gap:clamp(14px,2vw,28px)}
 .head-nav a{font-size:14px;font-weight:700;color:var(--bf-muted)}
 .head-nav a:hover{color:var(--bf-white)}
-.head-actions{display:flex;align-items:center;gap:10px}.nav-logo{display:inline-flex;align-items:center}
+.head-actions{display:flex;align-items:center;gap:10px}.nav-logo{display:inline-flex;align-items:center;align-self:stretch}
 .head-cta{display:inline-flex;align-items:center;height:42px;padding-inline:18px;background:var(--bf-red);color:var(--bf-white);font-weight:800;border-radius:4px;font-size:14px}
 .head-cta:hover{background:var(--bf-red-soft)}
 .head-menu{display:none;width:44px;height:44px;border:1px solid var(--line-2);background:transparent;border-radius:4px;place-items:center;cursor:pointer}
@@ -210,6 +211,42 @@ em{font-style:normal;color:var(--bf-red)}
 .how-step .step-art{width:120px;height:78px}
 .how-cta{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad) clamp(80px,12vh,130px);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:22px}
 .how-cta h2{font-size:clamp(2rem,4vw,3.4rem);margin:0;letter-spacing:-.02em}
+/* how-to-play: what you need */
+.how-needs{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad) clamp(50px,7vh,86px);display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(28px,5vw,64px);align-items:center}
+.how-needs-copy h2{font-size:clamp(1.9rem,3.4vw,3.2rem);line-height:1;letter-spacing:-.025em;margin:12px 0 12px}
+.how-needs-copy p{color:var(--bf-muted);font-size:17px;line-height:1.7;max-width:38ch;margin:0}
+.how-need-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line)}
+.how-need-list li{list-style:none;display:grid;gap:6px;padding:26px 20px;background:var(--bf-black)}
+.how-need-list b{font:900 clamp(26px,3vw,40px)/1 'Arial',sans-serif;color:var(--bf-red)}
+.how-need-list span{font-weight:800;font-size:16px;color:var(--bf-white)}
+.how-need-list small{color:var(--bf-gray);font-size:13px;line-height:1.5}
+/* how-to-play: endgame band */
+.how-endgame{position:relative;padding:clamp(70px,10vh,120px) var(--pad);background:radial-gradient(80% 80% at 24% 40%,#160a0c,var(--bf-black) 62%);border-block:1px solid var(--line)}
+.how-endgame-inner{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(28px,5vw,66px);align-items:center}
+.he-copy h2{font-size:clamp(2rem,3.8vw,3.6rem);line-height:1;letter-spacing:-.025em;margin:12px 0 14px;text-wrap:balance}
+.he-copy p{color:var(--bf-muted);font-size:clamp(16px,1.3vw,19px);line-height:1.8;max-width:52ch;margin:0}
+.he-facts{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.he-facts li{list-style:none;display:flex;align-items:baseline;gap:16px;padding:18px 22px;border:1px solid var(--line);border-radius:var(--r-3);background:rgba(255,255,255,.02)}
+.he-facts b{font:900 24px/1 'Arial',sans-serif;color:var(--bf-red-soft);min-width:2.4em}
+.he-facts span{color:var(--bf-white);font-weight:700}
+/* how-to-play: tips */
+.how-tips{max-width:var(--maxw);margin:0 auto;padding:clamp(60px,9vh,110px) var(--pad) 0}
+.how-tips-grid{margin-block-start:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.how-tips-grid article{padding:26px 22px;border:1px solid var(--line);border-radius:var(--r-3);background:var(--bf-ink)}
+.how-tips-grid b{display:block;font-size:18px;color:var(--bf-white);margin-bottom:8px;letter-spacing:-.01em}
+.how-tips-grid p{color:var(--bf-muted);font-size:15px;line-height:1.65;margin:0}
+/* how-to-play: faq */
+.how-faq{max-width:var(--maxw);margin:0 auto;padding:clamp(56px,8vh,100px) var(--pad) 0}
+.how-faq .faq-list{margin:0}
+.how-faq .faq-list>h2{font-size:clamp(1.8rem,3vw,2.6rem);margin:0 0 8px;letter-spacing:-.02em}
+@media(max-width:900px){
+  .how-needs{grid-template-columns:1fr;gap:26px}
+  .how-endgame-inner{grid-template-columns:1fr;gap:28px}
+  .how-tips-grid{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .how-need-list{grid-template-columns:1fr}
+}
 
 /* ---------------- devices (restyled neutral; used only in product + create) ---------------- */
 .tv-stage{position:relative;width:100%;padding-bottom:6.5%}

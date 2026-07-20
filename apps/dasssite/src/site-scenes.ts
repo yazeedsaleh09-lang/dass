@@ -41,84 +41,165 @@ function person(x: number, y: number, s: number, fill: string, o: Pose = {}): st
   return place(x, y, s, silhouette(fill, o));
 }
 
+// A phone held by a player: a dark body with a lit screen. `glow` adds a soft halo so
+// the secret/red phone reads as the live one. Screens are the only light the players hold.
+function phone(cx: number, cy: number, s: number, rot: number, screen: string, glowId = ''): string {
+  const w = 30;
+  const h = 60;
+  const halo = glowId ? `<ellipse cx="0" cy="0" rx="40" ry="58" fill="${screen}" opacity=".22" filter="url(#${glowId})"/>` : '';
+  return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${s})">${halo}<rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="6" fill="${NOIR.charcoal}" stroke="${NOIR.lead}" stroke-width="1.4"/><rect x="${-w / 2 + 3.5}" y="${-h / 2 + 6}" width="${w - 7}" height="${h - 12}" rx="3" fill="${screen}"/></g>`;
+}
+
+// A small QR-ish glyph on the TV — "scan to join from your phone" without any UI chrome.
+function joinGlyph(x: number, y: number, u: number, fill: string): string {
+  const cells: Array<[number, number]> = [[0, 0], [1, 0], [2, 0], [0, 1], [2, 1], [0, 2], [1, 2], [2, 2], [4, 0], [4, 2], [1, 4], [3, 4], [4, 4], [0, 4]];
+  return cells.map(([cx, cy]) => rect(x + cx * u, y + cy * u, u * 0.8, u * 0.8, fill, 'opacity=".8"')).join('');
+}
+
 // ---------------------------------------------------------------- HERO ----
-// One unified scene: a council of distinct people around a single lit table. The lit
-// player (muted, not white) lays a red decision on the table; a thin red line leaves
-// it, crosses the table, and returns to its source.
+// The living room: five distinct people gathered around ONE lit TV, each holding a
+// glowing phone. Faint lines carry every player's decision up to the shared screen; one
+// RED decision leaves the central phone, lands on the TV, then loops back down as a
+// consequence pointed at the player who sent it. Reads at a glance: group game, one TV,
+// many phones, secret decisions, a consequence returning.
 export function HeroScene(): string {
-  return `<svg class="scene hero-scene" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" role="img" aria-label="مجلس من أشخاص مختلفين حول طاولة مضاءة، أحدهم يضع قرارًا أحمر وخط أحمر يخرج منه عبر الطاولة ويعود إليه">
-    <!-- far players first, then the table occludes their lower bodies -->
-    ${person(258, 250, 0.94, NOIR.lead, { hx: 44, sw: 82, hr: 22 })}
-    ${person(420, 236, 0.98, NOIR.steel, { hr: 25, sw: 98, rise: -6 })}
-    ${person(586, 240, 0.94, NOIR.lead, { hx: 57, sw: 88 })}
-    ${person(732, 254, 0.9, NOIR.steel, { rise: 10, sw: 84 })}
-    <!-- table -->
-    <ellipse cx="492" cy="452" rx="384" ry="108" fill="${NOIR.ink}"/>
-    <ellipse cx="492" cy="444" rx="368" ry="98" fill="${NOIR.charcoal}"/>
-    <ellipse cx="492" cy="432" rx="300" ry="66" fill="none" stroke="${NOIR.lead}" stroke-width="1.4" opacity=".55"/>
-    <!-- near players in front of the table -->
-    ${person(666, 372, 1.3, NOIR.steel, { sw: 108, hr: 26, rise: 6 })}
-    ${person(300, 388, 1.42, NOIR.muted, { rise: 16, hx: 58, sw: 96 })}
-    <!-- the lit player's decision on the table + the return line -->
-    <rect x="398" y="452" width="38" height="20" rx="2" fill="${NOIR.red}" transform="rotate(-9 417 462)"/>
-    <path class="return-line rl-draw" pathLength="1" d="M414 452 C 548 378 690 380 742 424 C 790 466 742 392 656 396 C 552 400 476 432 398 470" fill="none" stroke="${NOIR.red}" stroke-width="2.2" stroke-linecap="round"/>
-    <circle class="rl-src" cx="414" cy="452" r="5.5" fill="${NOIR.red}"/>
-    <path class="rl-head" d="M398 470 l30 -14 -2 30z" fill="${NOIR.red}"/>
+  return `<svg class="scene hero-scene" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" role="img" aria-label="غرفة معيشة: خمسة أشخاص حول تلفزيون واحد مضاء، كل واحد يمسك جوالًا، وخط أحمر يخرج من جوال إلى الشاشة ثم يعود كعاقبة نحو صاحبه">
+    <defs>
+      <radialGradient id="hero-glow" cx="50%" cy="34%" r="60%"><stop offset="0" stop-color="${NOIR.red}" stop-opacity=".22"/><stop offset="1" stop-color="${NOIR.red}" stop-opacity="0"/></radialGradient>
+      <linearGradient id="hero-screen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${NOIR.graphite}"/><stop offset="1" stop-color="${NOIR.black}"/></linearGradient>
+      <filter id="hero-soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9"/></filter>
+      <filter id="hero-sh" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#000" flood-opacity=".5"/></filter>
+      <clipPath id="hero-tv"><rect x="330" y="84" width="340" height="196" rx="6"/></clipPath>
+    </defs>
+    <!-- ambient light thrown by the TV -->
+    <ellipse cx="500" cy="220" rx="380" ry="250" fill="url(#hero-glow)"/>
+    <!-- TV: the one shared screen -->
+    <rect x="486" y="290" width="28" height="34" fill="${NOIR.graphite}"/>
+    <ellipse cx="500" cy="330" rx="78" ry="12" fill="${NOIR.ink}"/>
+    <g filter="url(#hero-sh)"><rect x="314" y="70" width="372" height="224" rx="12" fill="${NOIR.charcoal}" stroke="${NOIR.lead}" stroke-width="2"/></g>
+    <rect x="330" y="84" width="340" height="196" rx="6" fill="url(#hero-screen)"/>
+    <g clip-path="url(#hero-tv)">
+      <line x1="330" y1="214" x2="670" y2="214" stroke="${NOIR.steel}" stroke-width="1.4" opacity=".3"/>
+      ${person(392, 118, 0.74, NOIR.steel, { hx: 54, sw: 96 })}
+      ${person(488, 128, 0.66, NOIR.lead, { hx: 44, sw: 92 })}
+      <rect x="470" y="196" width="40" height="22" rx="2" fill="${NOIR.red}" transform="rotate(-8 490 207)"/>
+      <circle cx="352" cy="106" r="5" fill="${NOIR.red}"/>
+      <rect x="364" y="102" width="26" height="7" rx="2" fill="${NOIR.steel}" opacity=".7"/>
+      <rect x="396" y="102" width="16" height="7" rx="2" fill="${NOIR.steel}" opacity=".5"/>
+      ${joinGlyph(600, 224, 9, NOIR.muted)}
+    </g>
+    <!-- the gathered players, seen from behind, facing the TV -->
+    ${person(150, 300, 1.3, NOIR.lead, { hx: 52, sw: 88, hr: 22 })}
+    ${person(770, 300, 1.3, NOIR.lead, { hx: 48, sw: 88, hr: 22 })}
+    ${person(300, 336, 1.5, NOIR.steel, { sw: 96 })}
+    ${person(625, 336, 1.5, NOIR.steel, { hx: 54, sw: 96 })}
+    ${person(417, 356, 1.66, NOIR.muted, { sw: 100 })}
+    <!-- every phone throws a faint decision line up to the shared screen -->
+    <g stroke="${NOIR.steel}" stroke-width="1.4" fill="none" opacity=".32" stroke-linecap="round">
+      <path d="M240 452 C 340 380 430 320 496 290"/>
+      <path d="M362 500 C 410 420 460 340 500 292"/>
+      <path d="M640 500 C 592 420 542 340 504 292"/>
+      <path d="M760 452 C 660 380 570 320 504 290"/>
+    </g>
+    <!-- the five phones; the central one is the live red decision -->
+    ${phone(240, 466, 0.62, -14, NOIR.muted)}
+    ${phone(362, 516, 0.8, -8, NOIR.muted)}
+    ${phone(640, 516, 0.8, 9, NOIR.muted)}
+    ${phone(760, 466, 0.62, 13, NOIR.muted)}
+    ${phone(500, 552, 0.98, 0, NOIR.red, 'hero-soft')}
+    <!-- the Return Line: the red decision rises to the TV, then the consequence loops back onto its sender -->
+    <path class="cs-shadow" d="M500 524 C 494 452 500 372 500 300 C 500 250 612 246 606 336 C 600 408 546 440 508 452" fill="none" stroke="${NOIR.graphite}" stroke-width="8" stroke-linecap="round" transform="translate(9 12)"/>
+    <path class="return-line rl-draw" pathLength="1" d="M500 524 C 494 452 500 372 500 300 C 500 250 612 246 606 336 C 600 408 546 440 508 452" fill="none" stroke="${NOIR.red}" stroke-width="2.6" stroke-linecap="round"/>
+    <circle class="rl-src" cx="500" cy="524" r="6" fill="${NOIR.redSoft}"/>
+    <path class="rl-head" d="M508 452 l16 -10 4 20z" fill="${NOIR.red}"/>
   </svg>`;
 }
 
 // ---------------------------------------------------------------- POSTER 01 ----
-// One continuous scene — two people over a decision on a table, and a red clue — seen
-// through THREE separate openings (a vertical slit on one person, a horizontal band on
-// the table, a small window on the other person + the clue). The fragments belong to
-// the same picture, so "no one sees it whole" reads even without the text.
+// "No one sees the full picture." ONE complete situation exists — a group over a table
+// with a red clue — but it is only ever ghosted behind. The lit truth is sliced across
+// THREE phones, each held by a different player, with dark gaps between them. Each
+// person holds a bright fragment; only one phone carries the red clue; the whole is
+// never assembled. The apertures are the Partial Windows motif, distributed by device.
 export function IncompleteScene(): string {
-  const win = [
-    { x: 78, y: 104, w: 148, h: 286 },   // vertical → person A
-    { x: 150, y: 398, w: 402, h: 96 },   // horizontal → the table + decision
-    { x: 452, y: 208, w: 150, h: 158 },  // small → person B + red clue
+  // The single underlying scene, drawn once so every phone fragment aligns to it.
+  const truth =
+    person(-8, 44, 2.9, NOIR.steel, { hx: 58, sw: 98 }) +
+    person(360, 96, 2.6, NOIR.lead, { hx: 42, sw: 92 }) +
+    rect(20, 456, 620, 16, NOIR.lead) +
+    rect(150, 402, 96, 54, NOIR.muted) +
+    rect(300, 406, 84, 50, NOIR.steel) +
+    rect(472, 300, 66, 74, NOIR.red);
+  // Three device-windows onto that scene. Gaps between them are the missing information.
+  const holders = [
+    { id: 'a', x: 48, y: 150, w: 150, h: 250, head: 118 },   // ← a person fragment
+    { id: 'b', x: 250, y: 250, w: 150, h: 250, head: 220 },  // ← the table + decision
+    { id: 'c', x: 452, y: 168, w: 150, h: 250, head: 136 },  // ← the red clue + a person
   ];
-  return `<svg class="scene incomplete-scene" viewBox="0 0 660 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="مشهد واحد بين شخصين وقرار على طاولة ودليل أحمر، لا يظهر إلا عبر ثلاث فتحات منفصلة تكشف أجزاءً من الصورة نفسها">
+  const phoneFragment = (p: (typeof holders)[number]): string => `
+    ${person(p.x + p.w / 2 - 42, p.head - 26, 0.84, NOIR.graphite, { sw: 96 })}
+    <rect x="${p.x - 9}" y="${p.y - 9}" width="${p.w + 18}" height="${p.h + 18}" rx="15" fill="${NOIR.ink}" stroke="${NOIR.lead}" stroke-width="1.6"/>
+    <rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="6" fill="${NOIR.black}"/>
+    <clipPath id="frag-${p.id}"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="6"/></clipPath>
+    <g clip-path="url(#frag-${p.id})">${truth}</g>
+    <rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="6" fill="none" stroke="${NOIR.steel}" stroke-width="1" opacity=".55"/>
+    <rect x="${p.x + p.w / 2 - 15}" y="${p.y - 5}" width="30" height="3.4" rx="1.7" fill="${NOIR.lead}"/>`;
+  return `<svg class="scene incomplete-scene" viewBox="0 0 660 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="مشهد واحد كامل مخفيّ في الخلفية، وأجزاؤه موزّعة على ثلاثة جوالات يمسكها ثلاثة لاعبين، بينها فجوات مظلمة، ولا أحد يرى الصورة كاملة">
     <defs>
-      <mask id="inc-mask"><rect width="660" height="560" fill="#000"/>${win.map((w) => rect(w.x, w.y, w.w, w.h, '#fff')).join('')}</mask>
       <filter id="inc-sh" x="-15%" y="-15%" width="130%" height="140%"><feDropShadow dx="0" dy="9" stdDeviation="7" flood-color="#0c0c0d" flood-opacity=".34"/></filter>
     </defs>
-    <g filter="url(#inc-sh)"><g mask="url(#inc-mask)">
-      <rect width="660" height="560" fill="${NOIR.black}"/>
-      ${person(40, 92, 2.42, NOIR.steel, { hx: 56, sw: 96, rise: 8 })}
-      ${person(392, 150, 2.0, NOIR.lead, { hx: 44, sw: 90 })}
-      ${rect(36, 452, 592, 13, NOIR.lead)}
-      ${rect(228, 410, 84, 44, NOIR.muted)}
-      ${rect(318, 412, 72, 42, NOIR.steel)}
-      ${rect(486, 300, 56, 62, NOIR.red)}
-    </g></g>
-    ${win.map((w) => `<rect x="${w.x}" y="${w.y}" width="${w.w}" height="${w.h}" fill="none" stroke="${NOIR.ink}" stroke-width="2"/>`).join('')}
-    <line x1="452" y1="184" x2="602" y2="184" stroke="${NOIR.red}" stroke-width="3"/>
+    <rect width="660" height="560" fill="${NOIR.black}"/>
+    <!-- the whole truth, present but unlit -->
+    <g opacity=".12">${truth}</g>
+    <g filter="url(#inc-sh)">${holders.map(phoneFragment).join('')}</g>
+    <!-- the picture line that the fragments never fully rebuild -->
+    <path d="M52 500 L 240 500" stroke="${NOIR.lead}" stroke-width="2" stroke-dasharray="4 8" opacity=".5"/>
+    <path d="M266 500 L 442 500" stroke="${NOIR.lead}" stroke-width="2" stroke-dasharray="4 8" opacity=".5"/>
+    <path d="M468 500 L 610 500" stroke="${NOIR.red}" stroke-width="2.4"/>
   </svg>`;
 }
 
 // ---------------------------------------------------------------- POSTER 02 ----
-// One public scene — a row of distinct players all seeing the same thing — with a
-// single narrow slit cut over one player that exposes a small red private detail. No
-// scan rectangle, no UI; an editorial reveal.
+// "What you know changes everything." A group stands level, wired together by faint
+// neutral ties — the shared, public state. One player's phone lights RED with a private
+// message no one else can read; that knowledge lifts them out of the row (stepped
+// forward, brighter), snaps their old tie to a neighbour, and redraws a new red line of
+// intent across the group. The hidden detail visibly repositions one person.
 export function PrivateScene(): string {
-  const slit = { x: 286, y: 214, w: 46, h: 214 };
-  return `<svg class="scene private-scene" viewBox="0 0 640 520" preserveAspectRatio="xMidYMid meet" role="img" aria-label="صفّ من لاعبين مختلفين يرون المشهد نفسه، وشقّ ضيّق فوق أحدهم يكشف تفصيلًا أحمر خاصًّا لا يراه الباقون">
-    <defs><clipPath id="pv-slit"><rect x="${slit.x}" y="${slit.y}" width="${slit.w}" height="${slit.h}"/></clipPath></defs>
-    <rect x="34" y="430" width="572" height="30" fill="${NOIR.ink}"/>
-    ${person(70, 230, 1.34, NOIR.steel, { sw: 100, hr: 26 })}
-    ${person(240, 224, 1.4, NOIR.steel, { sw: 92, hr: 24, rise: 6 })}
-    ${person(414, 232, 1.3, NOIR.steel, { hx: 57, sw: 96 })}
-    ${person(548, 244, 1.12, NOIR.lead, { sw: 84, rise: -6 })}
-    <!-- the slit: exposes the second player's private red mark -->
-    <g clip-path="url(#pv-slit)">
-      ${person(240, 224, 1.4, NOIR.muted, { sw: 92, hr: 24, rise: 6 })}
-      <rect class="pv-secret" x="${slit.x}" y="352" width="${slit.w}" height="58" fill="${NOIR.red}"/>
-      <rect class="pv-secret" x="${slit.x}" y="340" width="${slit.w}" height="10" fill="${NOIR.redSoft}"/>
+  const known = { x: 150, y: 214, s: 1.62 };          // the player who now knows
+  const kcx = known.x + 50 * known.s;                 // their head centre-x
+  return `<svg class="scene private-scene" viewBox="0 0 640 520" preserveAspectRatio="xMidYMid meet" role="img" aria-label="مجموعة لاعبين مربوطين بخيوط رمادية متساوية، جوال أحدهم يضيء بالأحمر بمعلومة خاصة، فيتقدّم عن الصف ويرسم خطًّا أحمر جديدًا نحو لاعب آخر بينما ينقطع خيطه القديم">
+    <defs>
+      <filter id="pv-soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="8"/></filter>
+    </defs>
+    <rect x="30" y="452" width="580" height="20" fill="${NOIR.ink}"/>
+    <!-- the public, neutral group -->
+    ${person(46, 250, 1.12, NOIR.steel, { sw: 92 })}
+    ${person(300, 246, 1.16, NOIR.steel, { hx: 52, sw: 94, rise: 4 })}
+    ${person(430, 252, 1.12, NOIR.steel, { sw: 90 })}
+    ${person(552, 258, 1.02, NOIR.lead, { sw: 84, rise: -6 })}
+    <!-- the even ties everyone shares -->
+    <g stroke="${NOIR.steel}" stroke-width="1.6" fill="none" opacity=".4" stroke-linecap="round">
+      <path d="M103 300 C 180 268 250 268 358 300"/>
+      <path d="M486 300 C 520 288 560 288 603 306"/>
     </g>
-    <line x1="${slit.x}" y1="${slit.y}" x2="${slit.x}" y2="${slit.y + slit.h}" stroke="${NOIR.paper}" stroke-width="2" opacity=".85"/>
-    <line x1="${slit.x + slit.w}" y1="${slit.y}" x2="${slit.x + slit.w}" y2="${slit.y + slit.h}" stroke="${NOIR.paper}" stroke-width="2" opacity=".85"/>
+    <!-- the old tie from the knower to their neighbour — now snapped -->
+    <path d="M${kcx} 300 C 300 262 340 262 358 300" fill="none" stroke="${NOIR.lead}" stroke-width="1.6" stroke-dasharray="5 9" opacity=".45"/>
+    <!-- the knower steps forward, brighter -->
+    ${person(known.x, known.y, known.s, NOIR.muted, { hx: 52, sw: 96 })}
+    <!-- the private red info, on their phone only -->
+    <ellipse class="pv-secret" cx="${kcx + 40}" cy="360" rx="34" ry="46" fill="${NOIR.red}" opacity=".2" filter="url(#pv-soft)"/>
+    ${phoneReveal(kcx + 40, 360)}
+    <!-- the new intent the knowledge creates: a red line redrawn across the group -->
+    <path class="rl-draw" pathLength="1" d="M${kcx + 40} 348 C 360 300 470 300 560 320" fill="none" stroke="${NOIR.red}" stroke-width="2.6" stroke-linecap="round"/>
+    <path class="rl-head" d="M560 320 l-18 -6 4 20z" fill="${NOIR.red}"/>
+    <circle class="rl-src" cx="${kcx + 40}" cy="348" r="5" fill="${NOIR.redSoft}"/>
   </svg>`;
+}
+
+// A phone turned toward its owner, its screen showing a private red mark no one else sees.
+function phoneReveal(cx: number, cy: number): string {
+  return `<g transform="translate(${cx} ${cy}) rotate(-8)"><rect x="-19" y="-38" width="38" height="76" rx="7" fill="${NOIR.charcoal}" stroke="${NOIR.lead}" stroke-width="1.6"/><rect class="pv-secret" x="-14" y="-31" width="28" height="62" rx="3" fill="${NOIR.red}"/><rect class="pv-secret" x="-8" y="-18" width="16" height="6" rx="2" fill="${NOIR.white}" opacity=".85"/><rect class="pv-secret" x="-8" y="-6" width="24" height="5" rx="2" fill="${NOIR.white}" opacity=".6"/></g>`;
 }
 
 // ---------------------------------------------------------------- CONSEQUENCE (locked) ----
