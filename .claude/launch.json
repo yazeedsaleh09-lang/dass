@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["tsx", "apps/dassserver/src/index.ts"],
       "port": 8092
+    },
+    {
+      "name": "dasssite",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["apps/dasssite/build.mjs", "--serve"],
+      "port": 8092
     }
   ]
 }

@@ -103,13 +103,24 @@ function applyProductPreferences(): void {
   }
 }
 
+/** Session-aware account entry: "حسابي" when signed in (guest or demo account), otherwise "دخول". */
+function accountEntry(): { href: string; label: string; on: boolean } {
+  try {
+    const session = platform.getSession();
+    if (session) return { href: '/account/profile', label: 'حسابي', on: true };
+  } catch { /* commerce layer unavailable — fall through to sign-in entry */ }
+  return { href: '/login', label: 'دخول', on: false };
+}
+
 function header(active = ''): string {
+  const acc = accountEntry();
+  const accClass = active === 'account' ? 'head-account on' : 'head-account';
   return `<a class="skip-link" href="#main">تخطَّ إلى المحتوى</a>
     <header class="site-head" id="site-head">
       <a class="nav-logo" data-link="/" aria-label="BACKFIRE — الرئيسية">${wordmark}</a>
       <nav class="head-nav" aria-label="التنقل الرئيسي"><a data-link="/modes" class="${active === 'modes' || active === 'store' ? 'on' : ''}">الأطوار</a><a data-link="/how-to-play" class="${active === 'how' ? 'on' : ''}">كيف تلعب</a><a data-link="/join">انضم بكود</a></nav>
-      <div class="head-actions"><a data-link="/create" class="head-cta">ابدأ لعبة</a><button id="menu" class="head-menu" type="button" aria-label="القائمة" aria-expanded="false" aria-controls="mpanel"><span></span><span></span></button></div>
-      <div id="mpanel" class="mobile-panel" hidden><a data-link="/modes">الأطوار</a><a data-link="/how-to-play">كيف تلعب</a><a data-link="/join">انضم بكود</a><a data-link="/create">ابدأ لعبة</a></div>
+      <div class="head-actions"><a data-link="${acc.href}" class="${accClass}">${acc.label}</a><a data-link="/create" class="head-cta">ابدأ لعبة</a><button id="menu" class="head-menu" type="button" aria-label="القائمة" aria-expanded="false" aria-controls="mpanel"><span></span><span></span></button></div>
+      <div id="mpanel" class="mobile-panel" hidden><a data-link="/modes">الأطوار</a><a data-link="/how-to-play">كيف تلعب</a><a data-link="/join">انضم بكود</a><a data-link="${acc.href}" class="mpanel-account">${acc.label}</a><a data-link="/create" class="mpanel-cta">ابدأ لعبة</a></div>
     </header>`;
 }
 
@@ -133,12 +144,12 @@ function home(): void {
   app.innerHTML = `${header()}<main id="main" tabindex="-1">
     <section class="hero-noir">
       <div class="hero-inner"><div class="hero-copy" data-reveal>
-        <span class="eyebrow">لعبة جماعية للشاشة والجوال</span>
+        <span class="eyebrow">لعبة جماعية على شاشة وجوالات</span>
         <h1>كل حركة<br>لها <em>عواقب.</em></h1>
-        <p class="hero-lead">كل لاعب يرى جزءًا مختلفًا. القرار سري، والنتيجة أمام الجميع.</p>
-        <ul class="hero-facts" aria-label="مواصفات سريعة"><li>٥ لاعبين</li><li>شاشة واحدة</li><li>جوال لكل لاعب</li><li>بلا تحميل</li></ul>
-        <div class="hero-cta"><a data-link="/create" class="btn primary lg">ابدأ لعبة</a><a data-link="/join" class="btn ghost lg">انضم بكود</a></div>
-        <div class="hero-note"><i></i><span>نسخة تجريبية — نظام السيناريو الجديد قيد التطوير.</span></div>
+        <p class="hero-lead">كل لاعب يشوف معلومة غير. القرار في جوالك، والعاقبة قدّام الكل.</p>
+        <ul class="hero-facts" aria-label="مواصفات سريعة"><li>٤–٨ لاعبين</li><li>شاشة وحدة</li><li>جوال لكل لاعب</li><li>ادخل كضيف</li></ul>
+        <div class="hero-cta"><a data-link="/create" class="btn primary lg">ابدأ لعبة</a><a data-link="/how-to-play" class="btn ghost lg">شوف كيف تلعب</a></div>
+        <div class="hero-note"><i></i><span>نسخة تجريبية — نظام السيناريو الجديد لسه تحت التطوير.</span></div>
       </div></div>
       <div class="hero-art" data-reveal>${HeroScene()}</div>
       <a class="scroll-cue" data-link="/#poster01"><span>انزل</span><i></i></a>
@@ -146,14 +157,14 @@ function home(): void {
 
     <section id="poster01" class="poster poster-incomplete on-paper" data-reveal>
       <div class="poster-inner">
-        <div class="poster-copy"><span class="sec-index">01</span><h2>لا أحد يرى<br>الصورة كاملة.</h2><p>المعلومة موزّعة. والثقة قرار.</p></div>
+        <div class="poster-copy"><h2>ما أحد يشوف<br>الصورة كاملة.</h2><p>المعلومة مفرّقة بينكم، والثقة قرار.</p></div>
         <div class="poster-art">${IncompleteScene()}</div>
       </div>
     </section>
 
     <section class="poster poster-private on-dark" data-reveal>
       <div class="poster-inner">
-        <div class="poster-copy"><span class="sec-index">02</span><h2>ما تعرفه<br>يغيّر كل شيء.</h2><p>كل واحد يعرف شيئًا، ولا أحد يعرف كل شيء. على جوالك جزء لا يراه غيرك.</p></div>
+        <div class="poster-copy"><h2>اللي تعرفه<br>يغيّر كل شي.</h2><p>كل واحد يعرف شي، وما أحد يعرف كل شي. على جوالك جزء ما يشوفه غيرك.</p></div>
         <div class="poster-art">${PrivateScene()}</div>
       </div>
     </section>
@@ -163,7 +174,7 @@ function home(): void {
         <div class="social-copy">
           <span class="eyebrow">اللعبة الحقيقية بينكم</span>
           <h2 class="social-head">المشكلة مو في المعلومة.<br>المشكلة: <em>مين تصدّق؟</em></h2>
-          <p class="social-note">الكذب، ونصف الحقيقة، والثقة المؤقتة، والاتهام المتأخر — هذي اللعبة الحقيقية بين اللاعبين، مو داخل جوالك.</p>
+          <p class="social-note">الكذب، ونص الحقيقة، والثقة المؤقتة، والاتهام المتأخر — هذي اللعبة الحقيقية بينكم، مو داخل جوالك.</p>
         </div>
         <div class="social-lines" aria-hidden="true">
           <span class="sl sl-1">«مين عطّل المسار؟»</span>
@@ -176,19 +187,19 @@ function home(): void {
 
     <section class="poster poster-consequence on-dark" data-reveal>
       <div class="poster-inner">
-        <div class="poster-copy"><span class="sec-index">03</span><h2>القرار يخرج منك.<br>والعاقبة <em>تعود إليك.</em></h2><p>كل جولة تتذكّر ما فعلتموه قبلها.</p></div>
+        <div class="poster-copy"><h2>القرار يطلع منك.<br>والعاقبة <em>ترجع لك.</em></h2><p>كل جولة تتذكّر اللي سويتوه قبلها.</p></div>
         <div class="poster-art">${ConsequenceScene()}</div>
       </div>
     </section>
 
     <section class="product-noir on-paper" data-reveal>
       <div class="product-inner">
-        <div class="product-head"><span class="eyebrow">المنتج</span><h2>شاشة واحدة.<br>أسرار مختلفة.</h2><p>التلفزيون يعرض ما يعرفه الجميع. هاتفك يحتفظ بما يخصك.</p></div>
+        <div class="product-head"><span class="eyebrow">المنتج</span><h2>شاشة وحدة.<br>أسرار مختلفة.</h2><p>الشاشة تعرض اللي يشوفه الكل. وجوالك يحتفظ باللي يخصّك إنت.</p></div>
         <div class="product-stage">
-          <figure class="stage-tv">${TvStage('reveal')}<figcaption><b>التلفزيون</b><span>المشهد العام الذي يراه الجميع.</span></figcaption></figure>
-          <div class="stage-phones"><figure>${PhoneMockup('secret', 'معلومة خاصة')}</figure><figure>${PhoneMockup('decision', 'قرار سري')}</figure></div>
+          <figure class="stage-tv">${TvStage('reveal')}<figcaption><b>التلفزيون</b><span>المشهد اللي يشوفه الكل.</span></figcaption></figure>
+          <div class="stage-phones"><figure>${PhoneMockup('secret', 'معلومة خاصة')}</figure><figure>${PhoneMockup('decision', 'قرار سرّي')}</figure></div>
         </div>
-        <ol class="product-steps"><li><b>01</b><span>افتح غرفة</span></li><li><b>02</b><span>امسح الرمز</span></li><li><b>03</b><span>اختر بسرية</span></li></ol>
+        <ol class="product-steps"><li><span>افتح غرفة</span></li><li><span>امسح الرمز</span></li><li><span>اختر بسرية</span></li></ol>
       </div>
     </section>
 
@@ -196,7 +207,7 @@ function home(): void {
 
     <section class="final-noir" data-reveal>
       <div class="final-art">${FinalScene()}</div>
-      <div class="final-inner"><span class="eyebrow">BACKFIRE</span><h2>ابدأ قبل أن<br>تكتمل الصورة.</h2><p>ضع الشاشة أمام الجميع، وادخلوا من جوالاتكم.</p><div class="hero-cta"><a data-link="/create" class="btn primary lg">ابدأ لعبة</a><a data-link="/join" class="btn ghost lg">انضم بكود</a></div></div>
+      <div class="final-inner"><span class="eyebrow">BACKFIRE</span><h2>ابدأ قبل لا<br>تكتمل الصورة.</h2><p>حطّ الشاشة قدّام الكل، وادخلوا من جوالاتكم.</p><div class="hero-cta"><a data-link="/create" class="btn primary lg">ابدأ لعبة</a><a data-link="/join" class="btn ghost lg">انضم بكود</a></div></div>
     </section>
   </main>${footer()}`;
   bindPageMotion();
@@ -208,8 +219,8 @@ function createRoom(): void {
     <section class="door-form" data-reveal>
       <span class="eyebrow">غرفة جديدة</span>
       <h1>افتح الشاشة.<br>واجمع الشلة.</h1>
-      <p>سننقلك إلى شاشة التلفزيون الحالية. هناك يظهر رمز الغرفة ليدخل اللاعبون من جوالاتهم.</p>
-      <div class="door-specs"><span><b>٥</b>لاعبين</span><span><b>رمز</b>أو كود</span><span><b>بلا</b>تحميل</span></div>
+      <p>بننقلك إلى شاشة التلفزيون. هناك يطلع رمز الغرفة عشان يدخلون اللاعبون من جوالاتهم.</p>
+      <div class="door-specs"><span><b>٤–٨</b>لاعبين</span><span><b>رمز</b>أو كود</span><span><b>بلا</b>تحميل</span></div>
       <button id="startbtn" class="btn primary lg wide">افتح الغرفة على التلفاز</button>
       <a data-link="/" class="text-link">العودة للرئيسية</a>
     </section>
@@ -233,7 +244,7 @@ function joinRoom(): void {
     <section class="door-form" data-reveal>
       <span class="eyebrow">انضمام من الجوال</span>
       <h1>ادخل الغرفة.<br>ولا تكشف شيئًا.</h1>
-      <p>اكتب الرمز الظاهر على التلفزيون، ثم الاسم الذي سيراه بقية اللاعبين.</p>
+      <p>اكتب الرمز اللي على التلفزيون، وبعده الاسم اللي بيشوفه باقي اللاعبين.</p>
       <label class="field"><span>رمز الغرفة</span><input id="code" class="input mono" placeholder="AB12CD" value="${escapeHtml(code)}" maxlength="12" autocapitalize="characters" autocorrect="off" autocomplete="off" inputmode="text"></label>
       <label class="field"><span>اسم اللاعب</span><input id="name" class="input" placeholder="اسمك" maxlength="20" autocomplete="off"></label>
       <button id="joinbtn" class="btn primary lg wide">انضم إلى الغرفة</button>
@@ -265,32 +276,32 @@ function howToPlay(): void {
     <header class="how-hero" data-reveal>
       <span class="eyebrow">كيف تلعب</span>
       <h1>الشاشة تحكي.<br>الجوالات تخبّي.</h1>
-      <p>شاشة واحدة أمام الجميع، وجوال في يد كل لاعب. الشاشة تروي المشهد العام، والجوال يحفظ ما يخصك وحدك. هذي رحلة جولة كاملة من الفتح حتى العاقبة.</p>
+      <p>شاشة وحدة قدّام الكل، وجوال بيد كل لاعب. الشاشة تحكي المشهد العام، والجوال يحفظ اللي يخصّك إنت. هذي رحلة جولة كاملة، من فتح الغرفة إلى العاقبة.</p>
     </header>
 
     <section class="how-needs" data-reveal>
-      <div class="how-needs-copy"><span class="eyebrow">ما تحتاجونه</span><h2>تجهيز بسيط،<br>بلا تحميل.</h2><p>شاشة كبيرة يراها الجميع، وجوال لكل لاعب على نفس الشبكة. لا حسابات ولا تطبيقات.</p></div>
+      <div class="how-needs-copy"><span class="eyebrow">وش تحتاجون</span><h2>تجهيز بسيط،<br>بلا تحميل.</h2><p>شاشة كبيرة يشوفها الكل، وجوال لكل لاعب على نفس الشبكة. بلا حسابات وبلا تطبيقات.</p></div>
       <ul class="how-need-list">
         <li><b>١</b><span>شاشة أو تلفاز</span><small>تعرض المشهد العام ورمز الدخول.</small></li>
-        <li><b>٤–٨</b><span>جوالات اللاعبين</span><small>كل جوال يحمل معلومة وقرارًا سريًّا.</small></li>
-        <li><b>١٥–٢٥</b><span>دقيقة للمباراة</span><small>ثلاث جولات، وكل جولة تتذكّر ما قبلها.</small></li>
+        <li><b>٤–٨</b><span>جوالات اللاعبين</span><small>كل جوال يحمل معلومة وقرار سرّي.</small></li>
+        <li><b>١٥–٢٥</b><span>دقيقة للمباراة</span><small>جولات متتابعة، كل جولة تتذكّر اللي قبلها.</small></li>
       </ul>
     </section>
 
     <div class="how-steps">
-      <article class="how-step" data-reveal><span class="n">01</span><div><h3>افتح الغرفة على الشاشة</h3><p>أنشئ الغرفة من تلفاز أو متصفح كبير يراه الجميع، فيظهر رمز الغرفة و QR.</p></div>${stepArt('room')}</article>
-      <article class="how-step" data-reveal><span class="n">02</span><div><h3>ادخلوا بمسح الرمز</h3><p>كل لاعب يمسح رمز QR أو يكتب الكود من جواله — بلا تسجيل ولا انتظار.</p></div>${stepArt('scan')}</article>
-      <article class="how-step" data-reveal><span class="n">03</span><div><h3>استلم معلوماتك السرية</h3><p>تصل لكل جوال بطاقة خاصة لا يراها غيره: دور، أو معلومة، أو ورقة ضغط.</p></div>${stepArt('secret')}</article>
-      <article class="how-step" data-reveal><span class="n">04</span><div><h3>ناقشوا وتشاوروا</h3><p>الكلام على الطاولة: وعود، وتحالفات، ونصف حقائق. اللعبة الحقيقية بينكم لا في جوالكم.</p></div>${stepArt('discuss')}</article>
-      <article class="how-step" data-reveal><span class="n">05</span><div><h3>اتخذ قرارك سرًّا</h3><p>تقفل حركتك على جوالك بعيدًا عن العيون، وتبقى مخفية حتى تكشفها الشاشة.</p></div>${stepArt('decide')}</article>
-      <article class="how-step" data-reveal><span class="n">06</span><div><h3>واجه العاقبة… ثم تذكّرها</h3><p>النتيجة تظهر أمام الجميع على الشاشة، وقرارك يُحفظ ليعود ضدك أو لك في جولة قادمة.</p></div>${stepArt('return')}</article>
+      <article class="how-step" data-reveal><div><h3>افتح الغرفة على الشاشة</h3><p>افتح الغرفة من تلفاز أو متصفح كبير يشوفه الكل، ويطلع رمز الغرفة و QR.</p></div>${stepArt('room')}</article>
+      <article class="how-step" data-reveal><div><h3>ادخلوا بمسح الرمز</h3><p>كل لاعب يمسح الـ QR أو يكتب الكود من جواله — تدخلون كضيوف على طول، بلا انتظار.</p></div>${stepArt('scan')}</article>
+      <article class="how-step" data-reveal><div><h3>استلم معلومتك السرّية</h3><p>توصل لكل جوال بطاقة خاصة ما يشوفها غيره: دور، أو معلومة، أو ورقة ضغط.</p></div>${stepArt('secret')}</article>
+      <article class="how-step" data-reveal><div><h3>تناقشوا واتفقوا</h3><p>الكلام على الطاولة: وعود، وتحالفات، ونص حقائق. اللعبة الحقيقية بينكم، مو في جوالكم.</p></div>${stepArt('discuss')}</article>
+      <article class="how-step" data-reveal><div><h3>قرّر بسرّك</h3><p>تقفل حركتك على جوالك بعيد عن العيون، وتضل مخفية إلى ما تكشفها الشاشة.</p></div>${stepArt('decide')}</article>
+      <article class="how-step" data-reveal><div><h3>واجه العاقبة… وتذكّرها</h3><p>النتيجة تطلع قدّام الكل على الشاشة، وقرارك ينحفظ يمكن يرجع لك أو عليك في جولة جاية.</p></div>${stepArt('return')}</article>
     </div>
 
     <section class="how-endgame on-dark" data-reveal>
       <div class="how-endgame-inner">
-        <div class="he-copy"><span class="eyebrow">النهاية</span><h2>كل شيء مترابط.<br><em>وكل قرار يُحسب.</em></h2><p>بعد ثلاث جولات، تجمع الشاشة كل ما فعلتموه: من التزم بوعده، ومن انقلب، ومن نجا لأن قرارًا قديمًا عاد في اللحظة الصح. الفائز ليس الأذكى في جولة، بل من قرأ العواقب قبل أن تقع.</p></div>
+        <div class="he-copy"><span class="eyebrow">النهاية</span><h2>كل شي مترابط.<br><em>وكل قرار محسوب.</em></h2><p>في نهاية المباراة، الشاشة تجمع كل اللي سويتوه: مين التزم بوعده، ومين انقلب، ومين نجا لأن قرار قديم رجع في اللحظة الصح. الفايز مو الأذكى في جولة، الفايز اللي قرأ العواقب قبل لا تصير.</p></div>
         <ul class="he-facts">
-          <li><b>٣</b><span>جولات متصلة</span></li>
+          <li><b>متتابعة</b><span>جولات تبني على بعضها</span></li>
           <li><b>سري</b><span>القرار حتى الكشف</span></li>
           <li><b>يعود</b><span>أثر كل قرار</span></li>
         </ul>
@@ -298,21 +309,21 @@ function howToPlay(): void {
     </section>
 
     <section class="how-tips" data-reveal>
-      <span class="eyebrow">لأفضل جلسة</span>
+      <span class="eyebrow">عشان أحسن جلسة</span>
       <div class="how-tips-grid">
-        <article><b>اجلسوا بحيث الشاشة أمام الجميع</b><p>المشهد العام هو مرجعكم المشترك — خلّوه واضحًا لكل اللاعبين.</p></article>
-        <article><b>احموا جوالكم</b><p>ما على جوالك يخصك وحدك. نظرة واحدة تكفي لتكشف سرًّا يقلب الجولة.</p></article>
-        <article><b>تكلّموا… واكذبوا بذكاء</b><p>النقاش سلاح. الوعد والاتهام والصمت كلها قرارات لها عواقب.</p></article>
+        <article><b>خلّوا الشاشة قدّام الكل</b><p>المشهد العام هو مرجعكم المشترك — خلّوه واضح لكل اللاعبين.</p></article>
+        <article><b>احموا جوالكم</b><p>اللي على جوالك يخصّك إنت. نظرة وحدة تكفي تكشف سرّ يقلب الجولة.</p></article>
+        <article><b>تكلّموا… واكذبوا بذكاء</b><p>النقاش سلاح. الوعد والاتهام والسكوت كلها قرارات لها عواقب.</p></article>
       </div>
     </section>
 
     <section class="how-faq" data-reveal>
       <div class="faq-list wide">
         <h2>أسئلة سريعة</h2>
-        <details open><summary>كم لاعبًا نحتاج؟</summary><p>من ٤ إلى ٨ لاعبين، وكل لاعب على جواله. أفضل توتر يبدأ من ٥ لاعبين.</p></details>
-        <details><summary>هل نحتاج تحميل تطبيق أو حساب؟</summary><p>لا. اللعبة تعمل من المتصفح على الشاشة والجوال، بلا تسجيل دخول.</p></details>
-        <details><summary>كم تستغرق المباراة؟</summary><p>غالبًا ١٥–٢٥ دقيقة على ثلاث جولات. تقدرون تلعبون أكثر من جولة متتالية.</p></details>
-        <details><summary>وش يصير لو انقطع اتصال أحدهم؟</summary><p>يقدر يرجع لنفس المقعد بنفس معلوماته السرية عبر إعادة الاتصال، من غير خلط الأوراق.</p></details>
+        <details open><summary>كم لاعب نحتاج؟</summary><p>من ٤ إلى ٨ لاعبين، كل واحد على جواله. وكل ما زاد العدد، زاد الشك.</p></details>
+        <details><summary>لازم نحمّل تطبيق أو نسوي حساب؟</summary><p>ما تحتاج حساب عشان تلعب. تدخلون الغرفة كضيوف على طول من المتصفح على الشاشة والجوال، بلا تحميل. الحساب اختياري — يفيدك بس لحفظ مشترياتك وإعداداتك.</p></details>
+        <details><summary>كم تاخذ المباراة؟</summary><p>غالبًا ١٥–٢٥ دقيقة عبر جولات متتابعة. وتقدرون تلعبون أكثر من مباراة ورا بعض.</p></details>
+        <details><summary>وش يصير لو فصل جوال واحد؟</summary><p>يقدر يرجع لنفس مقعده بنفس معلوماته السرّية عبر إعادة الاتصال، بدون ما تختلط الأوراق.</p></details>
       </div>
     </section>
 

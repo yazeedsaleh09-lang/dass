@@ -41,8 +41,8 @@ describe('BACKFIRE public identity', () => {
     const main = readSource('./main.ts');
     expect(main).toContain("location.href = '/tv'");
     expect(main).toContain('location.href = `/play?code=${encodeURIComponent(roomCode)}&name=${encodeURIComponent(name)}`');
-    expect(main).toContain('كل واحد يعرف شيئًا');
-    expect(main).toContain('نظام السيناريو الجديد قيد التطوير');
+    expect(main).toContain('كل واحد يعرف شي');
+    expect(main).toContain('نظام السيناريو الجديد لسه تحت التطوير');
   });
 
   it('ships original editorial-noir social art with pure DOM/SVG scenes and no raster/AI imagery', () => {

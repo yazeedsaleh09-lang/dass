@@ -239,8 +239,196 @@ function hotel(accent: string): string {
   </svg>`;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Anime-inspired concept covers. Same editorial-noir language (Return Line,
+// Partial Windows, Misaligned Shadow) recomposed per concept. NO characters,
+// logos, screenshots or copied symbols — only original abstract geometry.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ---- THE LAST WALL / هجوم العمالقة — a defensive wall, a looming threat, a red breach ----
+function attackOnTitan(accent: string): string {
+  const id = 'mode-aot';
+  // brick courses across the lower half
+  let wall = '';
+  const wallTop = 322, courseH = 34, brickW = 66;
+  for (let r = 0; r < 6; r++) {
+    const y = wallTop + r * courseH;
+    const off = r % 2 ? -brickW / 2 : 0;
+    for (let c = -1; c < 9; c++) {
+      const x = 30 + off + c * brickW;
+      wall += `<rect x="${x}" y="${y}" width="${brickW - 5}" height="${courseH - 5}" rx="2" fill="${N.graphite}" stroke="${N.lead}" stroke-width="1"/>`;
+    }
+  }
+  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="جدار حجري يحمي مجموعة، وكتلة تهديد ضخمة خلفه، وثغرة حمراء تكسر الجدار">
+    ${defs(accent, id)}
+    <rect width="500" height="600" fill="url(#sky-${id})"/><rect width="500" height="600" fill="url(#glow-${id})"/>
+    <!-- the looming external threat: a vast dark mass rising behind the wall -->
+    <path d="M40 322 C 90 150 180 70 250 70 C 320 70 410 150 460 322 Z" fill="${N.ink}" opacity=".92"/>
+    <circle cx="214" cy="196" r="7" fill="${accent}" opacity=".8"/>
+    <circle cx="286" cy="196" r="7" fill="${accent}" opacity=".8"/>
+    <path d="M224 236 C 240 248 260 248 276 236" fill="none" stroke="${N.lead}" stroke-width="3" stroke-linecap="round"/>
+    <!-- the wall -->
+    <g filter="url(#sh-${id})">${wall}</g>
+    <!-- structural damage: a black breach punched through the courses -->
+    <path d="M236 322 L214 400 L246 452 L212 530 L296 530 L266 452 L294 400 L272 322 Z" fill="${N.black}"/>
+    <path d="M236 322 L214 400 L246 452 L212 530" fill="none" stroke="${accent}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M272 322 L294 400 L266 452 L296 530" fill="none" stroke="${accent}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- tiny defenders on the wall top -->
+    ${person(120, 268, 0.34, N.steel, { sw: 96 })}
+    ${person(352, 268, 0.34, N.steel, { sw: 96 })}
+    ${person(60, 300, 0.3, N.muted, { sw: 96 })}
+    <!-- the red consequence line: the threat crosses the wall and reaches a defender -->
+    <path d="M250 236 C 250 300 190 300 150 330 C 120 352 130 396 96 300" fill="none" stroke="${accent}" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="250" cy="236" r="5" fill="${accent}"/>
+    <path d="M96 300 l-2 -18 12 8z" fill="${accent}"/>
+    ${frame(accent)}
+  </svg>`;
+}
+
+// ---- THE TRUST GAME / لعبة الأصدقاء — a watched circle, trust lines, one broken ----
+function tomodachiGame(accent: string): string {
+  const id = 'mode-tomo';
+  const cx = 250, cy = 360, R = 150;
+  const n = 6, betrayer = 4;
+  const pts = Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2 + Math.PI / 2;
+    return { x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * (R * 0.78), i };
+  });
+  // trust lines between neighbours around the circle
+  let links = '';
+  for (let i = 0; i < n; i++) {
+    const a = pts[i]!, b = pts[(i + 1) % n]!;
+    const broken = a.i === betrayer || b.i === betrayer;
+    links += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${broken ? accent : N.steel}" stroke-width="${broken ? 2 : 1.2}" opacity="${broken ? '.9' : '.32'}" ${broken ? 'stroke-dasharray="5 7"' : ''}/>`;
+  }
+  const seats = pts.map((p) => p.i === betrayer
+    ? person(p.x - 22, p.y - 40, 0.4, accent, { sw: 94 })
+    : person(p.x - 22, p.y - 40, 0.4, N.lead, { sw: 94 })).join('');
+  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="حلقة أصدقاء تحت عين مراقبة، خطوط ثقة تربطهم، وخط واحد أحمر مقطوع لواحد يخفي قراره">
+    ${defs(accent, id)}
+    <rect width="500" height="600" fill="url(#sky-${id})"/><rect width="500" height="600" fill="url(#glow-${id})"/>
+    <!-- the observing eye above, casting a cone over the circle -->
+    <path d="M250 96 L120 300 L380 300 Z" fill="${accent}" opacity=".05"/>
+    <ellipse cx="250" cy="96" rx="46" ry="24" fill="${N.ink}" stroke="${N.lead}" stroke-width="2"/>
+    <circle cx="250" cy="96" r="12" fill="${N.charcoal}" stroke="${accent}" stroke-width="2"/>
+    <circle cx="250" cy="96" r="4" fill="${accent}"/>
+    <!-- trust lines, then the seated group -->
+    <g>${links}</g>
+    <g filter="url(#sh-${id})">${seats}</g>
+    <!-- the private contradiction: a phone by the highlighted seat with a diverging mark -->
+    ${phone(pts[betrayer]!.x + 30, pts[betrayer]!.y + 8, 0.6, 14, accent)}
+    ${frame(accent)}
+  </svg>`;
+}
+
+// ---- THE GAMBLE / كايجي — a rising staircase of stakes, a narrowing edge, a return drop ----
+function kaiji(accent: string): string {
+  const id = 'mode-kaiji';
+  let steps = '';
+  let tokens = '';
+  const base = 470;
+  for (let i = 0; i < 6; i++) {
+    const x = 70 + i * 62, h = 60 + i * 46, w = 58;
+    steps += `<rect x="${x}" y="${base - h}" width="${w}" height="${h}" fill="${i === 5 ? N.graphite : N.ink}" stroke="${N.lead}" stroke-width="1.4"/>`;
+    // a growing stack of wager tokens on each step
+    for (let t = 0; t <= i; t++) {
+      tokens += `<ellipse cx="${x + w / 2}" cy="${base - h - 6 - t * 9}" rx="17" ry="5.5" fill="${t === i && i >= 3 ? accent : N.charcoal}" stroke="${N.steel}" stroke-width="1"/>`;
+    }
+  }
+  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="درج صاعد من الرهانات المتزايدة ينتهي بحافة ضيقة، وخط أحمر يصعد ثم يرجع هابطًا إلى لاعب وحيد">
+    ${defs(accent, id)}
+    <rect width="500" height="600" fill="url(#sky-${id})"/><rect width="500" height="600" fill="url(#glow-${id})"/>
+    <g filter="url(#sh-${id})">${steps}</g>
+    ${tokens}
+    <!-- the narrowing edge at the top -->
+    <path d="M442 64 L470 64 L470 178 L442 200 Z" fill="${N.black}"/>
+    <line x1="442" y1="64" x2="442" y2="200" stroke="${accent}" stroke-width="2" opacity=".7"/>
+    <!-- lone player at the foot of the climb -->
+    ${person(38, 372, 0.62, N.muted, { sw: 92 })}
+    <!-- the risk line: climbs the stairs, narrows, then loops back down onto the player -->
+    <path d="M92 462 L132 462 L154 416 L194 416 L216 370 L256 370 L278 300 L318 300 L340 236 L400 200
+             C 470 168 470 300 300 320 C 150 338 120 392 92 452" fill="none" stroke="${accent}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="92" cy="462" r="5" fill="${accent}"/>
+    <path d="M92 452 l-8 -12 16 -2z" fill="${accent}"/>
+    ${frame(accent)}
+  </svg>`;
+}
+
+// ---- THE COMMAND / كود غياس — a commander node, directed order-paths, one reversing ----
+function codeGeass(accent: string): string {
+  const id = 'mode-geass';
+  const cx = 250, cy = 300, R = 178;
+  const n = 6;
+  const nodes = Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+    return { x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R, i };
+  });
+  const reversed = 3;
+  let paths = '';
+  let dots = '';
+  nodes.forEach((p) => {
+    const rev = p.i === reversed;
+    // command arrow from centre out to each ally (reversed one points back in)
+    const from = rev ? p : { x: cx, y: cy };
+    const to = rev ? { x: cx, y: cy } : p;
+    const mx = (from.x + to.x) / 2 + (to.y - from.y) * 0.14;
+    const my = (from.y + to.y) / 2 - (to.x - from.x) * 0.14;
+    paths += `<path d="M${from.x} ${from.y} Q ${mx} ${my} ${to.x} ${to.y}" fill="none" stroke="${rev ? accent : N.steel}" stroke-width="${rev ? 2.4 : 1.4}" opacity="${rev ? '.9' : '.42'}" ${rev ? 'stroke-dasharray="6 6"' : ''}/>`;
+    const ang = Math.atan2(to.y - my, to.x - mx);
+    dots += `<path transform="translate(${to.x} ${to.y}) rotate(${(ang * 180) / Math.PI})" d="M0 0 l-11 -5 l0 10z" fill="${rev ? accent : N.steel}" opacity="${rev ? '.95' : '.5'}"/>`;
+    dots += `<circle cx="${p.x}" cy="${p.y}" r="16" fill="${rev ? accent : N.graphite}" stroke="${N.lead}" stroke-width="1.6"/>`;
+  });
+  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="عقدة قيادة مركزية تصدر أوامر لعقد حليفة حولها، وأمر واحد أحمر ينعكس راجعًا إلى المركز">
+    ${defs(accent, id)}
+    <rect width="500" height="600" fill="url(#sky-${id})"/><rect width="500" height="600" fill="url(#glow-${id})"/>
+    <g>${paths}</g>
+    <g filter="url(#sh-${id})">${dots}</g>
+    <!-- the hidden order at the centre: a command sigil -->
+    <circle cx="${cx}" cy="${cy}" r="42" fill="${N.ink}" stroke="${accent}" stroke-width="2.4"/>
+    <circle cx="${cx}" cy="${cy}" r="24" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".6"/>
+    <path d="M${cx} ${cy - 30} L${cx} ${cy + 30} M${cx - 30} ${cy} L${cx + 30} ${cy}" stroke="${accent}" stroke-width="1.6" opacity=".7"/>
+    <circle cx="${cx}" cy="${cy}" r="6" fill="${accent}"/>
+    ${frame(accent)}
+  </svg>`;
+}
+
+// ---- THE CURSE / جوجوتسو كايسن — a persistent mark, energy absorbed then returning ----
+function jujutsuKaisen(accent: string): string {
+  const id = 'mode-jjk';
+  const cx = 250, cy = 320;
+  // converging absorption lines from the edges toward the centre
+  let absorb = '';
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const x = cx + Math.cos(a) * 210, y = cy + Math.sin(a) * 230;
+    absorb += `<path d="M${x} ${y} Q ${cx + Math.cos(a) * 90} ${cy + Math.sin(a) * 90} ${cx} ${cy}" fill="none" stroke="${N.steel}" stroke-width="1.2" opacity=".3"/>`;
+  }
+  return `<svg class="mode-cover-art" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="علامة لعنة ثابتة على شخص، طاقة تُمتصّ نحوه ثم تُحوّل وترجع إليه عبر قوس متأخّر">
+    ${defs(accent, id)}
+    <rect width="500" height="600" fill="url(#sky-${id})"/><rect width="500" height="600" fill="url(#glow-${id})"/>
+    <!-- the cursed field: converging energy + concentric rings -->
+    <g>${absorb}</g>
+    <circle cx="${cx}" cy="${cy}" r="120" fill="none" stroke="${accent}" stroke-width="1.2" opacity=".24"/>
+    <circle cx="${cx}" cy="${cy}" r="84" fill="none" stroke="${accent}" stroke-width="1.2" opacity=".34"/>
+    <!-- the marked figure -->
+    <g filter="url(#sh-${id})">${person(cx - 40, cy - 96, 0.72, N.charcoal, { sw: 92 })}</g>
+    <!-- the persistent mark on its owner -->
+    <path d="M${cx - 16} ${cy - 44} L${cx + 16} ${cy - 44} M${cx} ${cy - 60} L${cx} ${cy - 28} M${cx - 12} ${cy - 56} L${cx + 12} ${cy - 32} M${cx + 12} ${cy - 56} L${cx - 12} ${cy - 32}" stroke="${accent}" stroke-width="2.4" stroke-linecap="round"/>
+    <!-- the delayed return: power leaves, curves wide, and comes back to its owner -->
+    <path d="M${cx} ${cy - 40} C ${cx + 150} ${cy - 120} ${cx + 200} ${cy + 120} ${cx + 40} ${cy + 150} C ${cx - 60} ${cy + 168} ${cx - 40} ${cy + 60} ${cx} ${cy + 14}" fill="none" stroke="${accent}" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy - 40}" r="5" fill="${accent}"/>
+    <path d="M${cx} ${cy + 14} l-12 -8 -2 16z" fill="${accent}"/>
+    ${frame(accent)}
+  </svg>`;
+}
+
 const COVERS: Record<string, (accent: string) => string> = {
   majlis, classroom, siege, blackout, orbit, hotel,
+  'attack-on-titan': attackOnTitan,
+  'tomodachi-game': tomodachiGame,
+  kaiji,
+  'code-geass': codeGeass,
+  'jujutsu-kaisen': jujutsuKaisen,
 };
 
 export function modeCover(id: string, accent: string): string {

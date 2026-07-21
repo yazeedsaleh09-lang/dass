@@ -37,9 +37,22 @@ export function modesCss(): string {
   .mode-featured-copy h2{font-size:clamp(34px,4.6vw,60px);line-height:1;letter-spacing:-.03em;margin:2px 0}
   .mode-featured-copy .mode-premise{font-size:clamp(17px,1.5vw,21px)}
 
-  .modes-rail-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 0 20px;padding-bottom:16px;border-bottom:1px solid var(--line)}
-  .modes-rail-head h2{font-size:var(--fs-h2);margin:0;letter-spacing:-.02em}
-  .modes-rail-head span{color:var(--muted);font-size:15px}
+  /* three labelled sections: متاح الآن / الأصلية / مستوحى من الأنمي */
+  .modes-section{margin:0 0 clamp(46px,7vw,80px)}
+  .modes-section-head{margin:0 0 22px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .modes-section-head h2{font-size:var(--fs-h2);margin:10px 0 6px;letter-spacing:-.02em}
+  .modes-section-head p{color:var(--muted);font-size:15px;line-height:1.6;margin:0;max-width:60ch}
+  .modes-section-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:900;letter-spacing:.04em;padding:5px 12px;border-radius:var(--r-pill);border:1px solid var(--line-2);color:var(--bf-muted)}
+  .modes-section-tag::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+  .modes-section-tag.live{color:var(--bf-red-soft);border-color:color-mix(in srgb,var(--bf-red-soft) 45%,transparent);background:color-mix(in srgb,var(--bf-red) 10%,transparent)}
+  .modes-section-tag.live::before{box-shadow:0 0 8px currentColor}
+  .modes-section-tag.anime{color:#cbb9e6;border-color:color-mix(in srgb,#8a6fb8 45%,transparent);background:color-mix(in srgb,#8a6fb8 12%,transparent)}
+  .modes-section-live .mode-featured{margin-bottom:0}
+  /* anime concept cards read as previews: dimmed cover, pressure line, disabled action */
+  .mode-card.anime .mode-hook-sm{margin:0;font-size:13px;padding:11px 13px}
+  .mode-card.anime .mode-hook-sm span{font-size:10px}
+  .mode-card.anime .btn[disabled]{margin-top:12px;width:100%;opacity:.68;cursor:not-allowed}
+  .mode-card.anime .mode-card-art::after{background:linear-gradient(180deg,rgba(8,8,8,.28) 0,transparent 34%,color-mix(in srgb,var(--accent) 16%,transparent) 76%,rgba(8,8,8,.82))}
 
   /* portal grid */
   .modes-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
@@ -87,7 +100,7 @@ export function modesCss(): string {
   .mode-round-head h2{font-size:var(--fs-h2);margin:12px 0 0;letter-spacing:-.02em}
   .mode-beats{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line)}
   .mode-beats li{list-style:none;display:flex;gap:14px;align-items:flex-start;padding:26px 22px;background:var(--bg);min-height:120px}
-  .mode-beats b{font:900 15px/1 'Arial',sans-serif;color:var(--accent)}
+  .mode-beats .beat-mark{flex:0 0 auto;width:9px;height:9px;margin-top:8px;background:var(--accent);transform:rotate(45deg)}
   .mode-beats span{font-size:17px;font-weight:700;color:var(--text);line-height:1.5}
 
   @media(max-width:900px){

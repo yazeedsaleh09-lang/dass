@@ -41,25 +41,25 @@ export function GameScreenPreview(state: TvState = 'round'): string {
         <div class="lobby-qr">${qrSvg(demoJoinUrl, '#0d0d0e', '#f1f0ec', 2)}</div>
         <div class="lobby-join"><small>امسح الرمز من جوالك أو اكتبه</small><strong dir="ltr">BF24X7</strong><span class="lobby-count">٤ / ٨ جاهزين</span></div>
       </div>
-      <div class="lobby-roster">${seatDot('ي', 0)}${seatDot('ن', 1)}${seatDot('س', 2)}${seatDot('ر', 3)}${seatDot('٥', 4, 'ghost')}${seatDot('٦', 5, 'ghost')}</div>
+      <div class="lobby-roster">${seatDot('ي', 0)}${seatDot('ت', 1)}${seatDot('س', 2)}${seatDot('ر', 3)}${seatDot('٥', 4, 'ghost')}${seatDot('٦', 5, 'ghost')}</div>
     </div>`;
   }
   if (state === 'reveal') {
     return `<div class="game-screen tv-reveal-screen" data-product-screen="tv-reveal">
       <header class="gs-hud"><span class="gs-brand">BACKFIRE</span><span class="gs-phase">الكشف</span><span class="gs-round mono" dir="ltr">4 / 8</span></header>
       <div class="reveal-list">
-        <article class="rv dassa">${seatDot('ن', 1)}<div class="rv-copy"><small>نورة وعدت أن تدعم يزيد</small><b>غيّرت قرارها في السر</b></div><em class="rv-tag dassa">دسّة</em></article>
-        <article class="rv kept">${seatDot('ي', 0)}<div class="rv-copy"><small>يزيد ثبّت قراره</small><b>التزم بوعده للمجلس</b></div><em class="rv-tag kept">التزم</em></article>
+        <article class="rv dassa">${seatDot('ت', 1)}<div class="rv-copy"><small>تركي قال إنه بيدعم يزيد</small><b>غيّر قراره من وراهم</b></div><em class="rv-tag dassa">دسّة</em></article>
+        <article class="rv kept">${seatDot('ي', 0)}<div class="rv-copy"><small>يزيد ثبّت على كلامه</small><b>التزم بوعده قدّام المجلس</b></div><em class="rv-tag kept">التزم</em></article>
       </div>
-      <footer class="reveal-foot"><span>الأثر التالي</span><strong>المسار رجع إلى نورة</strong></footer>
+      <footer class="reveal-foot"><span>الأثر الجاي</span><strong>المسار رجع على تركي</strong></footer>
     </div>`;
   }
   if (state === 'consequence') {
     return `<div class="game-screen tv-conseq-screen" data-product-screen="tv-consequence">
       <header class="gs-hud"><span class="gs-brand">BACKFIRE</span><span class="gs-phase">النتيجة العامة</span><span class="gs-round mono" dir="ltr">4 / 8</span></header>
-      <div class="conseq-body"><span class="conseq-eyebrow">تغيّر إيقاع الغرفة</span><h3>سقطت خزنة راكان،<br><em>وارتفع رصيد نورة.</em></h3></div>
+      <div class="conseq-body"><span class="conseq-eyebrow">تغيّر إيقاع الغرفة</span><h3>طاحت خزنة راكان،<br><em>وارتفع رصيد تركي.</em></h3></div>
       <div class="conseq-bars">
-        <span class="cb up" style="--h:78%">${seatDot('ن', 1)}<i>+٦</i></span>
+        <span class="cb up" style="--h:78%">${seatDot('ت', 1)}<i>+٦</i></span>
         <span class="cb up" style="--h:54%">${seatDot('ي', 0)}<i>+٢</i></span>
         <span class="cb flat" style="--h:40%">${seatDot('س', 2)}<i>٠</i></span>
         <span class="cb down" style="--h:22%">${seatDot('ر', 3)}<i>−٤</i></span>
@@ -71,10 +71,10 @@ export function GameScreenPreview(state: TvState = 'round'): string {
     <div class="round-prompt"><small>أعلنوا نيّاتكم على جوالاتكم</small><strong class="round-count" dir="ltr">12</strong></div>
     <div class="round-floor">
       <span class="rf-col"><i class="rf-intent up">${ICN.support}</i><span class="rf-bar" style="--h:70%"></span>${seatDot('ي', 0)}</span>
-      <span class="rf-col"><i class="rf-intent"></i><span class="rf-bar" style="--h:48%"></span>${seatDot('ن', 1)}</span>
+      <span class="rf-col"><i class="rf-intent"></i><span class="rf-bar" style="--h:48%"></span>${seatDot('ت', 1)}</span>
       <span class="rf-col"><i class="rf-intent dn">${ICN.attack}</i><span class="rf-bar" style="--h:86%"></span>${seatDot('ر', 3)}</span>
       <span class="rf-col"><i class="rf-intent"></i><span class="rf-bar" style="--h:34%"></span>${seatDot('س', 2)}</span>
-      <span class="rf-col wait"><i class="rf-intent">◌</i><span class="rf-bar" style="--h:58%"></span>${seatDot('ح', 4)}</span>
+      <span class="rf-col wait"><i class="rf-intent">◌</i><span class="rf-bar" style="--h:58%"></span>${seatDot('خ', 4)}</span>
     </div>
   </div>`;
 }
@@ -94,7 +94,7 @@ function phoneScreen(state: PhoneState): string {
         <span class="scr-eyebrow">أعلن نيّتك</span>
         <div class="pick-acts"><span class="pa up on">${ICN.support}<b>دعم</b></span><span class="pa dn">${ICN.attack}<b>هجوم</b></span><span class="pa gd">${ICN.vault}<b>خزنة</b></span></div>
         <span class="pick-label">أدعم مين؟</span>
-        <div class="pick-chips"><span class="pchip on">${seatDot('ي', 0, 'sm')}يزيد</span><span class="pchip">${seatDot('ر', 3, 'sm')}راكان</span><span class="pchip">${seatDot('س', 2, 'sm')}سارة</span></div>
+        <div class="pick-chips"><span class="pchip on">${seatDot('ي', 0, 'sm')}يزيد</span><span class="pchip">${seatDot('ر', 3, 'sm')}راكان</span><span class="pchip">${seatDot('س', 2, 'sm')}سعود</span></div>
         <span class="scr-confirm">اقفل الفعل</span>
       </div>`;
     case 'waiting':
